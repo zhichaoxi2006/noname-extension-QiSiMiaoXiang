@@ -5044,8 +5044,29 @@ export const skill = {
                 player.loseMaxHp();
             }
         },
+        "qsmx_zhiheng":{
+            trigger:{
+                player:['useCard', 'respond']
+            },
+            frequent:true,
+            filter:function(event, player){
+                return player.countCards('he')>0;
+            },
+            content:function(){
+                'step 0'
+                event.count = Math.min(player.countCards('he'), player.maxHp);
+                player.draw(event.count+1);
+                'step 1'
+                var next = player.chooseToDiscard(event.count, true);
+                next.set('ai',function(card){
+                    return -player.getUseValue(card);
+                });
+            }
+        }
     },
     translate: {
+        "qsmx_zhiheng": "制衡",
+        "qsmx_zhiheng_info": "你使用或打出牌时，你可以摸[X+1]张牌，然后弃置X张牌。（X为你手牌数与装备区牌数之和，至多为你的体力上限）",
         "qsmx_tianxie": "天邪",
         "qsmx_tianxie_info": "状态技，你的体力变动后，若你体力与体力上限相同，你扣减一点体力上限。",
         "qsmx_reverse": "反转",

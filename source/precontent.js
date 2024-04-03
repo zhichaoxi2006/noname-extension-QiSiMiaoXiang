@@ -39,23 +39,15 @@ export async function precontent(config, pack) {
             color: '#dcdcdc',
             nature: 'black',
         });
-        let list = [
-            'qsmx_baozheng',
-            'qsmx_sunce',
-            'qsmx_jiaxu',
-            'qsmx_luxun',
-            'qsmx_xusha',
-            'qsmx_zhonghui',
-            'qsmx_sunquan',
-            'qsmx_wangshuang',
-            'qsmx_nanhua',
-            'qsmx_cenhun',
-            'qsmx_huangzhong',
-            'qsmx_zhenji',
-            'qsmx_guanyu',
-            'qsmx_caocao',
-            "qsmx_caopi"
-        ];
-        for (var i of list) lib.translate[i + '_prefix'] = '妙';
+        lib.namePrefix.set('会玩', {
+            color: '#dcdcdc',
+            nature: 'black',
+        });
+        const prefix = {
+            'qsmx':['qsmx_baozheng','qsmx_sunce','qsmx_jiaxu','qsmx_luxun','qsmx_xusha','qsmx_zhonghui','qsmx_sunquan','qsmx_wangshuang','qsmx_nanhua','qsmx_cenhun','qsmx_huangzhong','qsmx_zhenji','qsmx_guanyu','qsmx_caocao',"qsmx_caopi"],
+            'qsmx_hw':['qsmx_hw_sunquan','qsmx_hw_zhonghui']
+        };
+        for (var i of prefix['qsmx']) lib.translate[i + '_prefix'] = '妙';
+        for (var i of prefix['qsmx_hw']) lib.translate[i + '_prefix'] = '会玩';
     }
 }

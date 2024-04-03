@@ -5044,49 +5044,6 @@ export const skill = {
                 player.loseMaxHp();
             }
         },
-        "_qsmx_bilu": {
-            silent: true,
-            trigger: {
-                player: ['drawBegin']
-            },
-            filter: function (event, player) {
-                var names = [player.name, player.name1, player.name2];
-                var cards = event.result;
-                if (cards.some(c => cards.name == 'zhuge')) return false;
-                if (player.getCards('hes').some(c => c.name == 'zhuge')) return false;
-                for (let index = 0; index < names.length; index++) {
-                    const name = names[index];
-                    if (!name) continue;
-                    if (name.includes('guanyu')) return true;
-                }
-            },
-            content: function () {
-                var card = get.cardPile2(function (card) {
-                    return card.name == 'zhuge'
-                });
-                var node = ui['cardPile'];
-                if (trigger.bottom) {
-                    node.appendChild(card);
-                } else {
-                    node.insertBefore(card, node.firstChild);
-                }
-            }
-        },
-        "qsmx_blueShield": {
-            silent: true,
-            trigger: {
-                player: ['changeHpBegin']
-            },
-            filter: function (event, player) {
-                if(player.hasSkillTag('nohujia',true))return false;
-                if(player.hujia>Math.abs(event.num))return false;
-                if(event.getParent().name!='damage')return false;
-                return player.hujia>0;
-            },
-            content: function () {
-                trigger.num=-player.hujia;
-            }
-        },
     },
     translate: {
         "qsmx_tianxie": "天邪",

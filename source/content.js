@@ -1101,7 +1101,52 @@ export async function content(config, pack) {
                     target.addSkillBlocker('qsmx_fengying');
                 }
             },
-        }
+        },
+        _qsmx_bilu: {
+            silent: true,
+            trigger: {
+                player: ['drawBegin']
+            },
+            filter: function (event, player) {
+                if(lib.config.extension_奇思妙想_easter_egg) return false;
+                var names = [player.name, player.name1, player.name2];
+                var cards = event.result;
+                if (cards.some(c => cards.name == 'zhuge')) return false;
+                if (player.getCards('hes').some(c => c.name == 'zhuge')) return false;
+                for (let index = 0; index < names.length; index++) {
+                    const name = names[index];
+                    if (!name) continue;
+                    if (name.includes('guanyu')) return true;
+                }
+            },
+            content: function () {
+                var card = get.cardPile2(function (card) {
+                    return card.name == 'zhuge'
+                });
+                var node = ui['cardPile'];
+                if (trigger.bottom) {
+                    node.appendChild(card);
+                } else {
+                    node.insertBefore(card, node.firstChild);
+                }
+            }
+        },
+        _qsmx_blueShield: {
+            silent: true,
+            trigger: {
+                player: ['changeHpBegin']
+            },
+            filter: function (event, player) {
+                if(lib.config.extension_奇思妙想_blue_shield) return false;
+                if(player.hasSkillTag('nohujia',true))return false;
+                if(player.hujia>Math.abs(event.num))return false;
+                if(event.getParent().name!='damage')return false;
+                return player.hujia>0;
+            },
+            content: function () {
+                trigger.num=-player.hujia;
+            }
+        },
     })
     //lib.rank
     lib.rank.rarity.junk.addArray(['qsmx_matara_okina']);

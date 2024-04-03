@@ -14,7 +14,7 @@ export const config = {
     },
     "blue_shield": { 
         "name": "蓝盾", 
-        "init": false, 
+        "init": true, 
         "intro": "开启后，当一名角色体力扣减时，若满足以下所有条件：①你的护甲值大于0②你的护甲可以为你抵挡伤害③体力扣减由伤害造成④体力扣减值A大于X，你将A改为X。（X为你的护甲值）", 
         "_name": "blue_shield" 
     },

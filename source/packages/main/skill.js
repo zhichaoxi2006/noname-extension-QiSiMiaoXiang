@@ -4165,12 +4165,18 @@ export const skill = {
             },
             content() {
                 'step 0'
-                player.draw();
+                var next=player.judge(function(card){
+                    if(get.color(card)=='black') return 1.5;
+                    return -1.5;
+                });
                 'step 1'
-                if (result) {
-                    player.loseToSpecial(result, 'qsmx_luoshen', player);
-                    player.markSkill('qsmx_luoshen');
+                if (result.card) {
+                    event.cardx=result.card;
+                    player.gain(event.cardx);
                 }
+                'step 2'
+                player.loseToSpecial([event.cardx], 'qsmx_luoshen', player);
+                player.markSkill('qsmx_luoshen');
             },
             group: ['qsmx_luoshen_unmark'],
             subSkill: {
@@ -4765,6 +4771,9 @@ export const skill = {
             direct: true,
             preHidden: true,
             group:['qsmx_fangzhu_cancel'],
+            getIndex(event, player, triggername){
+                return event.num;
+            },
             content: function () {
                 "step 0"
                 var draw = player.getDamagedHp();
@@ -5062,9 +5071,128 @@ export const skill = {
                     return -player.getUseValue(card);
                 });
             }
+        },
+        "qsmx_huituo":{
+            audio:2,
+            audioname:["re_caorui"],
+            trigger:{
+                player:"damageEnd",
+            },
+            getIndex(event, player, triggername){
+                return event.num;
+            },
+            direct:true,
+            content:function(){
+                'step 0'
+                var forced=event.forced===undefined?false:event.forced;
+                var info=get.skillInfoTranslation('huituo',player);
+                var str=`###${forced?'恢拓：请选择一名角色':get.prompt('huituo')}###令一名角色判定。若结果为红色，其回复1点体力并摸2张牌；若结果为黑色，其获得1点护甲并摸1张牌`;
+                player.chooseTarget(str,event.forced).set('ai',function(target){
+                    var player=_status.event.player;
+                    if(get.attitude(player,target)>0){
+                        return get.recoverEffect(target,player,player)+1;
+                    }
+                    return 0;
+                });
+                'step 1'
+                if(result.bool){
+                    player.logSkill('huituo',result.targets);
+                    var target=result.targets[0];
+                    event.target=target;
+                    target.judge(function(card){
+                        if(target.hp==target.maxHp){
+                            if(get.color(card)=='red') return -1;
+                        }
+                        if(get.color(card)=='red') return 1;
+                        return 0;
+                    });
+                }
+                else{
+                    event.finish();
+                }
+                'step 2'
+                if(result.color){
+                    if(result.color=='red'){
+                        if(event.target.hp<event.target.maxHp) event.target.recover();
+                        event.target.draw(2);
+                    }
+                    else{
+                        event.target.changeHujia();
+                        event.target.draw();
+                    }
+                }
+            },
+            ai:{
+                maixie:true,
+                "maixie_hp":true,
+            },
+            "_priority":0,
+        },
+        "qsmx_mingjian":{
+            audio:"mingjian",
+            trigger:{
+                player:"phaseUseBefore",
+            },
+            filter:function(event,player){
+                return player.countCards('h');
+            },
+            direct:true,
+            content:function(){
+                'step 0'
+                player.chooseTarget(get.prompt('oldmingjian'),'跳过出牌阶段并将所有手牌交给一名其他角色，你结束此回合，然后其于此回合后获得一个额外的出牌阶段',lib.filter.notMe).set('ai',target=>{
+                    var player=_status.event.player,att=get.attitude(player,target);
+                    if(target.hasSkillTag('nogain')) return 0.01*att;
+                    if(player.countCards('h')==player.countCards('h','du')) return -att;
+                    if(target.hasJudge('lebu')) att*=1.25;
+                    if(get.attitude(player,target)>3){
+                        var basis=get.threaten(target)*att;
+                        if(player==get.zhu(player)&&player.hp<=2&&player.countCards('h','shan')&&!game.hasPlayer(function(current){
+                            return get.attitude(current,player)>3&&current.countCards('h','tao')>0;
+                        })) return 0;
+                        if(target.countCards('h')+player.countCards('h')>target.hp+2) return basis*0.8;
+                        return basis;
+                    }
+                    return 0;
+                });
+                'step 1'
+                if(result.bool){
+                    var target=result.targets[0];
+                    event.target=target;
+                    player.logSkill('oldmingjian',target);
+                    player.give(player.getCards('h'),target);
+                    trigger.cancel();
+                }
+                else event.finish();
+                'step 2'
+                var evt=trigger.getParent('phase');
+                if(evt){
+                    game.log(player,'结束了回合');
+                    evt.finish();
+                }
+                var next=target.insertPhase();
+                next._noTurnOver=true;
+                next.phaseList=['phaseUse'];
+                //next.setContent(lib.skill.oldmingjian.phase);
+            },
+            phase:function(){
+                'step 0'
+                player.phaseUse();
+                'step 1'
+                game.broadcastAll(function(){
+                    if(ui.tempnowuxie){
+                        ui.tempnowuxie.close();
+                        delete ui.tempnowuxie;
+                    }
+                });
+            },
+            "_priority":0,
         }
     },
     translate: {
+        "qsmx_mingjian": "明鉴",
+        "qsmx_mingjian_info": "你可以跳过出牌阶段并将所有手牌交给一名其他角色。若如此做，你结束当前回合，然后其获得一个仅有出牌阶段的额外回合。",
+        "qsmx_huituo": "恢拓",
+        "qsmx_huituo_info": "你受到1点伤害后，你可以令一名角色进行一次判定，若结果为红色，其回复1点体力并摸2张牌；若结果为黑色，其获得1点护甲。",
         "qsmx_zhiheng": "制衡",
         "qsmx_zhiheng_info": "你使用或打出牌时，你可以摸[X+1]张牌，然后弃置X张牌。（X为你手牌数与装备区牌数之和，至多为你的体力上限）",
         "qsmx_tianxie": "天邪",
@@ -5074,7 +5202,7 @@ export const skill = {
         "qsmx_xingshang": "行殇",
         "qsmx_xingshang_info": "一名角色死亡后，你可以获得其武将牌上的任意个技能，然后增加一点体力上限并回复一点体力。",
         "qsmx_fangzhu": "放逐",
-        "qsmx_fangzhu_info": "你受到伤害后，你可以令一名其他角色摸X张牌标记为“放逐”并强制翻面；一名有“放逐”牌的角色翻面时，你弃置其一张“放逐”牌取消之。（X为你损失的体力值）",
+        "qsmx_fangzhu_info": "你受到1点伤害后，你可以令一名其他角色摸X张牌标记为“放逐”并强制翻面；一名有“放逐”牌的角色翻面时，你弃置其一张“放逐”牌取消之。（X为你损失的体力值）",
         "qsmx_jianxiong": "奸雄",
         "qsmx_jianxiong_info": "你受到伤害后，<br>▪若此伤害由技能造成：你可以获得造成伤害的技能并令伤害来源失去造成伤害的技能。<br>▪若此伤害由牌造成：你可以获得造成伤害的牌。<br>▪若此伤害由技能转化的牌造成：你可以获得转化牌的技能并令伤害来源失去转化牌的技能<br>最后你摸一张牌并令此技能的摸牌数+1。",
         "qsmx_winwin": "赢麻",
@@ -5091,7 +5219,7 @@ export const skill = {
         "qsmx_shidi": "势敌",
         "qsmx_shidi_info": "专属技，你取消武将牌替换、技能清除/失效、濒死结算，你的体力和体力上限恒定为4；一名其他角色使用非实牌时，若此牌的目标包括你，你令此牌对你无效；你受到伤害后，若伤害对应实体牌数为[X-1]，你死亡，你取消不以此法的死亡。(X为伤害来源的攻击范围)",
         "qsmx_luoshen": "洛神",
-        "qsmx_luoshen_info": "你获得牌后，若其中有黑色牌，你可以摸一张牌并将其置于你的武将牌上，称为“洛神”；你可以如手牌般使用或打出“洛神”。",
+        "qsmx_luoshen_info": "你获得牌后，若其中有黑色牌，你可以进行一次判定，然后你获得判定牌并将其置于你的武将牌上，称为“洛神”；你可以如手牌般使用或打出“洛神”。",
         "qsmx_liancai": "敛财",
         "qsmx_liancai_info": "出牌阶段，你可以将2张手牌当做“财”置入你的武将牌上并摸1张牌；你可以如手牌般使用或打出“财”。（X为你以此法弃置的牌数）",
         "qsmx_powang": "破妄",

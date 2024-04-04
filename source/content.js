@@ -1147,19 +1147,6 @@ export async function content(config, pack) {
                 trigger.num = -player.hujia;
             }
         },
-        _qsmx_dying: {
-            silent: true,
-            charlotte: true,
-            trigger: {
-                player: ['changeHpAfter'],
-            },
-            filter: function (event, player) {
-                return player.hp <= 0;
-            },
-            content: function () {
-                player.dying();
-            }
-        },
     })
     //lib.rank
     lib.rank.rarity.junk.addArray(['qsmx_matara_okina']);

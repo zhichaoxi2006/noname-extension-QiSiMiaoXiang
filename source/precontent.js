@@ -1,4 +1,5 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js'
+import { getRepoTags } from './update.js'
 export async function precontent(config, pack) {
     //MathJax
     window.MathJax = {
@@ -34,7 +35,8 @@ export async function precontent(config, pack) {
         document.head.appendChild(script);
     })();
     //CheckUpdate
-
+    var object = getRepoTags({ username: 'zhichaoxi2006', repository: 'noname-extension-QiSiMiaoXiang' });
+    console.log(object);
     //namePrifix
     if (lib.namePrefix) {
         lib.namePrefix.set('妙', {
@@ -46,7 +48,7 @@ export async function precontent(config, pack) {
             nature: 'black',
         });
         const prefix = {
-            'qsmx': ['qsmx_caorui', 'qsmx_baozheng', 'qsmx_sunce', 'qsmx_jiaxu', 'qsmx_luxun', 'qsmx_xusha', 'qsmx_zhonghui', 'qsmx_sunquan', 'qsmx_wangshuang', 'qsmx_nanhua', 'qsmx_cenhun', 'qsmx_huangzhong', 'qsmx_zhenji', 'qsmx_guanyu', 'qsmx_caocao', "qsmx_caopi"],
+            'qsmx': ['qsmx_menghuo' ,'qsmx_caorui', 'qsmx_baozheng', 'qsmx_sunce', 'qsmx_jiaxu', 'qsmx_luxun', 'qsmx_xusha', 'qsmx_zhonghui', 'qsmx_sunquan', 'qsmx_wangshuang', 'qsmx_nanhua', 'qsmx_cenhun', 'qsmx_huangzhong', 'qsmx_zhenji', 'qsmx_guanyu', 'qsmx_caocao', "qsmx_caopi"],
             'qsmx_hw': ['qsmx_hw_sunquan', 'qsmx_hw_zhonghui']
         };
         for (var i of prefix['qsmx']) lib.translate[i + '_prefix'] = '妙';

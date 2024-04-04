@@ -27,6 +27,7 @@ export const character = async function () {
             "qsmx_caocao": ["male", "wei", "4/4", ["qsmx_jianxiong", "rehuojia"], ["ext:奇思妙想/resource/image/character/qsmx_caocao.jpg"]],
             "qsmx_caopi": ["male", "wei", "3/3", ["qsmx_xingshang", "qsmx_fangzhu", "songwei"], ["ext:奇思妙想/resource/image/character/qsmx_caopi.jpg"]],
             "qsmx_caorui": ["male", "wei", "3/3", ["qsmx_huituo", "qsmx_mingjian", "xingshuai"], ["ext:奇思妙想/resource/image/character/qsmx_caorui.jpg"]],
+            "qsmx_menghuo": ["male", "qun", "4/7", ["qsmx_manqin", "qsmx_zaiqi"], ["ext:奇思妙想/resource/image/character/qsmx_menghuo.jpg"]],
         },
         characterTitle: {
             "qsmx_longinus": "百夫长",
@@ -68,6 +69,7 @@ export const character = async function () {
             "qsmx_caorui": "妙曹叡",
             "qsmx_caopi": "妙曹丕",
             "qsmx_zhengxie": "鬼人正邪",
+            "qsmx_menghuo": "妙孟获",
             "qsmx_caocao": "妙曹操",
             "qsmx_mimidog": "眯咪狗",
             "qsmx_guanyu": "妙关羽",

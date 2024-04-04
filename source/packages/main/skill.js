@@ -4951,7 +4951,7 @@ export const skill = {
                     player.addSkill(skill);
                 }
             },
-            group: ['qsmx_reverse_changeHp', 'qsmx_reverse_gainMaxHp', 'qsmx_reverse_loseMaxHp'],
+            group: ['qsmx_reverse_dying','qsmx_reverse_changeHp', 'qsmx_reverse_gainMaxHp', 'qsmx_reverse_loseMaxHp'],
             subSkill: {
                 damage: {
                     trigger: {
@@ -4990,6 +4990,19 @@ export const skill = {
                     content: function () {
                         var temp = trigger.num;
                         trigger.num = -temp;
+                    }
+                },
+                dying: {
+                    silent: true,
+                    charlotte: true,
+                    trigger: {
+                        player: ['changeHpAfter'],
+                    },
+                    filter: function (event, player) {
+                        return player.hp <= 0;
+                    },
+                    content: function () {
+                        player.dying();
                     }
                 },
                 gainMaxHp: {
@@ -5059,6 +5072,7 @@ export const skill = {
             }
         },
         "qsmx_zhiheng": {
+            audio:'rezhiheng',
             trigger: {
                 player: ['useCard', 'respond']
             },
@@ -5190,9 +5204,266 @@ export const skill = {
                 });
             },
             "_priority": 0,
+        },
+        "qsmx_manqin":{
+            audio:2,
+            enable:"phaseUse",
+            position:"hs",
+            viewAs:{
+                name:"nanman",
+            },
+            filterCard:function(card,player){
+                if(ui.selected.cards.length){
+                    return get.suit(card)!=get.suit(ui.selected.cards[0]);
+                }
+                var cards=player.getCards('hs');
+                for(var i=0;i<cards.length;i++){
+                    if(card!=cards[i]){
+                        if(get.suit(card)!==get.suit(cards[i])) return true;
+                    }
+                }
+                return false;
+            },
+            selectCard:2,
+            complexCard:true,
+            check:function(card){
+                var player=_status.event.player;
+                var targets=game.filterPlayer(function(current){
+                    return player.canUse('nanman',current);
+                });
+                var num=0;
+                for(var i=0;i<targets.length;i++){
+                    var eff=get.sgn(get.effect(targets[i],{name:'nanman'},player,player));
+                    if(targets[i].hp==1){
+                        eff*=1.5;
+                    }
+                    num+=eff;
+                }
+                if(!player.needsToDiscard(-1)){
+                    if(targets.length>=7){
+                        if(num<2) return 0;
+                    }
+                    else if(targets.length>=5){
+                        if(num<1.5) return 0;
+                    }
+                }
+                return 6-get.value(card);
+            },
+            ai:{
+                wuxie(target, card, player, viewer, status) {
+                    let att = get.attitude(viewer, target), eff = get.effect(target, card, player, target);
+                    if (Math.abs(att) < 1 || status * eff * att >= 0) return 0;
+                    let evt = _status.event.getParent('useCard'), pri = 1, bonus = player.hasSkillTag('damageBonus', true, {
+                        target: target,
+                        card: card
+                    }), damage = 1, isZhu = function (tar) {
+                        return tar.isZhu || tar === game.boss || tar === game.trueZhu || tar === game.falseZhu;
+                    }, canSha = function (tar, blur) {
+                        let known = tar.getKnownCards(viewer);
+                        if (!blur) return known.some(card => {
+                            let name = get.name(card, tar);
+                            return (name === 'sha' || name === 'hufu' || name === 'yuchanqian') && lib.filter.cardRespondable(card, tar);
+                        });
+                        if (tar.countCards('hs', i => !known.includes(i)) > 4.67 - 2 * tar.hp / tar.maxHp) return true;
+                        if (!tar.hasSkillTag('respondSha', true, 'respond', true)) return false;
+                        if (tar.hp <= damage) return false;
+                        if (tar.hp <= damage + 1) return isZhu(tar);
+                        return true;
+                    }, self = false;
+                    if (canSha(target)) return 0;
+                    if (bonus && !viewer.hasSkillTag('filterDamage', null, {
+                        player: player,
+                        card: card
+                    })) damage = 2;
+                    if ((viewer.hp <= damage || viewer.hp <= damage + 1 && isZhu(viewer)) && !canSha(viewer)) {
+                        if (viewer === target) return status;
+                        let fv = true;
+                        if (evt && evt.targets) for (let i of evt.targets) {
+                            if (fv) {
+                                if (target === i) fv = false;
+                                continue;
+                            }
+                            if (viewer == i) {
+                                if (isZhu(viewer)) return 0;
+                                self = true;
+                                break;
+                            }
+                        }
+                    }
+                    let maySha = canSha(target, true);
+                    if (bonus && !target.hasSkillTag('filterDamage', null, {
+                        player: player,
+                        card: card
+                    })) damage = 2;
+                    else damage = 1;
+                    if (isZhu(target)) {
+                        if (eff < 0) {
+                            if (target.hp <= damage + 1 || !maySha && target.hp <= damage + 2) return 1;
+                            if (maySha && target.hp > damage + 2) return 0;
+                            else if (maySha || target.hp > damage + 2) pri = 3;
+                            else pri = 4;
+                        }
+                        else if (target.hp > damage + 1) pri = 2;
+                        else return 0;
+                    }
+                    else if (self) return 0;
+                    else if (eff < 0) {
+                        if (!maySha && target.hp <= damage) pri = 5;
+                        else if (maySha) return 0;
+                        else if (target.hp > damage + 1) pri = 2;
+                        else if (target.hp === damage + 1) pri = 3;
+                        else pri = 4;
+                    }
+                    else if (target.hp <= damage) return 0;
+                    let find = false;
+                    if (evt && evt.targets) for (let i = 0; i < evt.targets.length; i++) {
+                        if (!find) {
+                            if (evt.targets[i] === target) find = true;
+                            continue;
+                        }
+                        let att1 = get.attitude(viewer, evt.targets[i]), eff1 = get.effect(evt.targets[i], card, player, evt.targets[i]), temp = 1;
+                        if (Math.abs(att1) < 1 || att1 * eff1 >= 0 || canSha(evt.targets[i])) continue;
+                        maySha = canSha(evt.targets[i], true);
+                        if (bonus && !evt.targets[i].hasSkillTag('filterDamage', null, {
+                            player: player,
+                            card: card
+                        })) damage = 2;
+                        else damage = 1;
+                        if (isZhu(evt.targets[i])) {
+                            if (eff1 < 0) {
+                                if (evt.targets[i].hp <= damage + 1 || !maySha && evt.targets[i].hp <= damage + 2) return 0;
+                                if (maySha && evt.targets[i].hp > damage + 2) continue;
+                                if (maySha || evt.targets[i].hp > damage + 2) temp = 3;
+                                else temp = 4;
+                            }
+                            else if (evt.targets[i].hp > damage + 1) temp = 2;
+                            else continue;
+                        }
+                        else if (eff1 < 0) {
+                            if (!maySha && evt.targets[i].hp <= damage) temp = 5;
+                            else if (maySha) continue;
+                            else if (evt.targets[i].hp > damage + 1) temp = 2;
+                            else if (evt.targets[i].hp === damage + 1) temp = 3;
+                            else temp = 4;
+                        }
+                        else if (evt.targets[i].hp > damage + 1) temp = 2;
+                        if (temp > pri) return 0;
+                    }
+                    return 1;
+                },
+                basic:{
+                    order:9,
+                    useful:[5,1],
+                    value:5,
+                },
+                result:{
+                    player(player, target) {
+                        if (player._nanman_temp || player.hasSkillTag('jueqing', false, target)) return 0;
+                        player._nanman_temp = true;
+                        let eff = get.effect(target, new lib.element.VCard({ name: 'nanman' }), player, target);
+                        delete player._nanman_temp;
+                        if (eff >= 0) return 0;
+                        if (target.hp > 2 || target.hp > 1 && !target.isZhu && target != game.boss && target != game.trueZhu && target != game.falseZhu) return 0;
+                        if (target.hp > 1 && target.hasSkillTag('respondSha', true, 'respond', true)) return 0;
+                        let known = target.getKnownCards(player);
+                        if (known.some(card => {
+                            let name = get.name(card, target);
+                            if (name === 'sha' || name === 'hufu' || name === 'yuchanqian') return lib.filter.cardRespondable(card, target);
+                            if (name === 'wuxie') return lib.filter.cardEnabled(card, target, 'forceEnable');
+                        })) return 0;
+                        if (target.hp > 1 || target.countCards('hs', i => !known.includes(i)) > 4.67 - 2 * target.hp / target.maxHp) return 0;
+                        let res = 0, att = get.sgnAttitude(player, target);
+                        res -= att * (0.8 * target.countCards('hs') + 0.6 * target.countCards('e') + 3.6);
+                        if (get.mode() === 'identity' && target.identity === 'fan') res += 2.4;
+                        if (get.mode() === 'guozhan' && player.identity !== 'ye' && player.identity === target.identity ||
+                            get.mode() === 'identity' && player.identity === 'zhu' && (target.identity === 'zhong' || target.identity === 'mingzhong')) res -= 0.8 * player.countCards('he');
+                        return res;
+                    },
+                    target(player, target) {
+                        let zhu = (get.mode() === 'identity' && target.isZhu) || target.identity === 'zhu';
+                        if (!lib.filter.cardRespondable({ name: 'sha' }, target)) {
+                            if (zhu) {
+                                if (target.hp < 2) return -99;
+                                if (target.hp === 2) return -3.6;
+                            }
+                            return -2;
+                        }
+                        let known = target.getKnownCards(player);
+                        if (known.some(card => {
+                            let name = get.name(card, target);
+                            if (name === 'sha' || name === 'hufu' || name === 'yuchanqian') return lib.filter.cardRespondable(card, target);
+                            if (name === 'wuxie') return lib.filter.cardEnabled(card, target, 'forceEnable');
+                        })) return -1.2;
+                        let nh = target.countCards('hs', i => !known.includes(i));
+                        if (zhu && target.hp <= 1) {
+                            if (nh === 0) return -99;
+                            if (nh === 1) return -60;
+                            if (nh === 2) return -36;
+                            if (nh === 3) return -12;
+                            if (nh === 4) return -8;
+                            return -5;
+                        }
+                        if (target.hasSkillTag('respondSha', true, 'respond', true)) return -1.35;
+                        if (!nh) return -2;
+                        if (nh === 1) return -1.8;
+                        return -1.5;
+                    },
+                },
+                tag:{
+                    respond:1,
+                    respondSha:1,
+                    damage:1,
+                    multitarget:1,
+                    multineg:1,
+                },
+            },
+            "_priority":0,
+        },
+        "qsmx_zaiqi":{
+            audio:'zaiqi',
+            trigger:{
+                player:["dying","phaseZhunbeiBegin"],
+            },
+            filter:function(event,player){
+                return player.hp<player.maxHp;
+            },
+            frequent:true,
+            content:function(){
+                "step 0"
+                event.cards=get.cards(player.getDamagedHp());
+                game.cardsGotoOrdering(event.cards);
+                player.showCards(event.cards);
+                "step 1"
+                var num=0;
+                for(var i=0;i<event.cards.length;i++){
+                    if(get.suit(event.cards[i])=='heart'){
+                        num++;
+                        event.cards.splice(i--,1);
+                    }
+                }
+                if(num){
+                    player.recover(num);
+                }
+                "step 2"
+                if(event.cards.length){
+                    player.gain(event.cards,'gain2');
+                }
+            },
+            ai:{
+                threaten:function(player,target){
+                    if(target.hp==1) return 2;
+                    if(target.hp==2) return 1.5;
+                    return 1;
+                },
+            },
+            "_priority":0,
         }
     },
     translate: {
+        "qsmx_manqin": "蛮侵",
+        "qsmx_manqin_info": "出牌阶段，你可以将两张花色不同的手牌当做【南蛮入侵】使用。",
+        "qsmx_zaiqi": "再起",
+        "qsmx_zaiqi_info": "你进入濒死状态时，或准备阶段开始时，若你已受伤，你可以亮出牌堆顶X张牌（X为你已损失的体力值），并回复X点体力（X为其中♥牌的数量）。然后你将这些♥牌置入弃牌堆，并获得其余的牌。",
         "qsmx_mingjian": "明鉴",
         "qsmx_mingjian_info": "你可以跳过出牌阶段并将所有手牌交给一名其他角色。若如此做，你结束当前回合，然后其获得一个仅有出牌阶段的额外回合。",
         "qsmx_huituo": "恢拓",

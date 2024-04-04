@@ -1,10 +1,10 @@
-import {lib,game,ui,get,ai,_status} from '../../../../../noname.js'
-import {basic} from '../../basic.js'
-export async function card(){
+import { lib, game, ui, get, ai, _status } from '../../../../../noname.js'
+import { basic } from '../../basic.js'
+export async function card() {
     let pack = {
         card: {
             longinus: {
-                image:`${basic.extensionDirectoryPath.replace('extension/','ext:')}resource/image/card/longinus.png`,
+                image: `${basic.extensionDirectoryPath.replace('extension/', 'ext:')}resource/image/card/longinus.png`,
                 type: "equip",
                 subtype: "equip1",
                 distance: {
@@ -52,7 +52,7 @@ export async function card(){
                 toself: true,
             },
             "qsmx_paper": {
-                image:`${basic.extensionDirectoryPath.replace('extension/','ext:')}resource/image/card/qsmx_paper.png`,
+                image: `${basic.extensionDirectoryPath.replace('extension/', 'ext:')}resource/image/card/qsmx_paper.png`,
                 fullskin: true,
             },
         },
@@ -64,6 +64,6 @@ export async function card(){
         },
         list: [],
     };
-    
+
     return pack;
 }

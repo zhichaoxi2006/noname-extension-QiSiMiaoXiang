@@ -291,15 +291,15 @@ export async function content(config, pack) {
     })
     //game
     game.over = function () {
-        if (!_status.forceWin.length&&!_status.GameResultReverse) {
+        if (!_status.forceWin.length && !_status.GameResultReverse) {
             lib.qsmx.over.apply(this, arguments);
             return;
         }
-        if(_status.GameResultReverse){
+        if (_status.GameResultReverse) {
             var new_arguments = []
             for (let index = 0; index < arguments.length; index++) {
                 const argument = arguments[index];
-                if(typeof argument == 'boolean'){
+                if (typeof argument == 'boolean') {
                     new_arguments.push(!argument);
                 } else {
                     new_arguments.push(argument);
@@ -1108,7 +1108,7 @@ export async function content(config, pack) {
                 player: ['drawBegin']
             },
             filter: function (event, player) {
-                if(game.getExtensionConfig('奇思妙想', 'easter_egg')) return false;
+                if (game.getExtensionConfig('奇思妙想', 'easter_egg')) return false;
                 var names = [player.name, player.name1, player.name2];
                 var cards = event.result;
                 if (cards.some(c => cards.name == 'zhuge')) return false;
@@ -1137,24 +1137,24 @@ export async function content(config, pack) {
                 player: ['changeHpBegin']
             },
             filter: function (event, player) {
-                if(game.getExtensionConfig('奇思妙想', 'blueshield')) return false;
-                if(player.hasSkillTag('nohujia',true))return false;
-                if(player.hujia>Math.abs(event.num))return false;
-                if(event.getParent().name!='damage')return false;
-                return player.hujia>0;
+                if (game.getExtensionConfig('奇思妙想', 'blueshield')) return false;
+                if (player.hasSkillTag('nohujia', true)) return false;
+                if (player.hujia > Math.abs(event.num)) return false;
+                if (event.getParent().name != 'damage') return false;
+                return player.hujia > 0;
             },
             content: function () {
-                trigger.num=-player.hujia;
+                trigger.num = -player.hujia;
             }
         },
-        _qsmx_dying:{
-            silent:true,
-            charlotte:true,
+        _qsmx_dying: {
+            silent: true,
+            charlotte: true,
             trigger: {
                 player: ['changeHpAfter'],
             },
             filter: function (event, player) {
-                return player.hp<=0;
+                return player.hp <= 0;
             },
             content: function () {
                 player.dying();

@@ -3860,7 +3860,7 @@ export const skill = {
             filter: function (event, player) {
                 return true;
             },
-            getIndex(event, player, triggername){
+            getIndex(event, player, triggername) {
                 return event.num;
             },
             content() {
@@ -4165,13 +4165,13 @@ export const skill = {
             },
             content() {
                 'step 0'
-                var next=player.judge(function(card){
-                    if(get.color(card)=='black') return 1.5;
+                var next = player.judge(function (card) {
+                    if (get.color(card) == 'black') return 1.5;
                     return -1.5;
                 });
                 'step 1'
                 if (result.card) {
-                    event.cardx=result.card;
+                    event.cardx = result.card;
                     player.gain(event.cardx);
                 }
                 'step 2'
@@ -4770,8 +4770,8 @@ export const skill = {
             },
             direct: true,
             preHidden: true,
-            group:['qsmx_fangzhu_cancel'],
-            getIndex(event, player, triggername){
+            group: ['qsmx_fangzhu_cancel'],
+            getIndex(event, player, triggername) {
                 return event.num;
             },
             content: function () {
@@ -4804,13 +4804,13 @@ export const skill = {
                 if (result.bool) {
                     player.logSkill('qsmx_fangzhu', result.targets);
                     var draw = player.getDamagedHp();
-                    if (draw > 0){
+                    if (draw > 0) {
                         result.targets[0].draw(draw);
                     };
                     result.targets[0].classList.toggle('turnedover');
                 }
                 "step 2"
-                if(result){
+                if (result) {
                     var cards = result;
                     for (let index = 0; index < cards.length; index++) {
                         const card = cards[index];
@@ -4818,25 +4818,25 @@ export const skill = {
                     }
                 }
             },
-            subSkill:{
-                cancel:{
-                    forced:true,
-                    trigger:{
-                        global:['turnOverBegin']
+            subSkill: {
+                cancel: {
+                    forced: true,
+                    trigger: {
+                        global: ['turnOverBegin']
                     },
-                    filter:function(event, player){
+                    filter: function (event, player) {
                         var handCards = event.player.getCards('h');
                         for (let index = 0; index < handCards.length; index++) {
                             const card = handCards[index];
-                            if(card.hasGaintag('qsmx_fangzhu'))return true;
+                            if (card.hasGaintag('qsmx_fangzhu')) return true;
                         }
                     },
-                    content:function(){
+                    content: function () {
                         trigger.cancel();
                         var next = player.discardPlayerCard(trigger.player);
-                        next.filterButton=function(button){
+                        next.filterButton = function (button) {
                             var card = button.link;
-                            if(card.hasGaintag('qsmx_fangzhu'))return true;
+                            if (card.hasGaintag('qsmx_fangzhu')) return true;
                         }
                     }
                 }
@@ -4872,54 +4872,54 @@ export const skill = {
             "_priority": 0,
         },
         "qsmx_xingshang": {
-            audio:'xingshang',
+            audio: 'xingshang',
             trigger: {
                 global: "dieAfter",
             },
             preHidden: true,
-            direct:true,
+            direct: true,
             filter: function (event, player) {
-                return event.player!=player;
+                return event.player != player;
             },
             content: function () {
                 "step 0"
-                var list=[];
-                var skills=trigger.player.getSkills(true,false).filter(skill=>{
-                    if(skill=='jiu') return false;
-                    if(player.hasSkill(skill)) return false;
-                    if(!lib.translate[skill+'_info']) return false;
-                    if(lib.translate[skill+'_info']=='') return false;
-                    var info=get.info(skill);
-                    if(!info) return false;
+                var list = [];
+                var skills = trigger.player.getSkills(true, false).filter(skill => {
+                    if (skill == 'jiu') return false;
+                    if (player.hasSkill(skill)) return false;
+                    if (!lib.translate[skill + '_info']) return false;
+                    if (lib.translate[skill + '_info'] == '') return false;
+                    var info = get.info(skill);
+                    if (!info) return false;
                     return true;
                 });
-                if(!skills.length){
+                if (!skills.length) {
                     event.finish();
                     return;
                 }
-                else{
-                    for(var skill of skills){
+                else {
+                    for (var skill of skills) {
                         list.push([
                             skill,
-                            '<div class="popup text" style="width:calc(100% - 10px);display:inline-block"><div class="skill">【'+
-                            get.translation(skill)+'】</div><div>'+lib.translate[skill+'_info']+'</div></div>',
+                            '<div class="popup text" style="width:calc(100% - 10px);display:inline-block"><div class="skill">【' +
+                            get.translation(skill) + '】</div><div>' + lib.translate[skill + '_info'] + '</div></div>',
                         ])
                     }
-                    var next=player.chooseButton([
+                    var next = player.chooseButton([
                         '行殇：请选择获得任意个技能',
-                        [list,'textbutton'],
+                        [list, 'textbutton'],
                     ]);
-                    next.set('forced',false);
-                    next.set('selectButton',[1,skills.length]);
-                    next.set('ai',function(button){
+                    next.set('forced', false);
+                    next.set('selectButton', [1, skills.length]);
+                    next.set('ai', function (button) {
                         return Math.random();
                     });
-                    next.set('skills',skills);
+                    next.set('skills', skills);
                 }
                 "step 1"
-                if(result.bool){
-                    var skills=result.links;
-                    player.logSkill('qsmx_xingshang',trigger.player);
+                if (result.bool) {
+                    var skills = result.links;
+                    player.logSkill('qsmx_xingshang', trigger.player);
                     player.addAdditionalSkills(null, skills.slice(0), true);
                 }
                 player.gainMaxHp();
@@ -4929,13 +4929,13 @@ export const skill = {
         },
         "qsmx_reverse": {
             forced: true,
-            charlotte:true,
+            charlotte: true,
             init: function (player, skill) {
                 var name = [player.name, player.name1, player.name2];
                 if (!name.includes("qsmx_zhengxie")) {
                     player.removeSkill(skill);
                 } else {
-                    _status.GameResultReverse=true;
+                    _status.GameResultReverse = true;
                     if (!_status.fixedCharacter) {
                         _status.fixedCharacter = {};
                     }
@@ -4945,21 +4945,21 @@ export const skill = {
                     }
                 }
             },
-            onremove:function (player, skill) {
+            onremove: function (player, skill) {
                 var name = [player.name, player.name1, player.name2];
                 if (name.includes("qsmx_zhengxie")) {
                     player.addSkill(skill);
                 }
             },
-            group:['qsmx_reverse_changeHp','qsmx_reverse_gainMaxHp', 'qsmx_reverse_loseMaxHp'],
-            subSkill:{
-                damage:{
+            group: ['qsmx_reverse_changeHp', 'qsmx_reverse_gainMaxHp', 'qsmx_reverse_loseMaxHp'],
+            subSkill: {
+                damage: {
                     trigger: {
                         player: ['damageBefore'],
                         source: ['damageBefore']
                     },
-                    forced:true,
-                    charlotte:true,
+                    forced: true,
+                    charlotte: true,
                     filter: function (event, player) {
                         if (!event.source) return false;
                         return !event.reverse;
@@ -4978,9 +4978,9 @@ export const skill = {
                         delete event.player;
                     }
                 },
-                changeHp:{
-                    forced:true,
-                    charlotte:true,
+                changeHp: {
+                    forced: true,
+                    charlotte: true,
                     trigger: {
                         player: ['changeHpBefore'],
                     },
@@ -4992,9 +4992,9 @@ export const skill = {
                         trigger.num = -temp;
                     }
                 },
-                gainMaxHp:{
-                    forced:true,
-                    charlotte:true,
+                gainMaxHp: {
+                    forced: true,
+                    charlotte: true,
                     trigger: {
                         player: ['gainMaxHpBefore'],
                     },
@@ -5005,9 +5005,9 @@ export const skill = {
                         trigger.setContent('loseMaxHp');
                     }
                 },
-                loseMaxHp:{
-                    forced:true,
-                    charlotte:true,
+                loseMaxHp: {
+                    forced: true,
+                    charlotte: true,
                     trigger: {
                         player: ['loseMaxHpBefore'],
                     },
@@ -5020,176 +5020,176 @@ export const skill = {
                 },
             },
         },
-        "qsmx_tianxie":{
-            charlotte:true,
-            forced:true,
-            unique:true,
-            onremove:function (player, skill) {
+        "qsmx_tianxie": {
+            charlotte: true,
+            forced: true,
+            unique: true,
+            onremove: function (player, skill) {
                 var name = [player.name, player.name1, player.name2];
                 if (name.includes("qsmx_zhengxie")) {
                     player.addSkill(skill);
                 }
             },
             trigger: {
-                player: ['changeHpEnd','gainMaxHpEnd',"loseMaxHpEnd"],
+                player: ['changeHpEnd', 'gainMaxHpEnd', "loseMaxHpEnd"],
             },
-            group:['qsmx_tianxie_MaxHp'],
+            group: ['qsmx_tianxie_MaxHp'],
             filter: function (event, player) {
-                return player.hp==player.maxHp;
+                return player.hp == player.maxHp;
             },
             content: function () {
                 player.gainMaxHp();
             },
-            subSkill:{
-                MaxHp:{
-                    charlotte:true,
-                    forced:true,
-                    unique:true,
+            subSkill: {
+                MaxHp: {
+                    charlotte: true,
+                    forced: true,
+                    unique: true,
                     trigger: {
-                        player: ['gainMaxHpEnd',"loseMaxHpEnd"],
+                        player: ['gainMaxHpEnd', "loseMaxHpEnd"],
                     },
                     content: function () {
-                       if(trigger.name=='gainMaxHp'){
-                        player.loseHp();
-                       } else {
-                        player.recover();
-                       }
+                        if (trigger.name == 'gainMaxHp') {
+                            player.loseHp();
+                        } else {
+                            player.recover();
+                        }
                     },
                 },
             }
         },
-        "qsmx_zhiheng":{
-            trigger:{
-                player:['useCard', 'respond']
+        "qsmx_zhiheng": {
+            trigger: {
+                player: ['useCard', 'respond']
             },
-            frequent:true,
-            filter:function(event, player){
-                return player.countCards('he')>0;
+            frequent: true,
+            filter: function (event, player) {
+                return player.countCards('he') > 0;
             },
-            content:function(){
+            content: function () {
                 'step 0'
                 event.count = Math.min(player.countCards('he'), player.maxHp);
-                player.draw(event.count+1);
+                player.draw(event.count + 1);
                 'step 1'
                 var next = player.chooseToDiscard(event.count, true);
-                next.set('ai',function(card){
+                next.set('ai', function (card) {
                     return -player.getUseValue(card);
                 });
             }
         },
-        "qsmx_huituo":{
-            audio:2,
-            audioname:["re_caorui"],
-            trigger:{
-                player:"damageEnd",
+        "qsmx_huituo": {
+            audio: 2,
+            audioname: ["re_caorui"],
+            trigger: {
+                player: "damageEnd",
             },
-            getIndex(event, player, triggername){
+            getIndex(event, player, triggername) {
                 return event.num;
             },
-            direct:true,
-            content:function(){
+            direct: true,
+            content: function () {
                 'step 0'
-                var forced=event.forced===undefined?false:event.forced;
-                var info=get.skillInfoTranslation('huituo',player);
-                var str=`###${forced?'恢拓：请选择一名角色':get.prompt('huituo')}###令一名角色判定。若结果为红色，其回复1点体力并摸2张牌；若结果为黑色，其获得1点护甲并摸1张牌`;
-                player.chooseTarget(str,event.forced).set('ai',function(target){
-                    var player=_status.event.player;
-                    if(get.attitude(player,target)>0){
-                        return get.recoverEffect(target,player,player)+1;
+                var forced = event.forced === undefined ? false : event.forced;
+                var info = get.skillInfoTranslation('huituo', player);
+                var str = `###${forced ? '恢拓：请选择一名角色' : get.prompt('huituo')}###令一名角色判定。若结果为红色，其回复1点体力并摸2张牌；若结果为黑色，其获得1点护甲并摸1张牌`;
+                player.chooseTarget(str, event.forced).set('ai', function (target) {
+                    var player = _status.event.player;
+                    if (get.attitude(player, target) > 0) {
+                        return get.recoverEffect(target, player, player) + 1;
                     }
                     return 0;
                 });
                 'step 1'
-                if(result.bool){
-                    player.logSkill('huituo',result.targets);
-                    var target=result.targets[0];
-                    event.target=target;
-                    target.judge(function(card){
-                        if(target.hp==target.maxHp){
-                            if(get.color(card)=='red') return -1;
+                if (result.bool) {
+                    player.logSkill('huituo', result.targets);
+                    var target = result.targets[0];
+                    event.target = target;
+                    target.judge(function (card) {
+                        if (target.hp == target.maxHp) {
+                            if (get.color(card) == 'red') return -1;
                         }
-                        if(get.color(card)=='red') return 1;
+                        if (get.color(card) == 'red') return 1;
                         return 0;
                     });
                 }
-                else{
+                else {
                     event.finish();
                 }
                 'step 2'
-                if(result.color){
-                    if(result.color=='red'){
-                        if(event.target.hp<event.target.maxHp) event.target.recover();
+                if (result.color) {
+                    if (result.color == 'red') {
+                        if (event.target.hp < event.target.maxHp) event.target.recover();
                         event.target.draw();
                     }
-                    else{
+                    else {
                         event.target.changeHujia();
                     }
                 }
             },
-            ai:{
-                maixie:true,
-                "maixie_hp":true,
+            ai: {
+                maixie: true,
+                "maixie_hp": true,
             },
-            "_priority":0,
+            "_priority": 0,
         },
-        "qsmx_mingjian":{
-            audio:"mingjian",
-            trigger:{
-                player:"phaseUseBefore",
+        "qsmx_mingjian": {
+            audio: "mingjian",
+            trigger: {
+                player: "phaseUseBefore",
             },
-            filter:function(event,player){
+            filter: function (event, player) {
                 return player.countCards('h');
             },
-            direct:true,
-            content:function(){
+            direct: true,
+            content: function () {
                 'step 0'
-                player.chooseTarget(get.prompt('oldmingjian'),'跳过出牌阶段并将所有手牌交给一名其他角色，你结束此回合，然后其于此回合后获得一个额外的出牌阶段',lib.filter.notMe).set('ai',target=>{
-                    var player=_status.event.player,att=get.attitude(player,target);
-                    if(target.hasSkillTag('nogain')) return 0.01*att;
-                    if(player.countCards('h')==player.countCards('h','du')) return -att;
-                    if(target.hasJudge('lebu')) att*=1.25;
-                    if(get.attitude(player,target)>3){
-                        var basis=get.threaten(target)*att;
-                        if(player==get.zhu(player)&&player.hp<=2&&player.countCards('h','shan')&&!game.hasPlayer(function(current){
-                            return get.attitude(current,player)>3&&current.countCards('h','tao')>0;
+                player.chooseTarget(get.prompt('oldmingjian'), '跳过出牌阶段并将所有手牌交给一名其他角色，你结束此回合，然后其于此回合后获得一个额外的出牌阶段', lib.filter.notMe).set('ai', target => {
+                    var player = _status.event.player, att = get.attitude(player, target);
+                    if (target.hasSkillTag('nogain')) return 0.01 * att;
+                    if (player.countCards('h') == player.countCards('h', 'du')) return -att;
+                    if (target.hasJudge('lebu')) att *= 1.25;
+                    if (get.attitude(player, target) > 3) {
+                        var basis = get.threaten(target) * att;
+                        if (player == get.zhu(player) && player.hp <= 2 && player.countCards('h', 'shan') && !game.hasPlayer(function (current) {
+                            return get.attitude(current, player) > 3 && current.countCards('h', 'tao') > 0;
                         })) return 0;
-                        if(target.countCards('h')+player.countCards('h')>target.hp+2) return basis*0.8;
+                        if (target.countCards('h') + player.countCards('h') > target.hp + 2) return basis * 0.8;
                         return basis;
                     }
                     return 0;
                 });
                 'step 1'
-                if(result.bool){
-                    var target=result.targets[0];
-                    event.target=target;
-                    player.logSkill('oldmingjian',target);
-                    player.give(player.getCards('h'),target);
+                if (result.bool) {
+                    var target = result.targets[0];
+                    event.target = target;
+                    player.logSkill('oldmingjian', target);
+                    player.give(player.getCards('h'), target);
                     trigger.cancel();
                 }
                 else event.finish();
                 'step 2'
-                var evt=trigger.getParent('phase');
-                if(evt){
-                    game.log(player,'结束了回合');
+                var evt = trigger.getParent('phase');
+                if (evt) {
+                    game.log(player, '结束了回合');
                     evt.finish();
                 }
-                var next=target.insertPhase();
-                next._noTurnOver=true;
-                next.phaseList=['phaseUse'];
+                var next = target.insertPhase();
+                next._noTurnOver = true;
+                next.phaseList = ['phaseUse'];
                 //next.setContent(lib.skill.oldmingjian.phase);
             },
-            phase:function(){
+            phase: function () {
                 'step 0'
                 player.phaseUse();
                 'step 1'
-                game.broadcastAll(function(){
-                    if(ui.tempnowuxie){
+                game.broadcastAll(function () {
+                    if (ui.tempnowuxie) {
                         ui.tempnowuxie.close();
                         delete ui.tempnowuxie;
                     }
                 });
             },
-            "_priority":0,
+            "_priority": 0,
         }
     },
     translate: {

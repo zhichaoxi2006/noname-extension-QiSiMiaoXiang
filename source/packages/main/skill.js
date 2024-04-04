@@ -4951,7 +4951,7 @@ export const skill = {
                     player.addSkill(skill);
                 }
             },
-            group:['qsmx_reverse_damage', 'qsmx_reverse_changeHp',  'qsmx_reverse_dying', 'qsmx_reverse_gainMaxHp', 'qsmx_reverse_loseMaxHp'],
+            group:['qsmx_reverse_changeHp','qsmx_reverse_gainMaxHp', 'qsmx_reverse_loseMaxHp'],
             subSkill:{
                 damage:{
                     trigger: {
@@ -4990,19 +4990,6 @@ export const skill = {
                     content: function () {
                         var temp = trigger.num;
                         trigger.num = -temp;
-                    }
-                },
-                dying:{
-                    silent:true,
-                    charlotte:true,
-                    trigger: {
-                        player: ['changeHpAfter'],
-                    },
-                    filter: function (event, player) {
-                        return player.hp<=0;
-                    },
-                    content: function () {
-                        player.dying();
                     }
                 },
                 gainMaxHp:{
@@ -5044,13 +5031,31 @@ export const skill = {
                 }
             },
             trigger: {
-                player: ['changeHpEnd', 'gainMaxHpEnd', 'loseMaxHpEnd', 'gainMaxHpCancelled', 'loseMaxHpCancelled'],
+                player: ['changeHpEnd','gainMaxHpEnd',"loseMaxHpEnd"],
             },
+            group:['qsmx_tianxie_MaxHp'],
             filter: function (event, player) {
                 return player.hp==player.maxHp;
             },
             content: function () {
-                player.loseMaxHp();
+                player.gainMaxHp();
+            },
+            subSkill:{
+                MaxHp:{
+                    charlotte:true,
+                    forced:true,
+                    unique:true,
+                    trigger: {
+                        player: ['gainMaxHpEnd',"loseMaxHpEnd"],
+                    },
+                    content: function () {
+                       if(trigger.name=='gainMaxHp'){
+                        player.loseHp();
+                       } else {
+                        player.recover();
+                       }
+                    },
+                },
             }
         },
         "qsmx_zhiheng":{
@@ -5195,9 +5200,9 @@ export const skill = {
         "qsmx_zhiheng": "制衡",
         "qsmx_zhiheng_info": "你使用或打出牌时，你可以摸[X+1]张牌，然后弃置X张牌。（X为你手牌数与装备区牌数之和，至多为你的体力上限）",
         "qsmx_tianxie": "天邪",
-        "qsmx_tianxie_info": "状态技，你的体力变动后，若你体力与体力上限相同，你扣减一点体力上限。",
+        "qsmx_tianxie_info": "状态技，你的体力变动后，若你体力与体力上限相同，你增加一点体力上限；你增加/扣减体力上限后，你流失/回复一点体力。",
         "qsmx_reverse": "反转",
-        "qsmx_reverse_info": "专属技，<br>①你即将受到/造成伤害时，你令交换伤害来源与受伤角色。<br>②你的体力变动前，你将体力变动值改为其相反数。<br>③游戏将要结束时，你反转游戏胜负。",
+        "qsmx_reverse_info": "专属技，<br>②你的体力变动前，你将体力变动值改为其相反数。<br>③游戏将要结束时，你反转游戏胜负。",
         "qsmx_xingshang": "行殇",
         "qsmx_xingshang_info": "一名角色死亡后，你可以获得其武将牌上的任意个技能，然后增加一点体力上限并回复一点体力。",
         "qsmx_fangzhu": "放逐",

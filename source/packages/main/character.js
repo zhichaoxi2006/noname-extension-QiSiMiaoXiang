@@ -21,7 +21,7 @@ export const character = async function () {
             "qsmx_matara_okina": ["female", "shen", "4/4", ["qsmx_mishen"], ["ext:奇思妙想/resource/image/character/qsmx_matara_okina.jpg"]],
             "qsmx_cenhun": ["male", "wu", "6/6", ["qsmx_liancai", "jishe", "lianhuo"], ["ext:奇思妙想/resource/image/character/qsmx_cenhun.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_cenhun.mp3"]],
             "qsmx_zhenji": ["female", "wei", "3/3", ["qsmx_luoshen", "qsmx_qingguo"], ["ext:奇思妙想/resource/image/character/qsmx_zhenji.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_zhenji.mp3"]],
-            "qsmx_zhengxie": ["female", "key", "2/4", ["qsmx_tianxie", "qsmx_reverse"], ["ext:奇思妙想/resource/image/character/qsmx_zhengxie.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_zhengxie.mp3"]],
+            "qsmx_zhengxie": ["female", "key", "1/2", ["qsmx_tianxie", "qsmx_reverse"], ["ext:奇思妙想/resource/image/character/qsmx_zhengxie.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_zhengxie.mp3"]],
             "qsmx_guanyu": ["male", "shu", "4/4", ["qsmx_wusheng", "qsmx_yijue"], ["ext:奇思妙想/resource/image/character/qsmx_guanyu.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_guanyu.mp3"]],
             "qsmx_mimidog": ["male", "key", "6/6", ["qsmx_cizhang", "qsmx_yangbai", "qsmx_mingli"], ["ext:奇思妙想/resource/image/character/qsmx_mimidog.jpg"]],
             "qsmx_caocao": ["male", "wei", "4/4", ["qsmx_jianxiong", "rehuojia"], ["ext:奇思妙想/resource/image/character/qsmx_caocao.jpg"]],

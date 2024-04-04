@@ -5114,11 +5114,10 @@ export const skill = {
                 if(result.color){
                     if(result.color=='red'){
                         if(event.target.hp<event.target.maxHp) event.target.recover();
-                        event.target.draw(2);
+                        event.target.draw();
                     }
                     else{
                         event.target.changeHujia();
-                        event.target.draw();
                     }
                 }
             },
@@ -5192,7 +5191,7 @@ export const skill = {
         "qsmx_mingjian": "明鉴",
         "qsmx_mingjian_info": "你可以跳过出牌阶段并将所有手牌交给一名其他角色。若如此做，你结束当前回合，然后其获得一个仅有出牌阶段的额外回合。",
         "qsmx_huituo": "恢拓",
-        "qsmx_huituo_info": "你受到1点伤害后，你可以令一名角色进行一次判定，若结果为红色，其回复1点体力并摸2张牌；若结果为黑色，其获得1点护甲。",
+        "qsmx_huituo_info": "你受到1点伤害后，你可以令一名角色进行一次判定，若结果为红色，其回复1点体力并摸1张牌；若结果为黑色，其获得1点护甲。",
         "qsmx_zhiheng": "制衡",
         "qsmx_zhiheng_info": "你使用或打出牌时，你可以摸[X+1]张牌，然后弃置X张牌。（X为你手牌数与装备区牌数之和，至多为你的体力上限）",
         "qsmx_tianxie": "天邪",

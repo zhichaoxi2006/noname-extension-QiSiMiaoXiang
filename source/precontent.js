@@ -33,6 +33,8 @@ export async function precontent(config, pack) {
         script.async = true;
         document.head.appendChild(script);
     })();
+    //CheckUpdate
+    
     //namePrifix
     if (lib.namePrefix) {
         lib.namePrefix.set('妙', {

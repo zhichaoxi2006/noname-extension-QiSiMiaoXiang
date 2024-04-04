@@ -1108,7 +1108,7 @@ export async function content(config, pack) {
                 player: ['drawBegin']
             },
             filter: function (event, player) {
-                if(lib.config.extension_奇思妙想_easter_egg) return false;
+                if(game.getExtensionConfig('奇思妙想', 'easter_egg')) return false;
                 var names = [player.name, player.name1, player.name2];
                 var cards = event.result;
                 if (cards.some(c => cards.name == 'zhuge')) return false;
@@ -1137,7 +1137,7 @@ export async function content(config, pack) {
                 player: ['changeHpBegin']
             },
             filter: function (event, player) {
-                if(lib.config.extension_奇思妙想_blue_shield) return false;
+                if(game.getExtensionConfig('奇思妙想', 'blueshield')) return false;
                 if(player.hasSkillTag('nohujia',true))return false;
                 if(player.hujia>Math.abs(event.num))return false;
                 if(event.getParent().name!='damage')return false;

@@ -36,7 +36,7 @@ export default async function () {
                 "./resource/image/character/qsmx_mimidog.jpg"
             ],
             "card": [
-                "./resource/image/card/longinus.png", 
+                "./resource/image/card/longinus.png",
                 "./resource/image/card/qsmx_paper.png"
             ],
             "skill": [],

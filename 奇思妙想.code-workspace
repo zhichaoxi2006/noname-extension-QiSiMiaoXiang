@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../node_modules"
+		},
+		{
+			"path": "../../noname"
+		}
+	],
+	"settings": {}
+}

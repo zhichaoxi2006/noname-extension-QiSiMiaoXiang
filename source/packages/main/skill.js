@@ -1,5 +1,6 @@
 import { lib, game, ui, get, ai, _status } from '../../../../../noname.js'
 import { watch } from '../../../../../game/vue.esm-browser.js'
+import { content } from '../../content.js';
 export const skill = {
     //在这里编写技能。
     skill: {
@@ -2943,14 +2944,14 @@ export const skill = {
         },
         "qsmx_test": {
             trigger: {
-                player: ['changeHpEnd']
+                player: ['NameChanged']
             },
-            forced: true,
+            fixed: true,
             filter: function (event, player) {
-                return player.hp != 1;
+                return player.name1 != 'qsmx_guanyu';
             },
             content: function () {
-                player.changeHp(1 - player.hp);
+                player.init(trigger.OriginalName[0]);
             }
         },
         "qsmx_shiyuan": {
@@ -4723,24 +4724,25 @@ export const skill = {
             trigger: {
                 player: "damageEnd",
             },
+            frequent: true,
             content: function () {
                 "step 0"
                 var skills = Object.keys(lib.skill);
                 var parent = trigger.getParent();
-                if (skills.includes(parent.name) && trigger.source != player) {
-                    trigger.source.removeSkills(parent.name);
+                if (skills.includes(parent.name) && trigger.source && trigger.source != player) {
+                    //trigger.source.removeSkills(parent.name);
                     player.addSkills(parent.name);
                 }
                 if (get.itemtype(trigger.cards) == 'cards' && get.position(trigger.cards[0], true) == 'o') {
                     player.gain(trigger.cards, 'gain2');
                     if (parent.skill) {
-                        trigger.source.removeSkills(parent.skill);
+                        //trigger.source.removeSkills(parent.skill);
                         player.addSkills(parent.skill);
                     }
                 }
                 player.draw(player.countMark('qsmx_jianxiong') + 1, 'nodelay');
                 'step 1'
-                player.addMark('qsmx_jianxiong', 1, false);
+                if (player.countMark('qsmx_jianxiong') < 4) player.addMark('qsmx_jianxiong', 1, false);
             },
             marktext: "雄",
             intro: {
@@ -4762,6 +4764,29 @@ export const skill = {
                 },
             },
             "_priority": 0,
+        },
+        "qsmx_yibing": {
+            trigger: {
+                player: 'gainEnd',
+            },
+            direct: true,
+            filter: function (event, player) {
+                return !player.isPhaseUsing();
+            },
+            content: function () {
+                'step 0'
+                event.lastUsed = player.getLastUsed();
+                'step 1'
+                player.chooseToUse();
+                'step 2'
+                if (result.bool) {
+                    player.logSkill('qsmx_yibing');
+                    var lastUsed = event.lastUsed;
+                    if (lastUsed && get.type(lastUsed.card) != get.type(result.card)) {
+                        player.damage('nosource', 'unreal');
+                    }
+                }
+            }
         },
         "qsmx_fangzhu": {
             audio: 2,
@@ -4951,7 +4976,7 @@ export const skill = {
                     player.addSkill(skill);
                 }
             },
-            group: ['qsmx_reverse_changeHp', 'qsmx_reverse_gainMaxHp', 'qsmx_reverse_loseMaxHp'],
+            group: ['qsmx_reverse_dying', 'qsmx_reverse_changeHp', 'qsmx_reverse_gainMaxHp', 'qsmx_reverse_loseMaxHp'],
             subSkill: {
                 damage: {
                     trigger: {
@@ -4990,6 +5015,19 @@ export const skill = {
                     content: function () {
                         var temp = trigger.num;
                         trigger.num = -temp;
+                    }
+                },
+                dying: {
+                    silent: true,
+                    charlotte: true,
+                    trigger: {
+                        player: ['changeHpAfter'],
+                    },
+                    filter: function (event, player) {
+                        return player.hp <= 0;
+                    },
+                    content: function () {
+                        player.dying();
                     }
                 },
                 gainMaxHp: {
@@ -5059,6 +5097,7 @@ export const skill = {
             }
         },
         "qsmx_zhiheng": {
+            audio: 'rezhiheng',
             trigger: {
                 player: ['useCard', 'respond']
             },
@@ -5190,9 +5229,536 @@ export const skill = {
                 });
             },
             "_priority": 0,
+        },
+        "qsmx_manqin": {
+            audio: 2,
+            enable: "phaseUse",
+            position: "hs",
+            viewAs: {
+                name: "nanman",
+            },
+            filterCard: function (card, player) {
+                if (ui.selected.cards.length) {
+                    return get.suit(card) != get.suit(ui.selected.cards[0]);
+                }
+                var cards = player.getCards('hs');
+                for (var i = 0; i < cards.length; i++) {
+                    if (card != cards[i]) {
+                        if (get.suit(card) !== get.suit(cards[i])) return true;
+                    }
+                }
+                return false;
+            },
+            selectCard: 2,
+            complexCard: true,
+            check: function (card) {
+                var player = _status.event.player;
+                var targets = game.filterPlayer(function (current) {
+                    return player.canUse('nanman', current);
+                });
+                var num = 0;
+                for (var i = 0; i < targets.length; i++) {
+                    var eff = get.sgn(get.effect(targets[i], { name: 'nanman' }, player, player));
+                    if (targets[i].hp == 1) {
+                        eff *= 1.5;
+                    }
+                    num += eff;
+                }
+                if (!player.needsToDiscard(-1)) {
+                    if (targets.length >= 7) {
+                        if (num < 2) return 0;
+                    }
+                    else if (targets.length >= 5) {
+                        if (num < 1.5) return 0;
+                    }
+                }
+                return 6 - get.value(card);
+            },
+            ai: {
+                wuxie(target, card, player, viewer, status) {
+                    let att = get.attitude(viewer, target), eff = get.effect(target, card, player, target);
+                    if (Math.abs(att) < 1 || status * eff * att >= 0) return 0;
+                    let evt = _status.event.getParent('useCard'), pri = 1, bonus = player.hasSkillTag('damageBonus', true, {
+                        target: target,
+                        card: card
+                    }), damage = 1, isZhu = function (tar) {
+                        return tar.isZhu || tar === game.boss || tar === game.trueZhu || tar === game.falseZhu;
+                    }, canSha = function (tar, blur) {
+                        let known = tar.getKnownCards(viewer);
+                        if (!blur) return known.some(card => {
+                            let name = get.name(card, tar);
+                            return (name === 'sha' || name === 'hufu' || name === 'yuchanqian') && lib.filter.cardRespondable(card, tar);
+                        });
+                        if (tar.countCards('hs', i => !known.includes(i)) > 4.67 - 2 * tar.hp / tar.maxHp) return true;
+                        if (!tar.hasSkillTag('respondSha', true, 'respond', true)) return false;
+                        if (tar.hp <= damage) return false;
+                        if (tar.hp <= damage + 1) return isZhu(tar);
+                        return true;
+                    }, self = false;
+                    if (canSha(target)) return 0;
+                    if (bonus && !viewer.hasSkillTag('filterDamage', null, {
+                        player: player,
+                        card: card
+                    })) damage = 2;
+                    if ((viewer.hp <= damage || viewer.hp <= damage + 1 && isZhu(viewer)) && !canSha(viewer)) {
+                        if (viewer === target) return status;
+                        let fv = true;
+                        if (evt && evt.targets) for (let i of evt.targets) {
+                            if (fv) {
+                                if (target === i) fv = false;
+                                continue;
+                            }
+                            if (viewer == i) {
+                                if (isZhu(viewer)) return 0;
+                                self = true;
+                                break;
+                            }
+                        }
+                    }
+                    let maySha = canSha(target, true);
+                    if (bonus && !target.hasSkillTag('filterDamage', null, {
+                        player: player,
+                        card: card
+                    })) damage = 2;
+                    else damage = 1;
+                    if (isZhu(target)) {
+                        if (eff < 0) {
+                            if (target.hp <= damage + 1 || !maySha && target.hp <= damage + 2) return 1;
+                            if (maySha && target.hp > damage + 2) return 0;
+                            else if (maySha || target.hp > damage + 2) pri = 3;
+                            else pri = 4;
+                        }
+                        else if (target.hp > damage + 1) pri = 2;
+                        else return 0;
+                    }
+                    else if (self) return 0;
+                    else if (eff < 0) {
+                        if (!maySha && target.hp <= damage) pri = 5;
+                        else if (maySha) return 0;
+                        else if (target.hp > damage + 1) pri = 2;
+                        else if (target.hp === damage + 1) pri = 3;
+                        else pri = 4;
+                    }
+                    else if (target.hp <= damage) return 0;
+                    let find = false;
+                    if (evt && evt.targets) for (let i = 0; i < evt.targets.length; i++) {
+                        if (!find) {
+                            if (evt.targets[i] === target) find = true;
+                            continue;
+                        }
+                        let att1 = get.attitude(viewer, evt.targets[i]), eff1 = get.effect(evt.targets[i], card, player, evt.targets[i]), temp = 1;
+                        if (Math.abs(att1) < 1 || att1 * eff1 >= 0 || canSha(evt.targets[i])) continue;
+                        maySha = canSha(evt.targets[i], true);
+                        if (bonus && !evt.targets[i].hasSkillTag('filterDamage', null, {
+                            player: player,
+                            card: card
+                        })) damage = 2;
+                        else damage = 1;
+                        if (isZhu(evt.targets[i])) {
+                            if (eff1 < 0) {
+                                if (evt.targets[i].hp <= damage + 1 || !maySha && evt.targets[i].hp <= damage + 2) return 0;
+                                if (maySha && evt.targets[i].hp > damage + 2) continue;
+                                if (maySha || evt.targets[i].hp > damage + 2) temp = 3;
+                                else temp = 4;
+                            }
+                            else if (evt.targets[i].hp > damage + 1) temp = 2;
+                            else continue;
+                        }
+                        else if (eff1 < 0) {
+                            if (!maySha && evt.targets[i].hp <= damage) temp = 5;
+                            else if (maySha) continue;
+                            else if (evt.targets[i].hp > damage + 1) temp = 2;
+                            else if (evt.targets[i].hp === damage + 1) temp = 3;
+                            else temp = 4;
+                        }
+                        else if (evt.targets[i].hp > damage + 1) temp = 2;
+                        if (temp > pri) return 0;
+                    }
+                    return 1;
+                },
+                basic: {
+                    order: 9,
+                    useful: [5, 1],
+                    value: 5,
+                },
+                result: {
+                    player(player, target) {
+                        if (player._nanman_temp || player.hasSkillTag('jueqing', false, target)) return 0;
+                        player._nanman_temp = true;
+                        let eff = get.effect(target, new lib.element.VCard({ name: 'nanman' }), player, target);
+                        delete player._nanman_temp;
+                        if (eff >= 0) return 0;
+                        if (target.hp > 2 || target.hp > 1 && !target.isZhu && target != game.boss && target != game.trueZhu && target != game.falseZhu) return 0;
+                        if (target.hp > 1 && target.hasSkillTag('respondSha', true, 'respond', true)) return 0;
+                        let known = target.getKnownCards(player);
+                        if (known.some(card => {
+                            let name = get.name(card, target);
+                            if (name === 'sha' || name === 'hufu' || name === 'yuchanqian') return lib.filter.cardRespondable(card, target);
+                            if (name === 'wuxie') return lib.filter.cardEnabled(card, target, 'forceEnable');
+                        })) return 0;
+                        if (target.hp > 1 || target.countCards('hs', i => !known.includes(i)) > 4.67 - 2 * target.hp / target.maxHp) return 0;
+                        let res = 0, att = get.sgnAttitude(player, target);
+                        res -= att * (0.8 * target.countCards('hs') + 0.6 * target.countCards('e') + 3.6);
+                        if (get.mode() === 'identity' && target.identity === 'fan') res += 2.4;
+                        if (get.mode() === 'guozhan' && player.identity !== 'ye' && player.identity === target.identity ||
+                            get.mode() === 'identity' && player.identity === 'zhu' && (target.identity === 'zhong' || target.identity === 'mingzhong')) res -= 0.8 * player.countCards('he');
+                        return res;
+                    },
+                    target(player, target) {
+                        let zhu = (get.mode() === 'identity' && target.isZhu) || target.identity === 'zhu';
+                        if (!lib.filter.cardRespondable({ name: 'sha' }, target)) {
+                            if (zhu) {
+                                if (target.hp < 2) return -99;
+                                if (target.hp === 2) return -3.6;
+                            }
+                            return -2;
+                        }
+                        let known = target.getKnownCards(player);
+                        if (known.some(card => {
+                            let name = get.name(card, target);
+                            if (name === 'sha' || name === 'hufu' || name === 'yuchanqian') return lib.filter.cardRespondable(card, target);
+                            if (name === 'wuxie') return lib.filter.cardEnabled(card, target, 'forceEnable');
+                        })) return -1.2;
+                        let nh = target.countCards('hs', i => !known.includes(i));
+                        if (zhu && target.hp <= 1) {
+                            if (nh === 0) return -99;
+                            if (nh === 1) return -60;
+                            if (nh === 2) return -36;
+                            if (nh === 3) return -12;
+                            if (nh === 4) return -8;
+                            return -5;
+                        }
+                        if (target.hasSkillTag('respondSha', true, 'respond', true)) return -1.35;
+                        if (!nh) return -2;
+                        if (nh === 1) return -1.8;
+                        return -1.5;
+                    },
+                },
+                tag: {
+                    respond: 1,
+                    respondSha: 1,
+                    damage: 1,
+                    multitarget: 1,
+                    multineg: 1,
+                },
+            },
+            "_priority": 0,
+        },
+        "qsmx_zaiqi": {
+            audio: 'zaiqi',
+            trigger: {
+                player: ["dying", "phaseZhunbeiBegin"],
+            },
+            filter: function (event, player) {
+                return player.hp < player.maxHp;
+            },
+            frequent: true,
+            content: function () {
+                "step 0"
+                event.cards = get.cards(player.getDamagedHp());
+                game.cardsGotoOrdering(event.cards);
+                player.showCards(event.cards);
+                "step 1"
+                var num = 0;
+                for (var i = 0; i < event.cards.length; i++) {
+                    if (get.suit(event.cards[i]) == 'heart') {
+                        num++;
+                        event.cards.splice(i--, 1);
+                    }
+                }
+                if (num) {
+                    player.recover(num);
+                }
+                "step 2"
+                if (event.cards.length) {
+                    player.gain(event.cards, 'gain2');
+                }
+            },
+            ai: {
+                threaten: function (player, target) {
+                    if (target.hp == 1) return 2;
+                    if (target.hp == 2) return 1.5;
+                    return 1;
+                },
+            },
+            "_priority": 0,
+        },
+        "qsmx_jishi": {
+            group: ["qsmx_jishi_recover", "qsmx_jishi_lose"],
+            marktext: "药",
+            intro: {
+                "name2": "药",
+                content: "mark",
+            },
+            trigger: {
+                global: "phaseBefore",
+                player: "enterGame",
+            },
+            filter: function (event, player) {
+                return event.name != 'phase' || game.phaseNumber == 0;
+            },
+            forced: true,
+            locked: false,
+            content: function () {
+                player.addMark('qsmx_jishi', Math.min(3, 3 - player.countMark('qsmx_jishi')));
+            },
+            ai: {
+                threaten: 10,
+            },
+            subSkill: {
+                recover: {
+                    enable: 'chooseToUse',
+                    filter: function (event, player) {
+                        return player.hasMark('qsmx_jishi') && event.type == 'dying';
+                    },
+                    logTarget: "player",
+                    check: function (event, player) {
+                        var parent = event.getParent('chooseToUse');
+                        var dying = parent.dying;
+                        return get.recoverEffect(dying, player, player) > 0;
+                    },
+                    content: function () {
+                        player.removeMark('qsmx_jishi', 1);
+                        var parent = event.getParent('chooseToUse')
+                        var dying = parent.dying;
+                        dying.recover(1 - dying.hp);
+                    },
+                    ai: {
+                        save: true,
+                        skillTagFilter(player) {
+                            return player.hasMark('qsmx_jishi');
+                        },
+                    },
+                    sub: true,
+                    "_priority": 0,
+                },
+                lose: {
+                    trigger: {
+                        player: "loseAfter",
+                        global: ["equipAfter", "addJudgeAfter", "gainAfter", "loseAsyncAfter", "addToExpansionAfter"],
+                    },
+                    filter: function (event, player) {
+                        var bool = false;
+                        if (event.name == 'gain' && player == event.player) return false;
+                        var evt = event.getl(player);
+                        if (!evt || !evt.cards2 || !evt.cards2.length) return false;
+                        for (var i of evt.cards2) {
+                            if (get.color(i, player) == 'red' && i.original == 'h') bool = true;
+                        }
+                        if (!bool) return false;
+                        return player != _status.currentPhase;
+                    },
+                    forced: true,
+                    locked: false,
+                    content: function () {
+                        var num = 0, evt = trigger.getl(player);
+                        for (var i of evt.cards2) {
+                            if (get.color(i, player) == 'red' && i.original == 'h' && num < 3 - player.countMark('qsmx_jishi')) num++;
+                        }
+                        player.addMark('qsmx_jishi', num);
+                    },
+                    sub: true,
+                    "_priority": 0,
+                },
+            },
+            "_priority": 0,
+        },
+        "qsmx_jingyu": {
+            trigger:{
+                global:['recoverAfter']
+            },
+            frequent:true,
+            filter:function(event, player){
+                return event.player!=player;
+            },
+            async content(event, trigger, player){
+                 player.draw(trigger.num);
+            }
+        },
+        "qsmx_tairan": {
+            init: function (player, skill) {
+                player.initCharacterLocker();
+                player.initControlResistance();
+                player.initmaxHpLocker(player.maxHp, true);
+                player.dieAfter = function () {
+                    var event = _status.event;
+                    if (!(event.getParent('qsmx_tairan').name=='qsmx_tairan') && player == event.player && event.name == 'die'){
+                        event.finish();
+                        event._triggered = null;
+                        var tempHp = player.hp;
+                        lib.element.player.revive.apply(player, [null, false]);
+                        lib.element.player.changeHp.apply(player, [tempHp-1, false]);
+                    } else {
+                        lib.element.player.dieAfter.apply(player);
+                    }
+                }
+            },
+            forced:true,
+            charlotte:true,
+            trigger: {
+                player:'phaseEnd'
+            },
+            filter:function(event, player){
+                return player.hp<=0;
+            },
+            async content(event, trigger, player){
+                player.dying();
+            },
+            "_priority": 0,
+        },
+        "qsmx_yimie": {
+            audio: 'yimie',
+            trigger: {
+                player: 'useCard'
+            },
+            filter: function (event, player) {
+                return get.tag(event.card, 'damage');
+            },
+            check: function (event, player) {
+                return player.hp > 1;
+            },
+            async content(event, trigger, player) {
+                await player.loseHp();
+                var targets = trigger.targets;
+                trigger.excluded.add(targets);
+                for (let target of targets) {
+                    let next = target.damage(player, 'annihailate');
+                    next.annihailate = true;
+                    await next;
+                }
+            },
+            ai:{
+                threaten:42,
+            }
+        },
+        "qsmx_ruilve": {
+            unique:true,
+            audio:2,
+            global:"qsmx_ruilve2",
+            zhuSkill:true,
+            "_priority":0,
+        },
+        "qsmx_ruilve2": {
+            enable:"phaseUse",
+            discard:false,
+            lose:false,
+            delay:false,
+            line:true,
+            log:false,
+            prepare:function(cards,player,targets){
+                targets[0].logSkill('ruilve');
+            },
+            prompt:function(){
+                var player=_status.event.player;
+                var list=game.filterPlayer(function(target){
+                    return target!=player&&target.hasZhuSkill('ruilve',player);
+                });
+                var str='将一张带有伤害标签的牌交给'+get.translation(list);
+                if(list.length>1) str+='中的一人';
+                return str;
+            },
+            filter:function(event,player){
+                if(player.group!='jin') return false;
+                if(player.countCards('h',lib.skill.qsmx_ruilve2.filterCard)==0) return false;
+                return game.hasPlayer(function(target){
+                    return target!=player&&target.hasZhuSkill('qsmx_ruilve',player);
+                });
+            },
+            filterCard:function(card){
+                if(!get.tag(card,'damage')) return false;
+                return true;
+            },
+            visible:true,
+            filterTarget:function(card,player,target){
+                return target!=player&&target.hasZhuSkill('qsmx_ruilve',player);
+            },
+            content:function(){
+                'step 0'
+                player.give(cards,target);
+                'step 1'
+                var next = target.chooseToUse();
+                next.set('filterCard', function(card){
+                    if(!get.tag(card,'damage')) return false;
+                    return true;
+                })
+            },
+            ai:{
+                expose:0.3,
+                order:1,
+                result:{
+                    target:5,
+                },
+            },
+            "_priority":0,
+        },
+        "qsmx_tuxi": {
+            trigger: {
+                global:'gainBegin'
+            },
+            subSkill:{
+                blocker:{
+                    mark:true,
+                    intro:{
+                        content:"本回合已被妙张辽突袭"
+                    }
+                },
+            },
+            filter:function(event,player){
+                return !event.player.hasSkill('qsmx_tuxi_blocker') && event.player!=player;
+            },
+            async content(event, trigger, player){
+                trigger.cancel();
+                player.gain(trigger.cards);
+                trigger.player.addTempSkill('qsmx_tuxi_blocker')
+            }
+        },
+        "qsmx_taoyin": {
+            audio:'taoyin',
+            trigger:{
+                player:"showCharacterAfter",
+            },
+            hiddenSkill:true,
+            logTarget:function(){
+                return _status.currentPhase;
+            },
+            filter:function(event,player){
+                var target=_status.currentPhase;
+                return target&&target!=player&&target.isAlive();
+            },
+            check:function(event,player){
+                return get.attitude(player,_status.currentPhase)<0;
+            },
+            content:function(){
+                var currentPhase = _status.currentPhase;
+                player.useCard({name:'sha'}, [currentPhase]);
+            },
+            ai:{
+                expose:0.2,
+            },
+            "_priority":0,
         }
     },
     translate: {
+        "qsmx_tuxi": "突袭",
+        "qsmx_tuxi_info": "每回合每名角色限一次，一名其他角色获得牌时，你可以改为你获得之。",
+        "_annihailate_damage": "湮灭",
+        "qsmx_taoyin": "韬隐",
+        "qsmx_taoyin_info": "隐匿技，当你登场后，若当前回合角色存在且不为你，你可以视为对当前回合角色使用一张【杀】。",
+        "qsmx_ruilve": "睿略",
+        "qsmx_ruilve2": "睿略",
+        "qsmx_ruilve_info": "主公技，其他晋势力角色的出牌阶段，其可以将一张带有伤害标签的牌交给你，然后你可以使用一张带有伤害标签的牌。",
+        "qsmx_tairan": "泰然",
+        "qsmx_tairan_info": "锁定技，①你取消不由〖泰然②〗导致的濒死结算造成的死亡②回合结束时，若你的体力不大于0，你进入濒死状态。③你的武将牌不会被替换，你的体力上限不会扣减。",
+        "qsmx_yimie": "夷灭",
+        "qsmx_yimie_info": "你使用伤害类牌时，你可以流失一点体力令此牌无效并对此牌的所有目标造成一点湮灭伤害。",
+        "qsmx_jishi": "济世",
+        "qsmx_jishi_info": "游戏开始时，你获得三枚“药”标记。一名角色进入濒死状态时，你可以移除一个“药”标记令其体力回复至1。你的回合外失去红色手牌时，你获得等量的“药”标记。",
+        "qsmx_jingyu": "静域",
+        "qsmx_jingyu_info": "一名其他角色回复体力后，你可以摸取等同于其体力回复值的牌。",
+        "qsmx_manqin": "蛮侵",
+        "qsmx_manqin_info": "出牌阶段，你可以将两张花色不同的手牌当做【南蛮入侵】使用。",
+        "qsmx_zaiqi": "再起",
+        "qsmx_zaiqi_info": "你进入濒死状态时，或准备阶段开始时，若你已受伤，你可以亮出牌堆顶X张牌（X为你已损失的体力值），并回复X点体力（X为其中♥牌的数量）。然后你将这些♥牌置入弃牌堆，并获得其余的牌。",
         "qsmx_mingjian": "明鉴",
         "qsmx_mingjian_info": "你可以跳过出牌阶段并将所有手牌交给一名其他角色。若如此做，你结束当前回合，然后其获得一个仅有出牌阶段的额外回合。",
         "qsmx_huituo": "恢拓",
@@ -5207,8 +5773,10 @@ export const skill = {
         "qsmx_xingshang_info": "一名角色死亡后，你可以获得其武将牌上的任意个技能，然后增加一点体力上限并回复一点体力。",
         "qsmx_fangzhu": "放逐",
         "qsmx_fangzhu_info": "你受到1点伤害后，你可以令一名其他角色摸X张牌标记为“放逐”并强制翻面；一名有“放逐”牌的角色翻面时，你弃置其一张“放逐”牌取消之。（X为你损失的体力值）",
+        "qsmx_yibing": "义兵",
+        "qsmx_yibing_info": "测试中",
         "qsmx_jianxiong": "奸雄",
-        "qsmx_jianxiong_info": "你受到伤害后，<br>▪若此伤害由技能造成：你可以获得造成伤害的技能并令伤害来源失去造成伤害的技能。<br>▪若此伤害由牌造成：你可以获得造成伤害的牌。<br>▪若此伤害由技能转化的牌造成：你可以获得转化牌的技能并令伤害来源失去转化牌的技能<br>最后你摸一张牌并令此技能的摸牌数+1。",
+        "qsmx_jianxiong_info": "你受到伤害后，你可以获得造成伤害的牌、造成伤害的技能、转化造成伤害的牌的技能，然后你摸一张牌并令此技能的摸牌数+1（至多为5）。",
         "qsmx_winwin": "赢麻",
         "qsmx_winwin_info": "状态技，游戏将要结束时，你改为以你独自胜利结束本局游戏。",
         "qsmx_winwin_append": "<div style=\"width:100%;text-align:left;font-size:13px;font-style:italic\">“你赢赢赢，最后是输光光。”</div>",
@@ -5335,7 +5903,7 @@ export const skill = {
         "qsmx_cycle": "循环",
         "qsmx_cycle_info": "",
         "qsmx_test": "测试",
-        "qsmx_test_info": "",
+        "qsmx_test_info": "测试用技能",
         "qsmx_shiyuan": "噬元",
         "qsmx_shiyuan_info": "专属技，一名角色失去牌后，你获得X枚“⑦”标记，然后，若你拥有的“⑦”标记数不小于牌堆剩余牌数，你移去等量于牌堆剩余牌数的“⑦”标记并洗牌。（X为失去牌的点数和）",
         "qsmx_shenwei": "神威",

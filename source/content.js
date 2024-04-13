@@ -430,6 +430,38 @@ export async function content(config, pack) {
                 }
             })
         },
+        initCharacterLocker: function(){
+            var player = this;
+            this._name1=this.name1;
+            this._name2=this.name2;
+            this._nameList=[this._name1, this._name2];
+            Object.defineProperty(this, 'name1', {
+                configurable:true,
+                get:function(){
+                    return player._name1;
+                },
+                set:function(newValue){
+                    if (newValue!=player._nameList[0]) {
+                        var tempList = player._nameList.remove(undefined);
+                        player.changeCharacter(tempList, false)
+                    }
+                    return player._name1=newValue;
+                }
+            })
+            Object.defineProperty(this, 'name2', {
+                configurable:true,
+                get:function(){
+                    return player._name2;
+                },
+                set:function(newValue){
+                    if (newValue!=player._nameList[1]) {
+                        var tempList = player._nameList.remove(undefined);
+                        player.changeCharacter(tempList, false)
+                    }
+                    return player._name2=newValue;
+                }
+            })
+        },
         SimpleInitOriginalSkills: function () {
             if (this._skills) return;
             var OriginalSkills = this.getOriginalSkills();
@@ -448,17 +480,29 @@ export async function content(config, pack) {
                 }
             });
         },
-        initmaxHpLocker: function (num) {
-            Object.defineProperty(this, 'maxHp', {
-                get: function () {
-                    this._maxHp = num;
-                    return this._maxHp;
-                },
-                set: function (newValue) {
-                    this._maxHp = num;
-                    return;
-                }
-            });
+        initmaxHpLocker: function (num, cheat) {
+            this._maxHp = num;
+            if (cheat) {
+                Object.defineProperty(this, 'maxHp', {
+                    get: function () {
+                        return this._maxHp;
+                    },
+                    set: function (newValue) {
+                        var oldValue = this._maxHp;
+                        if(newValue > oldValue)this._maxHp = newValue;
+                        return;
+                    }
+                });
+            } else {
+                Object.defineProperty(this, 'maxHp', {
+                    get: function () {
+                        return this._maxHp;
+                    },
+                    set: function (newValue) {
+                        return;
+                    }
+                });
+            }
         },
         initClassListLocker: function (turnedover, linked) {
             this._classList = this.classList;
@@ -479,38 +523,6 @@ export async function content(config, pack) {
                 },
                 set: function (newValue) {
                     return;
-                }
-            });
-        },
-        initNameLocker: function (name, name1, name2) {
-            Object.defineProperty(this, 'name', {
-                get: function () {
-                    return name;
-                },
-                set: function (newValue) {
-                    var OriginalSkills = this.getOriginalSkills();
-                    this.skills.addArray(OriginalSkills);
-                    this.addSkillTrigger(OriginalSkills);
-                }
-            });
-            Object.defineProperty(this, 'name1', {
-                get: function () {
-                    return name1;
-                },
-                set: function (newValue) {
-                    var OriginalSkills = this.getOriginalSkills();
-                    this.skills.addArray(OriginalSkills);
-                    this.addSkillTrigger(OriginalSkills);
-                }
-            });
-            Object.defineProperty(this, 'name2', {
-                get: function () {
-                    return name2;
-                },
-                set: function (newValue) {
-                    var OriginalSkills = this.getOriginalSkills();
-                    this.skills.addArray(OriginalSkills);
-                    this.addSkillTrigger(OriginalSkills);
                 }
             });
         },
@@ -991,6 +1003,15 @@ export async function content(config, pack) {
     })
     //lib.skill
     Object.assign(lib.skill, {
+        qsmx_DieResistance: {
+            skillBlocker: function (skill, player) {
+                var event = _status.event;
+                if (player != event.player) return false;
+                if (event.name != 'die') return false;
+                event.finish();
+                event._triggered = null;
+            },
+        },
         _qsmx_DieResistance: {
             trigger: {
                 player: "dieBegin",
@@ -1108,7 +1129,7 @@ export async function content(config, pack) {
                 player: ['drawBegin']
             },
             filter: function (event, player) {
-                if (game.getExtensionConfig('奇思妙想', 'easter_egg')) return false;
+                if (!game.getExtensionConfig('奇思妙想', 'easter_egg')) return false;
                 var names = [player.name, player.name1, player.name2];
                 var cards = event.result;
                 if (cards.some(c => cards.name == 'zhuge')) return false;
@@ -1137,7 +1158,7 @@ export async function content(config, pack) {
                 player: ['changeHpBegin']
             },
             filter: function (event, player) {
-                if (game.getExtensionConfig('奇思妙想', 'blueshield')) return false;
+                if (!game.getExtensionConfig('奇思妙想', 'blue_shield')) return false;
                 if (player.hasSkillTag('nohujia', true)) return false;
                 if (player.hujia > Math.abs(event.num)) return false;
                 if (event.getParent().name != 'damage') return false;
@@ -1147,23 +1168,35 @@ export async function content(config, pack) {
                 trigger.num = -player.hujia;
             }
         },
-        _qsmx_dying: {
-            silent: true,
-            charlotte: true,
+        _annihailate_damage: {
+            audio: 2,
             trigger: {
-                player: ['changeHpAfter'],
+                source: ["damageCancelled", "damageZero", "damageAfter"],
             },
-            filter: function (event, player) {
-                return player.hp <= 0;
+            charlotte: true,
+            prompt: function (event, player) {
+                var name = get.translation(event.player);
+                return "是否强制击杀" + name + "？";
+            },
+            filter: function (event, player, name) {
+                return event.annihailate;
+            },
+            check: function (event, player) {
+                return get.attitude(player, event.player) <= 0;
             },
             content: function () {
-                player.dying();
-            }
+                var next = trigger.player.AntiResistanceDie();
+                next.source = player;
+            },
+            "_priority": 0,
         },
     })
+    //nature
+    lib.nature.add('annihailate');
+    lib.translate['annihailate'] = '湮灭';
     //lib.rank
     lib.rank.rarity.junk.addArray(['qsmx_matara_okina']);
     lib.rank.rarity.rare.addArray(['qsmx_wangshuang']);
-    lib.rank.rarity.epic.addArray(['qsmx_luxun', 'qsmx_nanhua', 'qsmx_sunquan', 'qsmx_zhonghui']);
+    lib.rank.rarity.epic.addArray(['qsmx_luxun', 'qsmx_menghuo', 'qsmx_nanhua', 'qsmx_sunquan', 'qsmx_zhonghui']);
     lib.rank.rarity.legend.addArray(['qsmx_xusha', 'qsmx_cailun', 'qsmx_longinus', 'qsmx_baozheng', 'qsmx_SevenGod', 'qsmx_jiaxu', 'qsmx_mimidog']);
 }

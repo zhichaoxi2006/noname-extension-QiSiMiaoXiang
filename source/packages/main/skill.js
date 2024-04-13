@@ -5565,16 +5565,14 @@ export const skill = {
         },
         "qsmx_jingyu": {
             trigger:{
-                global:['recoverAfter','damageAfter']
+                global:['recoverAfter']
             },
-            frequent:function(event, player){
-                if(event.name=='recover')return true;
-            },
+            frequent:true,
             filter:function(event, player){
                 return event.player!=player;
             },
             async content(event, trigger, player){
-                player.draw(trigger.num);
+                 player.draw(trigger.num);
             }
         },
         "qsmx_tairan": {
@@ -5640,7 +5638,7 @@ export const skill = {
         "qsmx_jishi": "济世",
         "qsmx_jishi_info": "游戏开始时，你获得三枚“药”标记。一名角色进入濒死状态时，你可以移除一个“药”标记令其体力回复至1。你的回合外失去红色手牌时，你获得等量的“药”标记。",
         "qsmx_jingyu": "静域",
-        "qsmx_jingyu_info": "一名其他角色回复体力/受到伤害后，你可以摸取等同于其体力回复值的牌/弃置等同于其受到的伤害值的牌。",
+        "qsmx_jingyu_info": "一名其他角色回复体力后，你可以摸取等同于其体力回复值的牌。",
         "qsmx_manqin": "蛮侵",
         "qsmx_manqin_info": "出牌阶段，你可以将两张花色不同的手牌当做【南蛮入侵】使用。",
         "qsmx_zaiqi": "再起",

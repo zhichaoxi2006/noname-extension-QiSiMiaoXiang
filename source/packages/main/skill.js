@@ -4723,24 +4723,25 @@ export const skill = {
             trigger: {
                 player: "damageEnd",
             },
+            frequent:true,
             content: function () {
                 "step 0"
                 var skills = Object.keys(lib.skill);
                 var parent = trigger.getParent();
-                if (skills.includes(parent.name) && trigger.source != player) {
-                    trigger.source.removeSkills(parent.name);
+                if (skills.includes(parent.name) && trigger.source && trigger.source != player) {
+                    //trigger.source.removeSkills(parent.name);
                     player.addSkills(parent.name);
                 }
                 if (get.itemtype(trigger.cards) == 'cards' && get.position(trigger.cards[0], true) == 'o') {
                     player.gain(trigger.cards, 'gain2');
                     if (parent.skill) {
-                        trigger.source.removeSkills(parent.skill);
+                        //trigger.source.removeSkills(parent.skill);
                         player.addSkills(parent.skill);
                     }
                 }
                 player.draw(player.countMark('qsmx_jianxiong') + 1, 'nodelay');
                 'step 1'
-                player.addMark('qsmx_jianxiong', 1, false);
+                if(player.countMark('qsmx_jianxiong')<4)player.addMark('qsmx_jianxiong', 1, false);
             },
             marktext: "雄",
             intro: {
@@ -4762,6 +4763,29 @@ export const skill = {
                 },
             },
             "_priority": 0,
+        },
+        "qsmx_yibing": {
+            trigger:{
+                player:'gainEnd',
+            },
+            direct:true,
+            filter:function(event, player){
+                return !player.isPhaseUsing();
+            },
+            content:function(){
+                'step 0'
+                event.lastUsed = player.getLastUsed();
+                'step 1'
+                player.chooseToUse();
+                'step 2'
+                if (result.bool) {
+                    player.logSkill('qsmx_yibing');
+                    var lastUsed = event.lastUsed;
+                    if (lastUsed&&get.type(lastUsed.card)!=get.type(result.card)) {
+                        player.damage('nosource','unreal');
+                    }
+                }
+            }
         },
         "qsmx_fangzhu": {
             audio: 2,
@@ -5560,8 +5584,10 @@ export const skill = {
         "qsmx_xingshang_info": "一名角色死亡后，你可以获得其武将牌上的任意个技能，然后增加一点体力上限并回复一点体力。",
         "qsmx_fangzhu": "放逐",
         "qsmx_fangzhu_info": "你受到1点伤害后，你可以令一名其他角色摸X张牌标记为“放逐”并强制翻面；一名有“放逐”牌的角色翻面时，你弃置其一张“放逐”牌取消之。（X为你损失的体力值）",
+        "qsmx_yibing": "义兵",
+        "qsmx_yibing_info": "测试中",
         "qsmx_jianxiong": "奸雄",
-        "qsmx_jianxiong_info": "你受到伤害后，<br>▪若此伤害由技能造成：你可以获得造成伤害的技能并令伤害来源失去造成伤害的技能。<br>▪若此伤害由牌造成：你可以获得造成伤害的牌。<br>▪若此伤害由技能转化的牌造成：你可以获得转化牌的技能并令伤害来源失去转化牌的技能<br>最后你摸一张牌并令此技能的摸牌数+1。",
+        "qsmx_jianxiong_info": "你受到伤害后，你可以获得造成伤害的牌、造成伤害的技能、转化造成伤害的牌的技能，然后你摸一张牌并令此技能的摸牌数+1（至多为5）。",
         "qsmx_winwin": "赢麻",
         "qsmx_winwin_info": "状态技，游戏将要结束时，你改为以你独自胜利结束本局游戏。",
         "qsmx_winwin_append": "<div style=\"width:100%;text-align:left;font-size:13px;font-style:italic\">“你赢赢赢，最后是输光光。”</div>",

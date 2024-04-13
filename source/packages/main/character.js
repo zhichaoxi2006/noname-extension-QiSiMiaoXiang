@@ -28,8 +28,8 @@ export const character = async function () {
             "qsmx_caopi": ["male", "wei", "3/3", ["qsmx_xingshang", "qsmx_fangzhu", "songwei"], ["ext:奇思妙想/resource/image/character/qsmx_caopi.jpg"]],
             "qsmx_caorui": ["male", "wei", "3/3/1", ["qsmx_huituo", "qsmx_mingjian", "xingshuai"], ["ext:奇思妙想/resource/image/character/qsmx_caorui.jpg"]],
             "qsmx_menghuo": ["male", "qun", "4/7", ["qsmx_manqin", "qsmx_zaiqi"], ["ext:奇思妙想/resource/image/character/qsmx_menghuo.jpg"]],
-            "qsmx_huatuo": ["male", "qun", "1/1", ['qsmx_jishi'], ["ext:奇思妙想/resource/image/character/qsmx_huatuo.jpg"]],
-            "qsmx_simashi": ["male", "jin", "3/4", ["qsmx_tairan","qsmx_yimie"], ["ext:奇思妙想/resource/image/character/qsmx_simashi.jpg"]],
+            "qsmx_huatuo": ["male", "qun", "3/3", ['qsmx_jishi', 'qsmx_jingyu'], ["ext:奇思妙想/resource/image/character/qsmx_huatuo.jpg"]],
+            "qsmx_simashi": ["male", "jin", "3/4", ["qsmx_tairan", "qsmx_yimie"], ["ext:奇思妙想/resource/image/character/qsmx_simashi.jpg"]],
         },
         characterTitle: {
             "qsmx_longinus": "百夫长",

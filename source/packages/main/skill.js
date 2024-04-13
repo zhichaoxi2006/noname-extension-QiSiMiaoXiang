@@ -5627,6 +5627,69 @@ export const skill = {
                     await next;
                 }
             },
+            ai:{
+                threaten:42,
+            }
+        },
+        "qsmx_ruilve": {
+            unique:true,
+            audio:2,
+            global:"qsmx_ruilve2",
+            zhuSkill:true,
+            "_priority":0,
+        },
+        "qsmx_ruilve2": {
+            enable:"phaseUse",
+            discard:false,
+            lose:false,
+            delay:false,
+            line:true,
+            log:false,
+            prepare:function(cards,player,targets){
+                targets[0].logSkill('ruilve');
+            },
+            prompt:function(){
+                var player=_status.event.player;
+                var list=game.filterPlayer(function(target){
+                    return target!=player&&target.hasZhuSkill('ruilve',player);
+                });
+                var str='将一张带有伤害标签的牌交给'+get.translation(list);
+                if(list.length>1) str+='中的一人';
+                return str;
+            },
+            filter:function(event,player){
+                if(player.group!='jin') return false;
+                if(player.countCards('h',lib.skill.qsmx_ruilve2.filterCard)==0) return false;
+                return game.hasPlayer(function(target){
+                    return target!=player&&target.hasZhuSkill('qsmx_ruilve',player);
+                });
+            },
+            filterCard:function(card){
+                if(!get.tag(card,'damage')) return false;
+                return true;
+            },
+            visible:true,
+            filterTarget:function(card,player,target){
+                return target!=player&&target.hasZhuSkill('qsmx_ruilve',player);
+            },
+            content:function(){
+                'step 0'
+                player.give(cards,target);
+                'step 1'
+                var next = target.chooseToUse();
+                next.set('filterCard', function(card){
+                    if(!get.tag(card,'damage')) return false;
+                    return true;
+                })
+            },
+            ai:{
+                expose:0.3,
+                order:1,
+                result:{
+                    target:5,
+                },
+            },
+            "_priority":0,
         },
         "qsmx_tuxi": {
             trigger: {
@@ -5648,12 +5711,42 @@ export const skill = {
                 player.gain(trigger.cards);
                 trigger.player.addTempSkill('qsmx_tuxi_blocker')
             }
+        },
+        "qsmx_taoyin": {
+            audio:'taoyin',
+            trigger:{
+                player:"showCharacterAfter",
+            },
+            hiddenSkill:true,
+            logTarget:function(){
+                return _status.currentPhase;
+            },
+            filter:function(event,player){
+                var target=_status.currentPhase;
+                return target&&target!=player&&target.isAlive();
+            },
+            check:function(event,player){
+                return get.attitude(player,_status.currentPhase)<0;
+            },
+            content:function(){
+                var currentPhase = _status.currentPhase;
+                player.useCard({name:'sha'}, [currentPhase]);
+            },
+            ai:{
+                expose:0.2,
+            },
+            "_priority":0,
         }
     },
     translate: {
         "qsmx_tuxi": "突袭",
         "qsmx_tuxi_info": "每回合每名角色限一次，一名其他角色获得牌时，你可以改为你获得之。",
         "_annihailate_damage": "湮灭",
+        "qsmx_taoyin": "韬隐",
+        "qsmx_taoyin_info": "隐匿技，当你登场后，若当前回合角色存在且不为你，你可以视为对当前回合角色使用一张【杀】。",
+        "qsmx_ruilve": "睿略",
+        "qsmx_ruilve2": "睿略",
+        "qsmx_ruilve_info": "主公技，其他晋势力角色的出牌阶段，其可以将一张带有伤害标签的牌交给你，然后你可以使用一张带有伤害标签的牌。",
         "qsmx_tairan": "泰然",
         "qsmx_tairan_info": "锁定技，①你取消不由〖泰然②〗导致的濒死结算造成的死亡②回合结束时，若你的体力不大于0，你进入濒死状态。③你的武将牌不会被替换，你的体力上限不会扣减。",
         "qsmx_yimie": "夷灭",

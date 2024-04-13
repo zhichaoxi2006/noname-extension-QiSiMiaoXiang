@@ -1,5 +1,6 @@
 import { lib, game, ui, get, ai, _status } from '../../../../../noname.js'
 import { watch } from '../../../../../game/vue.esm-browser.js'
+import { content } from '../../content.js';
 export const skill = {
     //在这里编写技能。
     skill: {
@@ -2943,14 +2944,14 @@ export const skill = {
         },
         "qsmx_test": {
             trigger: {
-                player: ['changeHpEnd']
+                player: ['NameChanged']
             },
-            forced: true,
+            fixed: true,
             filter: function (event, player) {
-                return player.hp != 1;
+                return player.name1 != 'qsmx_guanyu';
             },
             content: function () {
-                player.changeHp(1 - player.hp);
+                player.init(trigger.OriginalName[0]);
             }
         },
         "qsmx_shiyuan": {
@@ -4723,7 +4724,7 @@ export const skill = {
             trigger: {
                 player: "damageEnd",
             },
-            frequent:true,
+            frequent: true,
             content: function () {
                 "step 0"
                 var skills = Object.keys(lib.skill);
@@ -4741,7 +4742,7 @@ export const skill = {
                 }
                 player.draw(player.countMark('qsmx_jianxiong') + 1, 'nodelay');
                 'step 1'
-                if(player.countMark('qsmx_jianxiong')<4)player.addMark('qsmx_jianxiong', 1, false);
+                if (player.countMark('qsmx_jianxiong') < 4) player.addMark('qsmx_jianxiong', 1, false);
             },
             marktext: "雄",
             intro: {
@@ -4765,14 +4766,14 @@ export const skill = {
             "_priority": 0,
         },
         "qsmx_yibing": {
-            trigger:{
-                player:'gainEnd',
+            trigger: {
+                player: 'gainEnd',
             },
-            direct:true,
-            filter:function(event, player){
+            direct: true,
+            filter: function (event, player) {
                 return !player.isPhaseUsing();
             },
-            content:function(){
+            content: function () {
                 'step 0'
                 event.lastUsed = player.getLastUsed();
                 'step 1'
@@ -4781,8 +4782,8 @@ export const skill = {
                 if (result.bool) {
                     player.logSkill('qsmx_yibing');
                     var lastUsed = event.lastUsed;
-                    if (lastUsed&&get.type(lastUsed.card)!=get.type(result.card)) {
-                        player.damage('nosource','unreal');
+                    if (lastUsed && get.type(lastUsed.card) != get.type(result.card)) {
+                        player.damage('nosource', 'unreal');
                     }
                 }
             }
@@ -5562,8 +5563,66 @@ export const skill = {
             },
             "_priority": 0,
         },
+        "qsmx_tairan": {
+            init: function (player, skill) {
+                player.initCharacterLocker();
+                player.initControlResistance();
+                player.initmaxHpLocker(player.maxHp, true);
+                player.dieAfter = function () {
+                    var event = _status.event;
+                    if (!(event.getParent('qsmx_tairan').name=='qsmx_tairan') && player == event.player && event.name == 'die'){
+                        event.finish();
+                        event._triggered = null;
+                        var tempHp = player.hp;
+                        lib.element.player.revive.apply(player, [null, false]);
+                        lib.element.player.changeHp.apply(player, [tempHp-1, false]);
+                    } else {
+                        lib.element.player.dieAfter.apply(player);
+                    }
+                }
+            },
+            forced:true,
+            charlotte:true,
+            trigger: {
+                player:'phaseEnd'
+            },
+            filter:function(event, player){
+                return player.hp<=0;
+            },
+            async content(event, trigger, player){
+                player.dying();
+            },
+            "_priority": 0,
+        },
+        "qsmx_yimie": {
+            audio: 'yimie',
+            trigger: {
+                player: 'useCard'
+            },
+            filter: function (event, player) {
+                return get.tag(event.card, 'damage');
+            },
+            check: function (event, player) {
+                return player.hp > 1;
+            },
+            async content(event, trigger, player) {
+                await player.loseHp();
+                var targets = trigger.targets;
+                trigger.excluded.add(targets);
+                for (let target of targets) {
+                    let next = target.damage(player, 'annihailate');
+                    next.annihailate = true;
+                    await next;
+                }
+            },
+        }
     },
     translate: {
+        "_annihailate_damage": "湮灭",
+        "qsmx_tairan": "泰然",
+        "qsmx_tairan_info": "锁定技，①你取消不由〖泰然②〗导致的濒死结算造成的死亡②回合结束时，若你的体力不大于0，你进入濒死状态。③你的武将牌不会被替换，你的体力上限不会扣减。",
+        "qsmx_yimie": "夷灭",
+        "qsmx_yimie_info": "你使用伤害类牌时，你可以流失一点体力令此牌无效并对此牌的所有目标造成一点湮灭伤害。",
         "qsmx_jishi": "济世",
         "qsmx_jishi_info": "游戏开始时，你获得三枚“药”标记。一名角色进入濒死状态时，你可以移除一个“药”标记令其体力回复至1。你的回合外失去红色手牌时，你获得等量的“药”标记。",
         "qsmx_manqin": "蛮侵",
@@ -5714,7 +5773,7 @@ export const skill = {
         "qsmx_cycle": "循环",
         "qsmx_cycle_info": "",
         "qsmx_test": "测试",
-        "qsmx_test_info": "",
+        "qsmx_test_info": "测试用技能",
         "qsmx_shiyuan": "噬元",
         "qsmx_shiyuan_info": "专属技，一名角色失去牌后，你获得X枚“⑦”标记，然后，若你拥有的“⑦”标记数不小于牌堆剩余牌数，你移去等量于牌堆剩余牌数的“⑦”标记并洗牌。（X为失去牌的点数和）",
         "qsmx_shenwei": "神威",

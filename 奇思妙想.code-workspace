@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../../noname"
+		},
+		{
+			"path": "../../image"
 		}
 	],
 	"settings": {}

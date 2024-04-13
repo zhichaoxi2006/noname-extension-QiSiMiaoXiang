@@ -139,8 +139,8 @@ export function checkVersion(ver1, ver2) {
  * });
  * ```
  */
-export async function getRepoTags(options = { username: 'libccy', repository: 'noname' }) {
-	const { username = 'libccy', repository = 'noname', accessToken } = options;
+export async function getRepoTags(options = { username: 'zhichaoxi2006', repository: 'noname-extension-QiSiMiaoXiang' }) {
+	const { username = 'zhichaoxi2006', repository = 'noname-extension-QiSiMiaoXiang', accessToken } = options;
 	const headers = Object.assign({}, defaultHeaders);
 	if (accessToken) {
 		headers['Authorization'] = `token ${accessToken}`;
@@ -171,8 +171,8 @@ export async function getRepoTags(options = { username: 'libccy', repository: 'n
  * ```
  */
 
-export async function getRepoTagDescription(tagName, options = { username: 'libccy', repository: 'noname' }) {
-	const { username = 'libccy', repository = 'noname', accessToken } = options;
+export async function getRepoTagDescription(tagName, options = { username: 'zhichaoxi2006', repository: 'noname-extension-QiSiMiaoXiang' }) {
+	const { username = 'zhichaoxi2006', repository = 'noname-extension-QiSiMiaoXiang', accessToken } = options;
 	const headers = Object.assign({}, defaultHeaders);
 	if (accessToken) {
 		headers['Authorization'] = `token ${accessToken}`;
@@ -228,8 +228,8 @@ export async function getRepoTagDescription(tagName, options = { username: 'libc
  * 	.catch(error => console.error('Failed to fetch files:', error));
  * ```
  */
-export async function getRepoFilesList(path = '', branch, options = { username: 'libccy', repository: 'noname' }) {
-	const { username = 'libccy', repository = 'noname', accessToken } = options;
+export async function getRepoFilesList(path = '', branch, options = { username: 'zhichaoxi2006', repository: 'noname-extension-QiSiMiaoXiang' }) {
+	const { username = 'zhichaoxi2006', repository = 'noname-extension-QiSiMiaoXiang', accessToken } = options;
 	const headers = Object.assign({}, defaultHeaders);
 	if (accessToken) {
 		headers['Authorization'] = `token ${accessToken}`;

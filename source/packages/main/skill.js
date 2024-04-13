@@ -4951,7 +4951,7 @@ export const skill = {
                     player.addSkill(skill);
                 }
             },
-            group: ['qsmx_reverse_dying','qsmx_reverse_changeHp', 'qsmx_reverse_gainMaxHp', 'qsmx_reverse_loseMaxHp'],
+            group: ['qsmx_reverse_dying', 'qsmx_reverse_changeHp', 'qsmx_reverse_gainMaxHp', 'qsmx_reverse_loseMaxHp'],
             subSkill: {
                 damage: {
                     trigger: {
@@ -5072,7 +5072,7 @@ export const skill = {
             }
         },
         "qsmx_zhiheng": {
-            audio:'rezhiheng',
+            audio: 'rezhiheng',
             trigger: {
                 player: ['useCard', 'respond']
             },
@@ -5205,51 +5205,51 @@ export const skill = {
             },
             "_priority": 0,
         },
-        "qsmx_manqin":{
-            audio:2,
-            enable:"phaseUse",
-            position:"hs",
-            viewAs:{
-                name:"nanman",
+        "qsmx_manqin": {
+            audio: 2,
+            enable: "phaseUse",
+            position: "hs",
+            viewAs: {
+                name: "nanman",
             },
-            filterCard:function(card,player){
-                if(ui.selected.cards.length){
-                    return get.suit(card)!=get.suit(ui.selected.cards[0]);
+            filterCard: function (card, player) {
+                if (ui.selected.cards.length) {
+                    return get.suit(card) != get.suit(ui.selected.cards[0]);
                 }
-                var cards=player.getCards('hs');
-                for(var i=0;i<cards.length;i++){
-                    if(card!=cards[i]){
-                        if(get.suit(card)!==get.suit(cards[i])) return true;
+                var cards = player.getCards('hs');
+                for (var i = 0; i < cards.length; i++) {
+                    if (card != cards[i]) {
+                        if (get.suit(card) !== get.suit(cards[i])) return true;
                     }
                 }
                 return false;
             },
-            selectCard:2,
-            complexCard:true,
-            check:function(card){
-                var player=_status.event.player;
-                var targets=game.filterPlayer(function(current){
-                    return player.canUse('nanman',current);
+            selectCard: 2,
+            complexCard: true,
+            check: function (card) {
+                var player = _status.event.player;
+                var targets = game.filterPlayer(function (current) {
+                    return player.canUse('nanman', current);
                 });
-                var num=0;
-                for(var i=0;i<targets.length;i++){
-                    var eff=get.sgn(get.effect(targets[i],{name:'nanman'},player,player));
-                    if(targets[i].hp==1){
-                        eff*=1.5;
+                var num = 0;
+                for (var i = 0; i < targets.length; i++) {
+                    var eff = get.sgn(get.effect(targets[i], { name: 'nanman' }, player, player));
+                    if (targets[i].hp == 1) {
+                        eff *= 1.5;
                     }
-                    num+=eff;
+                    num += eff;
                 }
-                if(!player.needsToDiscard(-1)){
-                    if(targets.length>=7){
-                        if(num<2) return 0;
+                if (!player.needsToDiscard(-1)) {
+                    if (targets.length >= 7) {
+                        if (num < 2) return 0;
                     }
-                    else if(targets.length>=5){
-                        if(num<1.5) return 0;
+                    else if (targets.length >= 5) {
+                        if (num < 1.5) return 0;
                     }
                 }
-                return 6-get.value(card);
+                return 6 - get.value(card);
             },
-            ai:{
+            ai: {
                 wuxie(target, card, player, viewer, status) {
                     let att = get.attitude(viewer, target), eff = get.effect(target, card, player, target);
                     if (Math.abs(att) < 1 || status * eff * att >= 0) return 0;
@@ -5351,12 +5351,12 @@ export const skill = {
                     }
                     return 1;
                 },
-                basic:{
-                    order:9,
-                    useful:[5,1],
-                    value:5,
+                basic: {
+                    order: 9,
+                    useful: [5, 1],
+                    value: 5,
                 },
-                result:{
+                result: {
                     player(player, target) {
                         if (player._nanman_temp || player.hasSkillTag('jueqing', false, target)) return 0;
                         player._nanman_temp = true;
@@ -5409,57 +5409,139 @@ export const skill = {
                         return -1.5;
                     },
                 },
-                tag:{
-                    respond:1,
-                    respondSha:1,
-                    damage:1,
-                    multitarget:1,
-                    multineg:1,
+                tag: {
+                    respond: 1,
+                    respondSha: 1,
+                    damage: 1,
+                    multitarget: 1,
+                    multineg: 1,
                 },
             },
-            "_priority":0,
+            "_priority": 0,
         },
-        "qsmx_zaiqi":{
-            audio:'zaiqi',
-            trigger:{
-                player:["dying","phaseZhunbeiBegin"],
+        "qsmx_zaiqi": {
+            audio: 'zaiqi',
+            trigger: {
+                player: ["dying", "phaseZhunbeiBegin"],
             },
-            filter:function(event,player){
-                return player.hp<player.maxHp;
+            filter: function (event, player) {
+                return player.hp < player.maxHp;
             },
-            frequent:true,
-            content:function(){
+            frequent: true,
+            content: function () {
                 "step 0"
-                event.cards=get.cards(player.getDamagedHp());
+                event.cards = get.cards(player.getDamagedHp());
                 game.cardsGotoOrdering(event.cards);
                 player.showCards(event.cards);
                 "step 1"
-                var num=0;
-                for(var i=0;i<event.cards.length;i++){
-                    if(get.suit(event.cards[i])=='heart'){
+                var num = 0;
+                for (var i = 0; i < event.cards.length; i++) {
+                    if (get.suit(event.cards[i]) == 'heart') {
                         num++;
-                        event.cards.splice(i--,1);
+                        event.cards.splice(i--, 1);
                     }
                 }
-                if(num){
+                if (num) {
                     player.recover(num);
                 }
                 "step 2"
-                if(event.cards.length){
-                    player.gain(event.cards,'gain2');
+                if (event.cards.length) {
+                    player.gain(event.cards, 'gain2');
                 }
             },
-            ai:{
-                threaten:function(player,target){
-                    if(target.hp==1) return 2;
-                    if(target.hp==2) return 1.5;
+            ai: {
+                threaten: function (player, target) {
+                    if (target.hp == 1) return 2;
+                    if (target.hp == 2) return 1.5;
                     return 1;
                 },
             },
-            "_priority":0,
-        }
+            "_priority": 0,
+        },
+        "qsmx_jishi": {
+            group: ["qsmx_jishi_recover", "qsmx_jishi_lose"],
+            marktext: "药",
+            intro: {
+                "name2": "药",
+                content: "mark",
+            },
+            trigger: {
+                global: "phaseBefore",
+                player: "enterGame",
+            },
+            filter: function (event, player) {
+                return event.name != 'phase' || game.phaseNumber == 0;
+            },
+            forced: true,
+            locked: false,
+            content: function () {
+                player.addMark('qsmx_jishi', Math.min(3, 3 - player.countMark('qsmx_jishi')));
+            },
+            ai: {
+                threaten: 10,
+            },
+            subSkill: {
+                recover: {
+                    enable: 'chooseToUse',
+                    filter: function (event, player) {
+                        return player.hasMark('qsmx_jishi') && event.type == 'dying';
+                    },
+                    logTarget: "player",
+                    check: function (event, player) {
+                        var parent = event.getParent('chooseToUse');
+                        var dying = parent.dying;
+                        return get.recoverEffect(dying, player, player) > 0;
+                    },
+                    content: function () {
+                        player.removeMark('qsmx_jishi', 1);
+                        var parent = event.getParent('chooseToUse')
+                        var dying = parent.dying;
+                        dying.recover(1 - dying.hp);
+                    },
+                    ai: {
+                        save: true,
+                        skillTagFilter(player) {
+                            return player.hasMark('qsmx_jishi');
+                        },
+                    },
+                    sub: true,
+                    "_priority": 0,
+                },
+                lose: {
+                    trigger: {
+                        player: "loseAfter",
+                        global: ["equipAfter", "addJudgeAfter", "gainAfter", "loseAsyncAfter", "addToExpansionAfter"],
+                    },
+                    filter: function (event, player) {
+                        var bool = false;
+                        if (event.name == 'gain' && player == event.player) return false;
+                        var evt = event.getl(player);
+                        if (!evt || !evt.cards2 || !evt.cards2.length) return false;
+                        for (var i of evt.cards2) {
+                            if (get.color(i, player) == 'red' && i.original == 'h') bool = true;
+                        }
+                        if (!bool) return false;
+                        return player != _status.currentPhase;
+                    },
+                    forced: true,
+                    locked: false,
+                    content: function () {
+                        var num = 0, evt = trigger.getl(player);
+                        for (var i of evt.cards2) {
+                            if (get.color(i, player) == 'red' && i.original == 'h' && num < 3 - player.countMark('minijishi')) num++;
+                        }
+                        player.addMark('minijishi', num);
+                    },
+                    sub: true,
+                    "_priority": 0,
+                },
+            },
+            "_priority": 0,
+        },
     },
     translate: {
+        "qsmx_jishi": "济世",
+        "qsmx_jishi_info": "游戏开始时，你获得三枚“药”标记。一名角色进入濒死状态时，你可以移除一个“药”标记令其体力回复至1。你的回合外失去红色手牌时，你获得等量的“药”标记。",
         "qsmx_manqin": "蛮侵",
         "qsmx_manqin_info": "出牌阶段，你可以将两张花色不同的手牌当做【南蛮入侵】使用。",
         "qsmx_zaiqi": "再起",

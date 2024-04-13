@@ -29,6 +29,7 @@ export const character = async function () {
             "qsmx_caorui": ["male", "wei", "3/3/1", ["qsmx_huituo", "qsmx_mingjian", "xingshuai"], ["ext:奇思妙想/resource/image/character/qsmx_caorui.jpg"]],
             "qsmx_menghuo": ["male", "qun", "4/7", ["qsmx_manqin", "qsmx_zaiqi"], ["ext:奇思妙想/resource/image/character/qsmx_menghuo.jpg"]],
             "qsmx_huatuo": ["male", "qun", "3/3", ['qsmx_jishi', 'qsmx_jingyu'], ["ext:奇思妙想/resource/image/character/qsmx_huatuo.jpg"]],
+            "qsmx_zhangliao": ["male", "wei", "4/4", ["qsmx_tuxi"], ["ext:奇思妙想/resource/image/character/qsmx_zhangliao.jpg"]],
             "qsmx_simashi": ["male", "jin", "3/4", ["qsmx_tairan", "qsmx_yimie"], ["ext:奇思妙想/resource/image/character/qsmx_simashi.jpg"]],
         },
         characterTitle: {
@@ -69,6 +70,7 @@ export const character = async function () {
             "qmsx_diy": "DIY武将",
             "qsmx_touhou": "东方武将",
             "qsmx_caorui": "妙曹叡",
+            "qsmx_zhangliao": "妙张辽",
             "qsmx_huatuo": "妙华佗",
             "qsmx_caopi": "妙曹丕",
             "qsmx_zhengxie": "鬼人正邪",

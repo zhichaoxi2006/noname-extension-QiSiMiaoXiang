@@ -5627,9 +5627,32 @@ export const skill = {
                     await next;
                 }
             },
+        },
+        "qsmx_tuxi": {
+            trigger: {
+                global:'gainBegin'
+            },
+            subSkill:{
+                blocker:{
+                    mark:true,
+                    intro:{
+                        content:"本回合已被妙张辽突袭"
+                    }
+                },
+            },
+            filter:function(event,player){
+                return !event.player.hasSkill('qsmx_tuxi_blocker') && event.player!=player;
+            },
+            async content(event, trigger, player){
+                trigger.cancel();
+                player.gain(trigger.cards);
+                trigger.player.addTempSkill('qsmx_tuxi_blocker')
+            }
         }
     },
     translate: {
+        "qsmx_tuxi": "突袭",
+        "qsmx_tuxi_info": "每回合每名角色限一次，一名其他角色获得牌时，你可以改为你获得之。",
         "_annihailate_damage": "湮灭",
         "qsmx_tairan": "泰然",
         "qsmx_tairan_info": "锁定技，①你取消不由〖泰然②〗导致的濒死结算造成的死亡②回合结束时，若你的体力不大于0，你进入濒死状态。③你的武将牌不会被替换，你的体力上限不会扣减。",

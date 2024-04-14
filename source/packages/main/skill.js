@@ -5564,15 +5564,15 @@ export const skill = {
             "_priority": 0,
         },
         "qsmx_jingyu": {
-            trigger:{
-                global:['recoverAfter']
+            trigger: {
+                global: ['recoverAfter']
             },
-            frequent:true,
-            filter:function(event, player){
-                return event.player!=player;
+            frequent: true,
+            filter: function (event, player) {
+                return event.player != player;
             },
-            async content(event, trigger, player){
-                 player.draw(trigger.num);
+            async content(event, trigger, player) {
+                player.draw(trigger.num);
             }
         },
         "qsmx_tairan": {
@@ -5582,26 +5582,26 @@ export const skill = {
                 player.initmaxHpLocker(player.maxHp, true);
                 player.dieAfter = function () {
                     var event = _status.event;
-                    if (!(event.getParent('qsmx_tairan').name=='qsmx_tairan') && player == event.player && event.name == 'die'){
+                    if (!(event.getParent('qsmx_tairan').name == 'qsmx_tairan') && player == event.player && event.name == 'die') {
                         event.finish();
                         event._triggered = null;
                         var tempHp = player.hp;
                         lib.element.player.revive.apply(player, [null, false]);
-                        lib.element.player.changeHp.apply(player, [tempHp-1, false]);
+                        lib.element.player.changeHp.apply(player, [tempHp - 1, false]);
                     } else {
                         lib.element.player.dieAfter.apply(player);
                     }
                 }
             },
-            forced:true,
-            charlotte:true,
+            forced: true,
+            charlotte: true,
             trigger: {
-                player:'phaseEnd'
+                player: 'phaseEnd'
             },
-            filter:function(event, player){
-                return player.hp<=0;
+            filter: function (event, player) {
+                return player.hp <= 0;
             },
-            async content(event, trigger, player){
+            async content(event, trigger, player) {
                 player.dying();
             },
             "_priority": 0,
@@ -5627,136 +5627,203 @@ export const skill = {
                     await next;
                 }
             },
-            ai:{
-                threaten:42,
+            ai: {
+                threaten: 42,
             }
         },
         "qsmx_ruilve": {
-            unique:true,
-            audio:2,
-            global:"qsmx_ruilve2",
-            zhuSkill:true,
-            "_priority":0,
+            unique: true,
+            audio: 2,
+            global: "qsmx_ruilve2",
+            zhuSkill: true,
+            "_priority": 0,
         },
         "qsmx_ruilve2": {
-            enable:"phaseUse",
-            discard:false,
-            lose:false,
-            delay:false,
-            line:true,
-            log:false,
-            prepare:function(cards,player,targets){
+            enable: "phaseUse",
+            discard: false,
+            lose: false,
+            delay: false,
+            line: true,
+            log: false,
+            prepare: function (cards, player, targets) {
                 targets[0].logSkill('ruilve');
             },
-            prompt:function(){
-                var player=_status.event.player;
-                var list=game.filterPlayer(function(target){
-                    return target!=player&&target.hasZhuSkill('ruilve',player);
+            prompt: function () {
+                var player = _status.event.player;
+                var list = game.filterPlayer(function (target) {
+                    return target != player && target.hasZhuSkill('ruilve', player);
                 });
-                var str='将一张带有伤害标签的牌交给'+get.translation(list);
-                if(list.length>1) str+='中的一人';
+                var str = '将一张带有伤害标签的牌交给' + get.translation(list);
+                if (list.length > 1) str += '中的一人';
                 return str;
             },
-            filter:function(event,player){
-                if(player.group!='jin') return false;
-                if(player.countCards('h',lib.skill.qsmx_ruilve2.filterCard)==0) return false;
-                return game.hasPlayer(function(target){
-                    return target!=player&&target.hasZhuSkill('qsmx_ruilve',player);
+            filter: function (event, player) {
+                if (player.group != 'jin') return false;
+                if (player.countCards('h', lib.skill.qsmx_ruilve2.filterCard) == 0) return false;
+                return game.hasPlayer(function (target) {
+                    return target != player && target.hasZhuSkill('qsmx_ruilve', player);
                 });
             },
-            filterCard:function(card){
-                if(!get.tag(card,'damage')) return false;
+            filterCard: function (card) {
+                if (!get.tag(card, 'damage')) return false;
                 return true;
             },
-            visible:true,
-            filterTarget:function(card,player,target){
-                return target!=player&&target.hasZhuSkill('qsmx_ruilve',player);
+            visible: true,
+            filterTarget: function (card, player, target) {
+                return target != player && target.hasZhuSkill('qsmx_ruilve', player);
             },
-            content:function(){
+            content: function () {
                 'step 0'
-                player.give(cards,target);
+                player.give(cards, target);
                 'step 1'
                 var next = target.chooseToUse();
-                next.set('filterCard', function(card){
-                    if(!get.tag(card,'damage')) return false;
+                next.set('filterCard', function (card) {
+                    if (!get.tag(card, 'damage')) return false;
                     return true;
                 })
             },
-            ai:{
-                expose:0.3,
-                order:1,
-                result:{
-                    target:5,
+            ai: {
+                expose: 0.3,
+                order: 1,
+                result: {
+                    target: 5,
                 },
             },
-            "_priority":0,
+            "_priority": 0,
         },
         "qsmx_tuxi": {
             trigger: {
-                global:'gainBegin'
+                global: 'gainBegin'
             },
-            subSkill:{
-                blocker:{
-                    mark:true,
-                    intro:{
-                        content:"本回合已被妙张辽突袭"
+            subSkill: {
+                blocker: {
+                    mark: true,
+                    intro: {
+                        content: "本回合已被妙张辽突袭"
                     }
                 },
             },
-            filter:function(event,player){
-                return !event.player.hasSkill('qsmx_tuxi_blocker') && event.player!=player;
+            filter: function (event, player) {
+                return !event.player.hasSkill('qsmx_tuxi_blocker') && event.player != player;
             },
-            async content(event, trigger, player){
+            async content(event, trigger, player) {
                 trigger.cancel();
                 player.gain(trigger.cards);
                 trigger.player.addTempSkill('qsmx_tuxi_blocker')
             }
         },
         "qsmx_taoyin": {
-            audio:'taoyin',
-            trigger:{
-                player:"showCharacterAfter",
+            audio: 'taoyin',
+            trigger: {
+                player: "showCharacterAfter",
             },
-            hiddenSkill:true,
-            logTarget:function(){
+            hiddenSkill: true,
+            logTarget: function () {
                 return _status.currentPhase;
             },
-            filter:function(event,player){
-                var target=_status.currentPhase;
-                return target&&target!=player&&target.isAlive();
+            filter: function (event, player) {
+                var target = _status.currentPhase;
+                return target && target != player && target.isAlive();
             },
-            check:function(event,player){
-                return get.attitude(player,_status.currentPhase)<0;
+            check: function (event, player) {
+                return get.attitude(player, _status.currentPhase) < 0;
             },
-            content:function(){
+            content: function () {
                 var currentPhase = _status.currentPhase;
-                player.useCard({name:'sha'}, [currentPhase]);
+                player.useCard({ name: 'sha' }, [currentPhase]);
             },
-            ai:{
-                expose:0.2,
+            ai: {
+                expose: 0.2,
             },
-            "_priority":0,
+            "_priority": 0,
         },
-        "huanyuyanmiezhu":{
-            equipSkill:true,
-            firstDo:true,
-            forced:true,
+        "huanyuyanmiezhu": {
+            equipSkill: true,
+            firstDo: true,
+            forced: true,
             trigger: {
-                source:'damageBefore',
+                source: 'damageBefore',
             },
-            filter:function(event, player){
+            filter: function (event, player) {
                 return !event.annihailate;
             },
-            async content(event, trigger, player){
+            async content(event, trigger, player) {
                 trigger.set('annihailate', true);
             }
         },
+        "qsmx_shengong": {
+            enable: ["phaseUse"],
+            position: "hes",
+            lose: false,
+            discard: false,
+            filterCard: true,
+            selectCard: 1,
+            content: function () {
+                'step 0'
+                var subtype = ['equip1', 'equip2', 'equip3', 'equip4', 'equip5', 'cancel2'];
+                var next = player.chooseControl(subtype);
+                next.set('ai', function(){
+                    return Math.random();
+                })
+                'step 1'
+                if (result.control != 'cancel2') {
+                    var object = lib.cardPack;
+                    var omniCards = [];
+                    for (const key in object) {
+                        if (Object.hasOwnProperty.call(object, key)) {
+                            const element = object[key];
+                            omniCards.addArray(element);
+                        }
+                    }
+                    var equips = omniCards.filter(c => get.type(c) == 'equip');
+                    equips = equips.filter(c => get.subtype(c) == result.control);
+                    player.discard(cards);
+                    player.discoverCard(equips, 24);
+                }
+            }
+        },
+        "qsmx_tianjiang": {
+            enable: ["phaseUse"],
+            position: "hes",
+            lose: false,
+            discard: false,
+            filter:function(event,player){
+                return player.countCards('hes', {type:'equip'});
+            },
+            filterCard: function(card){
+                return get.type(card)=='equip';
+            },
+            filterTarget:true,
+            selectCard: 1,
+            content:function(){
+                'step 0'
+                event.cardx = cards[0];
+                event.subtype = get.subtype(cards[0]);
+                game.log(event.subtype);
+                if (target.countEmptySlot(event.subtype)==0) {
+                    player.chooseBool('是否令'+get.translation(target.name)+"获得一个扩展"+get.translation(event.subtype)+"栏？");
+                } else {
+                    event.goto(2);
+                }
+                'step 1'
+                if (result.bool) {
+                    target.expandEquip(event.subtype);
+                }
+                'step 2'
+                player.equip(event.cardx);
+            }
+        }
     },
     translate: {
+        "qsmx_tianjiang": "天匠",
+        "qsmx_tianjiang_info": "出牌阶段，你可以将一张装备牌装备到一名角色上，若其没有空余装备栏，则你可以先令其获得一个对应的扩展装备栏。",
+        "qsmx_shengong": "神工",
+        "qsmx_shengong_info": "出牌阶段，你可以弃置一张牌并声明一张副类型，然后从24张装备牌中发现一张装备牌。",
         "qsmx_tuxi": "突袭",
         "qsmx_tuxi_info": "每回合每名角色限一次，一名其他角色获得牌时，你可以改为你获得之。",
         "_annihailate_damage": "湮灭",
         "huanyuyanmiezhu": "寰宇湮灭珠",
+        "huanyuyanmiezhu_info": "锁定技，你即将造成的伤害视为湮灭伤害。<br>·此牌进入你的装备区时，若你的空余装备栏不大于0，你获得一个扩展宝物栏。<br>·此牌离开你的装备区时，你装备之。",
         "qsmx_taoyin": "韬隐",
         "qsmx_taoyin_info": "隐匿技，当你登场后，若当前回合角色存在且不为你，你可以视为对当前回合角色使用一张【杀】。",
         "qsmx_ruilve": "睿略",
@@ -5874,7 +5941,7 @@ export const skill = {
         "qsmx_yishua": "印刷",
         "qsmx_yishua_info": "出牌阶段，你可以弃置一张【纸】，声明一个点数、花色和牌名，然后你从游戏外获得一张与你声明的点数、花色、牌名相同的牌。",
         "qsmx_craft": "合成",
-        "qsmx_craft_info": "出牌阶段，你可以将两张装备牌合成为一张。",
+        "qsmx_craft_info": "出牌阶段，你可以将两张装备牌合成为一张装备牌。",
         "qsmx_dingjun": "定军",
         "qsmx_dingjun_info": "出牌阶段限一次，你可以将任意张花色不同的牌置入你的武将牌，称之为“军”，直到结束阶段，其他角色无法使用或打出与“军”花色相同的牌；结束阶段，你获得所有“军”。",
         "qsmx_guangxin": "观星",

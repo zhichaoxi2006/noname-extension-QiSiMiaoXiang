@@ -92,6 +92,12 @@ export async function card() {
                         target: (player, target, card) => get.equipResult(player, target, card.name),
                     },
                 },
+                onEquip:function(){
+                    if(player.countEmptySlot('equip5')<=0)player.expandEquip('equip5');
+                },
+                onLose:function(card){
+                    player.equip(card);
+                },
                 enable: true,
                 selectTarget: -1,
                 filterTarget: (card, player, target) => player == target && target.canEquip(card, true),
@@ -104,9 +110,8 @@ export async function card() {
             }
         },
         translate: {
-            huanyuyanmiezhu: "寰宇湮灭珠",
-            huanyuyanmiezhu_info: "锁定技，你即将造成的伤害视为湮灭伤害。",
-            longinus: "朗基努斯",
+            "huanyuyanmiezhu": "寰宇湮灭珠",
+            "longinus": "朗基努斯",
             "longinus_info": "①你使用【杀】无次数限制；<br>②你使用牌指定其他角色时，若其为唯一目标，其不能使用或打出牌直到回合结束，然后，你进行一次判定，若判定牌带有弃置标签：其弃置所有牌、带有获得标签：你获得其所有牌、为延时性锦囊：其废除判定区并执行一次判定牌牌名的效果、为装备：废除判定牌对应副类型的装备栏。",
             "qsmx_paper": "纸",
             "qsmx_paper_info": "",

@@ -30,6 +30,7 @@ export const character = async function () {
             "qsmx_menghuo": ["male", "qun", "4/7", ["qsmx_manqin", "qsmx_zaiqi"], ["ext:奇思妙想/resource/image/character/qsmx_menghuo.jpg"]],
             "qsmx_huatuo": ["male", "qun", "3/3", ['qsmx_jishi', 'qsmx_jingyu'], ["ext:奇思妙想/resource/image/character/qsmx_huatuo.jpg"]],
             "qsmx_zhangliao": ["male", "wei", "4/4", ["qsmx_tuxi"], ["ext:奇思妙想/resource/image/character/qsmx_zhangliao.jpg"]],
+            "qsmx_puyuan": ["male", "shu", "4/4", ['qsmx_shengong', 'qsmx_tianjiang'], ["ext:奇思妙想/resource/image/character/qsmx_puyuan.jpg"]],
             "qsmx_simashi": ["male", "jin", "3/4", ["qsmx_taoyin", "qsmx_yimie", "qsmx_tairan", "qsmx_ruilve"], ["ext:奇思妙想/resource/image/character/qsmx_simashi.jpg", "zhu", "hiddenSkill"]],
         },
         characterTitle: {
@@ -57,7 +58,7 @@ export const character = async function () {
                 "qsmx_junko_aura": ['qsmx_junko'],
                 "qsmx_HellOfResistance": ['qsmx_huangzhong', 'qsmx_baozheng', 'qsmx_SevenGod', 'qsmx_sunce', 'qsmx_jiaxu', 'qsmx_longinus', 'qsmx_mimidog', 'qsmx_simashi'],
                 "qsmx_huiwanxili": ['qsmx_xusha', 'qsmx_hw_zhonghui', 'qsmx_hw_sunquan'],
-                "qmsx_diy": ['qsmx_sunquan', 'qsmx_menghuo', 'qsmx_caorui', 'qsmx_caopi', 'qsmx_caocao', 'qsmx_huatuo', 'qsmx_zhangliao', 'qsmx_guanyu', 'qsmx_zhenji', 'qsmx_luxun', 'qsmx_cailun', 'qsmx_wangshuang', 'qsmx_nanhua', 'qsmx_cenhun'],
+                "qmsx_diy": ['qsmx_puyuan', 'qsmx_sunquan', 'qsmx_menghuo', 'qsmx_caorui', 'qsmx_caopi', 'qsmx_caocao', 'qsmx_huatuo', 'qsmx_zhangliao', 'qsmx_guanyu', 'qsmx_zhenji', 'qsmx_luxun', 'qsmx_cailun', 'qsmx_wangshuang', 'qsmx_nanhua', 'qsmx_cenhun'],
                 "qsmx_touhou": ['qsmx_matara_okina', 'qsmx_zhengxie']
             }
         },
@@ -70,6 +71,7 @@ export const character = async function () {
             "qmsx_diy": "DIY武将",
             "qsmx_touhou": "东方武将",
             "qsmx_caorui": "妙曹叡",
+            "qsmx_puyuan": "妙蒲元",
             "qsmx_zhangliao": "妙张辽",
             "qsmx_huatuo": "妙华佗",
             "qsmx_caopi": "妙曹丕",

@@ -5736,12 +5736,27 @@ export const skill = {
                 expose:0.2,
             },
             "_priority":0,
-        }
+        },
+        "huanyuyanmiezhu":{
+            equipSkill:true,
+            firstDo:true,
+            forced:true,
+            trigger: {
+                source:'damageBefore',
+            },
+            filter:function(event, player){
+                return !event.annihailate;
+            },
+            async content(event, trigger, player){
+                trigger.set('annihailate', true);
+            }
+        },
     },
     translate: {
         "qsmx_tuxi": "突袭",
         "qsmx_tuxi_info": "每回合每名角色限一次，一名其他角色获得牌时，你可以改为你获得之。",
         "_annihailate_damage": "湮灭",
+        "huanyuyanmiezhu": "寰宇湮灭珠",
         "qsmx_taoyin": "韬隐",
         "qsmx_taoyin_info": "隐匿技，当你登场后，若当前回合角色存在且不为你，你可以视为对当前回合角色使用一张【杀】。",
         "qsmx_ruilve": "睿略",

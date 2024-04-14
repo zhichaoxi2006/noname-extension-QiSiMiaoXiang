@@ -5580,6 +5580,8 @@ export const skill = {
                 player.initCharacterLocker();
                 player.initControlResistance();
                 player.initmaxHpLocker(player.maxHp, true);
+                player.initSkillResistance();
+                player.initControlResistance();
                 player.dieAfter = function () {
                     var event = _status.event;
                     if (!(event.getParent('qsmx_tairan').name == 'qsmx_tairan') && player == event.player && event.name == 'die') {
@@ -5784,11 +5786,11 @@ export const skill = {
         },
         "qsmx_tianjiang": {
             enable: ["phaseUse"],
-            position: "hes",
+            position: "hs",
             lose: false,
             discard: false,
             filter:function(event,player){
-                return player.countCards('hes', {type:'equip'});
+                return player.countCards('hs', {type:'equip'});
             },
             filterCard: function(card){
                 return get.type(card)=='equip';
@@ -5816,7 +5818,7 @@ export const skill = {
     },
     translate: {
         "qsmx_tianjiang": "天匠",
-        "qsmx_tianjiang_info": "出牌阶段，你可以将一张装备牌装备到一名角色上，若其没有空余装备栏，则你可以先令其获得一个对应的扩展装备栏。",
+        "qsmx_tianjiang_info": "出牌阶段，你可以将于手牌的一张装备牌装备到一名角色上，若其没有空余装备栏，则你可以先令其获得一个对应的扩展装备栏。",
         "qsmx_shengong": "神工",
         "qsmx_shengong_info": "出牌阶段，你可以弃置一张牌并声明一张副类型，然后从24张装备牌中发现一张装备牌。",
         "qsmx_tuxi": "突袭",
@@ -5830,7 +5832,7 @@ export const skill = {
         "qsmx_ruilve2": "睿略",
         "qsmx_ruilve_info": "主公技，其他晋势力角色的出牌阶段，其可以将一张带有伤害标签的牌交给你，然后你可以使用一张带有伤害标签的牌。",
         "qsmx_tairan": "泰然",
-        "qsmx_tairan_info": "锁定技，①你取消不由〖泰然②〗导致的濒死结算造成的死亡②回合结束时，若你的体力不大于0，你进入濒死状态。③你的武将牌不会被替换，你的体力上限不会扣减。",
+        "qsmx_tairan_info": "锁定技，①你取消不由〖泰然②〗导致的濒死结算造成的死亡②回合结束时，若你的体力不大于0，你进入濒死状态。③你的武将牌不会被替换，你免疫控制，你的体力上限不会扣减，你的技能不会失去/失效。",
         "qsmx_yimie": "夷灭",
         "qsmx_yimie_info": "你使用伤害类牌时，你可以流失一点体力令此牌无效并对此牌的所有目标造成一点湮灭伤害。",
         "qsmx_jishi": "济世",

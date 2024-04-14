@@ -5814,9 +5814,24 @@ export const skill = {
                 'step 2'
                 player.equip(event.cardx);
             }
+        },
+        "qsmx_biding": {
+            trigger:{
+                global:'pileChanged'
+            },
+            filter:function(event, player){
+                if(!_status.currentPhase) return false;
+                return event.getParent().name!=='draw';
+            },
+            content:function(){
+                var currentPhase = _status.currentPhase;
+                currentPhase.damage();
+            }
         }
     },
     translate: {
+        "qsmx_biding": "壁灯",
+
         "qsmx_tianjiang": "天匠",
         "qsmx_tianjiang_info": "出牌阶段，你可以将于手牌的一张装备牌装备到一名角色上，若其没有空余装备栏，则你可以先令其获得一个对应的扩展装备栏。",
         "qsmx_shengong": "神工",

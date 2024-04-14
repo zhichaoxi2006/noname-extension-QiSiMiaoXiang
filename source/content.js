@@ -430,35 +430,35 @@ export async function content(config, pack) {
                 }
             })
         },
-        initCharacterLocker: function(){
+        initCharacterLocker: function () {
             var player = this;
-            this._name1=this.name1;
-            this._name2=this.name2;
-            this._nameList=[this._name1, this._name2];
+            this._name1 = this.name1;
+            this._name2 = this.name2;
+            this._nameList = [this._name1, this._name2];
             Object.defineProperty(this, 'name1', {
-                configurable:true,
-                get:function(){
+                configurable: true,
+                get: function () {
                     return player._name1;
                 },
-                set:function(newValue){
-                    if (newValue!=player._nameList[0]) {
+                set: function (newValue) {
+                    if (newValue != player._nameList[0]) {
                         var tempList = player._nameList.remove(undefined);
                         player.changeCharacter(tempList, false)
                     }
-                    return player._name1=newValue;
+                    return player._name1 = newValue;
                 }
             })
             Object.defineProperty(this, 'name2', {
-                configurable:true,
-                get:function(){
+                configurable: true,
+                get: function () {
                     return player._name2;
                 },
-                set:function(newValue){
-                    if (newValue!=player._nameList[1]) {
+                set: function (newValue) {
+                    if (newValue != player._nameList[1]) {
                         var tempList = player._nameList.remove(undefined);
                         player.changeCharacter(tempList, false)
                     }
-                    return player._name2=newValue;
+                    return player._name2 = newValue;
                 }
             })
         },
@@ -489,7 +489,7 @@ export async function content(config, pack) {
                     },
                     set: function (newValue) {
                         var oldValue = this._maxHp;
-                        if(newValue > oldValue)this._maxHp = newValue;
+                        if (newValue > oldValue) this._maxHp = newValue;
                         return;
                     }
                 });
@@ -1194,6 +1194,26 @@ export async function content(config, pack) {
     //nature
     lib.nature.add('annihailate');
     lib.translate['annihailate'] = '湮灭';
+    //MatationObserver
+    lib.arenaReady.push(function () {
+        const observerCallback = function (mutationsList, observer) {
+            if (_status.gameStarted) {
+                var next = game.createEvent('pileChanged', false);
+                next.setContent('emptyEvent');
+            }
+            /*mutationsList.forEach(mutation => {
+                if (mutation.type === 'childList') {
+                    console.log("childNodes changed", mutation.addedNodes, mutation.removedNodes);
+                }
+            });*/
+        }
+        const observer = new MutationObserver(observerCallback);
+        const observer_config = {
+            childList: true,
+        }
+        const targetNode = ui.cardPile;
+        observer.observe(targetNode, observer_config);
+    })
     //lib.rank
     lib.rank.rarity.junk.addArray(['qsmx_matara_okina']);
     lib.rank.rarity.rare.addArray(['qsmx_wangshuang']);

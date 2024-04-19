@@ -5764,7 +5764,7 @@ export const skill = {
                 'step 0'
                 var subtype = ['equip1', 'equip2', 'equip3', 'equip4', 'equip5', 'cancel2'];
                 var next = player.chooseControl(subtype);
-                next.set('ai', function(){
+                next.set('ai', function () {
                     return Math.random();
                 })
                 'step 1'
@@ -5789,21 +5789,21 @@ export const skill = {
             position: "hs",
             lose: false,
             discard: false,
-            filter:function(event,player){
-                return player.countCards('hs', {type:'equip'});
+            filter: function (event, player) {
+                return player.countCards('hs', { type: 'equip' });
             },
-            filterCard: function(card){
-                return get.type(card)=='equip';
+            filterCard: function (card) {
+                return get.type(card) == 'equip';
             },
-            filterTarget:true,
+            filterTarget: true,
             selectCard: 1,
-            content:function(){
+            content: function () {
                 'step 0'
                 event.cardx = cards[0];
                 event.subtype = get.subtype(cards[0]);
                 game.log(event.subtype);
-                if (target.countEmptySlot(event.subtype)==0) {
-                    player.chooseBool('是否令'+get.translation(target.name)+"获得一个扩展"+get.translation(event.subtype)+"栏？");
+                if (target.countEmptySlot(event.subtype) == 0) {
+                    player.chooseBool('是否令' + get.translation(target.name) + "获得一个扩展" + get.translation(event.subtype) + "栏？");
                 } else {
                     event.goto(2);
                 }
@@ -5815,7 +5815,7 @@ export const skill = {
                 player.equip(event.cardx);
             }
         },
-        "qsmx_biding": {
+        /*"qsmx_biding": {
             trigger:{
                 global:'pileChanged'
             },
@@ -5827,11 +5827,45 @@ export const skill = {
                 var currentPhase = _status.currentPhase;
                 currentPhase.damage();
             }
-        }
+        }*/
+        "qsmx_resistance": {
+            init: function (player, skill) {
+                player.addSkillBlocker(skill);
+            },
+            /*onremove: function (player, skill) {
+                player.removeSkillBlocker(skill);
+            },*/
+            skillBlocker: function (skill, player) {
+                //排除有技能描述的技能
+                if(lib.translate[skill + '_info'])return false;
+                //识别会令技能失效的技能
+                if(lib.skill[skill].skillBlocker){
+                    player.removeSkill(skill);
+                }
+                //识别会禁止使用或打出牌的技能
+                if (lib.skill[skill].mod) {
+                    if(lib.skill[skill].mod.cardEnabled2){
+                        player.removeSkill(skill);
+                    }
+                    if(lib.skill[skill].mod.cardEnabled){
+                        player.removeSkill(skill);
+                    }
+                }
+                //识别令防具技能或护甲失效的技能
+                if (lib.skill[skill].ai) {
+                    if (lib.skill[skill].ai.unequip2) {
+                        player.removeSkill(skill);
+                    }
+                    if (lib.skill[skill].ai.nohujia) {
+                        player.removeSkill(skill);
+                    }
+                }
+                return false;
+            },
+            "_priority": 0,
+        },
     },
     translate: {
-        "qsmx_biding": "壁灯",
-
         "qsmx_tianjiang": "天匠",
         "qsmx_tianjiang_info": "出牌阶段，你可以将于手牌的一张装备牌装备到一名角色上，若其没有空余装备栏，则你可以先令其获得一个对应的扩展装备栏。",
         "qsmx_shengong": "神工",

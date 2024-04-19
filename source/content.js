@@ -1,4 +1,5 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
+import { cardPileObsever, discardPileObsever, orderingObsever, specialObsever } from './MatationObsever/PileObsever.js'
 
 export async function content(config, pack) {
     //get
@@ -1195,25 +1196,10 @@ export async function content(config, pack) {
     lib.nature.add('annihailate');
     lib.translate['annihailate'] = '湮灭';
     //MatationObserver
-    lib.arenaReady.push(function () {
-        const observerCallback = function (mutationsList, observer) {
-            if (_status.gameStarted) {
-                var next = game.createEvent('pileChanged', false);
-                next.setContent('emptyEvent');
-            }
-            /*mutationsList.forEach(mutation => {
-                if (mutation.type === 'childList') {
-                    console.log("childNodes changed", mutation.addedNodes, mutation.removedNodes);
-                }
-            });*/
-        }
-        const observer = new MutationObserver(observerCallback);
-        const observer_config = {
-            childList: true,
-        }
-        const targetNode = ui.cardPile;
-        observer.observe(targetNode, observer_config);
-    })
+    cardPileObsever();
+    discardPileObsever();
+    orderingObsever();
+    specialObsever();
     //lib.rank
     lib.rank.rarity.junk.addArray(['qsmx_matara_okina']);
     lib.rank.rarity.rare.addArray(['qsmx_wangshuang']);

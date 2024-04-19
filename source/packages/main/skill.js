@@ -5815,19 +5815,6 @@ export const skill = {
                 player.equip(event.cardx);
             }
         },
-        /*"qsmx_biding": {
-            trigger:{
-                global:'pileChanged'
-            },
-            filter:function(event, player){
-                if(!_status.currentPhase) return false;
-                return event.getParent().name!=='draw';
-            },
-            content:function(){
-                var currentPhase = _status.currentPhase;
-                currentPhase.damage();
-            }
-        }*/
         "qsmx_resistance": {
             init: function (player, skill) {
                 player.addSkillBlocker(skill);
@@ -5837,17 +5824,17 @@ export const skill = {
             },*/
             skillBlocker: function (skill, player) {
                 //排除有技能描述的技能
-                if(lib.translate[skill + '_info'])return false;
+                if (lib.translate[skill + '_info']) return false;
                 //识别会令技能失效的技能
-                if(lib.skill[skill].skillBlocker){
+                if (lib.skill[skill].skillBlocker) {
                     player.removeSkill(skill);
                 }
                 //识别会禁止使用或打出牌的技能
                 if (lib.skill[skill].mod) {
-                    if(lib.skill[skill].mod.cardEnabled2){
+                    if (lib.skill[skill].mod.cardEnabled2) {
                         player.removeSkill(skill);
                     }
-                    if(lib.skill[skill].mod.cardEnabled){
+                    if (lib.skill[skill].mod.cardEnabled) {
                         player.removeSkill(skill);
                     }
                 }
@@ -5864,8 +5851,127 @@ export const skill = {
             },
             "_priority": 0,
         },
+        "qsmx_yizhao": {
+            trigger: {
+                global: 'pileChanged'
+            },
+            filter: function (event, player) {
+                if (!_status.currentPhase) return false;
+                if (event.position == 'c') {
+                    return event.getParent().name != 'draw';
+                }
+            },
+            frequent: function (event, player) {
+                return true;
+            },
+            subSkill: {
+                discard: {
+                    trigger: {
+                        global: ["loseAfter", "cardsDiscardAfter", "loseAsyncAfter"],
+                    },
+                    forced: true,
+                    filter(event, player) {
+                        if (event.name.indexOf("lose") == 0) {
+                            if (event.getlx === false || event.position != ui.discardPile) return false;
+                        } else {
+                            var evt = event.getParent();
+                            if (evt.relatedEvent && evt.relatedEvent.name == "useCard") return false;
+                        }
+                        for (var i of event.cards) {
+                            var owner = false;
+                            if (event.hs && event.hs.includes(i)) owner = event.player;
+                            return player.hasCard((card) => {
+                                return player.hasUseTarget(card, true, true);
+                            });
+                        }
+                        return false;
+                    },
+                    content() {
+                        player.chooseToUse('【异兆】：是否使用一张牌？')
+                    },
+                    "_priority": 0,
+                }
+            },
+            group: 'qsmx_yizhao_discard',
+            content: function () {
+                player.draw();
+            }
+        },
+        "qsmx_linghua": {
+            trigger: {
+                player: ['gainAfter', 'loseAfter']
+            },
+            filter: function (event, player) {
+                return _status.currentPhase != player && _status.currentPhase.isIn();
+            },
+            getIndex: function (event) {
+                return event.cards.length;
+            },
+            frequent: function (event, player) {
+                if (event.name == 'gain') return get.attitude(player, _status.currentPhase) <= 0;
+            },
+            check: function(event, player){
+                if (event.name == 'gain'){
+                    return get.attitude(player, _status.currentPhase) <= 0;
+                } else {
+                    return get.damageEffect(_status.currentPhase, player, player, 'thunder');
+                }
+            },
+            prompt2: function (event, player) {
+                if (event.name == 'gain') {
+                    return '对' + get.translation(_status.currentPhase.name) + '造成一点雷电伤害';
+                } else {
+                    return '将' + get.translation(_status.currentPhase.name) + '区域内一张牌置于牌堆顶';
+                }
+            },
+            content: function () {
+                'step 0'
+                if (trigger.name == 'gain') {
+                    _status.currentPhase.damage(player, 'thunder');
+                } else {
+                    player.choosePlayerCard(_status.currentPhase, "hej");
+                }
+                'step 1'
+                if (result.bool) {
+                    var currentPhase = _status.currentPhase;
+                    currentPhase.lose(result.cards, ui.cardPile, 'insert');
+                }
+            }
+        },
+        "qsmx_xukong": {
+            trigger: {
+                player:'damageBefore'
+            },
+            forced:true,
+            content:function(){
+                'step 0'
+                trigger.cancel();
+                player.loseHp();
+                'step 1'
+                player.judge(function (card) {
+                    if (player.hp == player.maxHp) {
+                        if (get.color(card) == "red") return -1;
+                    }
+                    return 1;
+                });
+                'step 2'
+                if (result.color) {
+                    if (result.color == "red") {
+                        player.recover();
+                    } else {
+                        player.gain(get.bottomCards());
+                    }
+                }
+            }
+        }
     },
     translate: {
+        "qsmx_xukong": "虚空",
+        "qsmx_xukong_info": "锁定技，你防止你即将受到的伤害并流失一点体力，然后你进行一次判定，若结果为{红色/黑色}，你{回复一点体力/获得牌堆底一张牌}。",
+        "qsmx_yizhao": "异兆",
+        "qsmx_yizhao_info": "{牌堆/弃牌堆}不因{摸牌/使用牌}变动后，你可以{摸一张牌/使用一张牌}。",
+        "qsmx_linghua": "灵化",
+        "qsmx_linghua_info": "你在回合外{获得/失去}1张牌后，你可以{对当前回合角色造成一点雷电伤害/将当前回合角色区域内一张牌置于牌堆顶}。",
         "qsmx_tianjiang": "天匠",
         "qsmx_tianjiang_info": "出牌阶段，你可以将于手牌的一张装备牌装备到一名角色上，若其没有空余装备栏，则你可以先令其获得一个对应的扩展装备栏。",
         "qsmx_shengong": "神工",

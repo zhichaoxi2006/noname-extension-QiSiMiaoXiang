@@ -16,7 +16,7 @@ export const character = async function () {
             "qsmx_SevenGod": ["female", "shen", "7/7", ["qsmx_qichong", "qsmx_shenwei", "qsmx_shiyuan"], ["ext:奇思妙想/resource/image/character/qsmx_SevenGod.jpg"]],
             "qsmx_jiaxu": ["male", "wei", "4/4", ["qsmx_weimu", "qsmx_yanmie",], ["ext:奇思妙想/resource/image/character/qsmx_jiaxu.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_jiaxu.mp3"]],
             "qsmx_wangshuang": ["male", "wei", "8/8", ["qsmx_zhuilie"], ["ext:奇思妙想/resource/image/character/qsmx_wangshuang.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_wangshuang.mp3"]],
-            "qsmx_nanhua": ["male", "qun", "3/3", ["qsmx_void", "qsmx_leijie"], ["ext:奇思妙想/resource/image/character/qsmx_nanhua.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_nanhua.mp3"]],
+            "qsmx_nanhualaoxian": ["male", "qun", "3/3", ["qsmx_yizhao", "qsmx_linghua", "qsmx_xukong"], ["ext:奇思妙想/resource/image/character/qsmx_nanhua.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_nanhua.mp3"]],
             //"qsmx_junko": ["female", "shen", "4/4", ["qsmx_chunhua"], ["ext:奇思妙想/resource/image/character/qsmx_junko.jpg" ,'boss', 'bossallowed']],
             "qsmx_matara_okina": ["female", "shen", "4/4", ["qsmx_mishen"], ["ext:奇思妙想/resource/image/character/qsmx_matara_okina.jpg"]],
             "qsmx_cenhun": ["male", "wu", "6/6", ["qsmx_liancai", "jishe", "lianhuo"], ["ext:奇思妙想/resource/image/character/qsmx_cenhun.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_cenhun.mp3"]],
@@ -24,7 +24,7 @@ export const character = async function () {
             "qsmx_zhengxie": ["female", "key", "1/2", ["qsmx_tianxie", "qsmx_reverse"], ["ext:奇思妙想/resource/image/character/qsmx_zhengxie.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_zhengxie.mp3"]],
             "qsmx_guanyu": ["male", "shu", "4/4", ["qsmx_wusheng", "qsmx_yijue"], ["ext:奇思妙想/resource/image/character/qsmx_guanyu.jpg", "die:ext:奇思妙想/resource/audio/die/qsmx_guanyu.mp3"]],
             "qsmx_mimidog": ["male", "key", "6/6", ["qsmx_cizhang", "qsmx_yangbai", "qsmx_mingli"], ["ext:奇思妙想/resource/image/character/qsmx_mimidog.jpg"]],
-            "qsmx_caocao": ["male", "wei", "4/4", ["qsmx_jianxiong", "rehuojia"], ["ext:奇思妙想/resource/image/character/qsmx_caocao.jpg", "zhu"]],
+            "qsmx_caocao": ["male", "wei", "4/4", ["qsmx_jianxiong", "rehujia"], ["ext:奇思妙想/resource/image/character/qsmx_caocao.jpg", "zhu"]],
             "qsmx_caopi": ["male", "wei", "3/3", ["qsmx_xingshang", "qsmx_fangzhu", "songwei"], ["ext:奇思妙想/resource/image/character/qsmx_caopi.jpg", "zhu"]],
             "qsmx_caorui": ["male", "wei", "3/3/1", ["qsmx_huituo", "qsmx_mingjian", "xingshuai"], ["ext:奇思妙想/resource/image/character/qsmx_caorui.jpg", "zhu"]],
             "qsmx_menghuo": ["male", "qun", "4/7", ["qsmx_manqin", "qsmx_zaiqi"], ["ext:奇思妙想/resource/image/character/qsmx_menghuo.jpg"]],
@@ -58,7 +58,7 @@ export const character = async function () {
                 "qsmx_junko_aura": ['qsmx_junko'],
                 "qsmx_HellOfResistance": ['qsmx_huangzhong', 'qsmx_baozheng', 'qsmx_SevenGod', 'qsmx_sunce', 'qsmx_jiaxu', 'qsmx_longinus', 'qsmx_mimidog', 'qsmx_simashi'],
                 "qsmx_huiwanxili": ['qsmx_xusha', 'qsmx_hw_zhonghui', 'qsmx_hw_sunquan'],
-                "qmsx_diy": ['qsmx_puyuan', 'qsmx_sunquan', 'qsmx_menghuo', 'qsmx_caorui', 'qsmx_caopi', 'qsmx_caocao', 'qsmx_huatuo', 'qsmx_zhangliao', 'qsmx_guanyu', 'qsmx_zhenji', 'qsmx_luxun', 'qsmx_cailun', 'qsmx_wangshuang', 'qsmx_nanhua', 'qsmx_cenhun'],
+                "qmsx_diy": ['qsmx_puyuan', 'qsmx_sunquan', 'qsmx_menghuo', 'qsmx_caorui', 'qsmx_caopi', 'qsmx_caocao', 'qsmx_huatuo', 'qsmx_zhangliao', 'qsmx_guanyu', 'qsmx_zhenji', 'qsmx_luxun', 'qsmx_cailun', 'qsmx_wangshuang', 'qsmx_nanhualaoxian', 'qsmx_cenhun'],
                 "qsmx_touhou": ['qsmx_matara_okina', 'qsmx_zhengxie']
             }
         },
@@ -95,7 +95,7 @@ export const character = async function () {
             "qsmx_SevenGod": "七重毁灭者",
             "qsmx_jiaxu": "妙贾诩",
             "qsmx_wangshuang": "妙王双",
-            "qsmx_nanhua": "妙南华老仙",
+            "qsmx_nanhualaoxian": "妙南华老仙",
             "qsmx_matara_okina": "摩多罗隐岐奈",
             "qsmx_junko": "纯狐"
         },

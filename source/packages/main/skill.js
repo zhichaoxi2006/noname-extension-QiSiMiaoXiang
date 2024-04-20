@@ -5825,6 +5825,10 @@ export const skill = {
             skillBlocker: function (skill, player) {
                 //排除有技能描述的技能
                 if (lib.translate[skill + '_info']) return false;
+                //识别令武将进入疯狂的技能
+                if (skill == 'mad') {
+                    player.removeSkill(skill);
+                }
                 //识别会令技能失效的技能
                 if (lib.skill[skill].skillBlocker) {
                     player.removeSkill(skill);
@@ -5910,8 +5914,8 @@ export const skill = {
             frequent: function (event, player) {
                 if (event.name == 'gain') return get.attitude(player, _status.currentPhase) <= 0;
             },
-            check: function(event, player){
-                if (event.name == 'gain'){
+            check: function (event, player) {
+                if (event.name == 'gain') {
                     return get.attitude(player, _status.currentPhase) <= 0;
                 } else {
                     return get.damageEffect(_status.currentPhase, player, player, 'thunder');
@@ -5940,10 +5944,10 @@ export const skill = {
         },
         "qsmx_xukong": {
             trigger: {
-                player:'damageBefore'
+                player: 'damageBefore'
             },
-            forced:true,
-            content:function(){
+            forced: true,
+            content: function () {
                 'step 0'
                 trigger.cancel();
                 player.loseHp();
@@ -5963,9 +5967,225 @@ export const skill = {
                     }
                 }
             }
+        },
+        "qsmx_quanshi": {
+            onremove: true,
+            mark: true,
+            intro: {
+                mark: function (dialog, content, player) {
+                    var cardPile = Array.from(ui.cardPile.childNodes);
+                    if (player != game.me) return get.translation(player) + "观看牌堆中...";
+                    if (get.itemtype(cardPile.slice(0, 1)) != "cards") return "牌堆顶无牌";
+                    dialog.add(cardPile.slice(0, 1));
+                },
+            },
+            "_priority": 0,
+        },
+        "qsmx_tudiao": {
+            group: [
+                'qsmx_tudiao_recover',
+                'qsmx_tudiao_judge',
+                'qsmx_tudiao_gain',
+                'qsmx_tudiao_useCard',
+                'qsmx_tudiao_discard',
+                'qsmx_tudiao_turnOver',
+                'qsmx_tudiao_damageSource'
+            ],
+            onremove: function (player, skill) {
+                var name = [player.name, player.name1, player.name2];
+                if (name.includes("qsmx_zhangxianzhong")) {
+                    player.addSkill(skill);
+                }
+            },
+            frequent: true,
+            subSkill: {
+                prompt: {
+                    prompt: function (event, player) {
+                        if (event.name.includes('damage')) {
+                            return "是否视为对" + get.translation(event.source.name) + "使用一张【杀】（无视合法性）。";
+                        } else {
+                            return "是否视为对" + get.translation(event.player.name) + "使用一张【杀】（无视合法性）。";
+                        }
+                    },
+                    frequent: function (event, player) {
+                        if (lib.config.autoskilllist.includes('qsmx_tudiao')) return false;
+                        if (event.name.includes('damage')) {
+                            return get.attitude(player, event.source) <= 0;
+                        } else {
+                            return get.attitude(player, event.player) <= 0;
+                        }
+                    },
+                    check: function (event, player) {
+                        if (event.name.includes('damage')) {
+                            return get.attitude(player, event.source) <= 0;
+                        } else {
+                            return get.attitude(player, event.player) <= 0;
+                        }
+                    },
+                    content: function () {
+                        if (trigger.name == 'damage') {
+                            event.related = player.useCard({ name: 'sha', isCard: true }, trigger.source, false);
+                        } else {
+                            event.related = player.useCard({ name: 'sha', isCard: true }, trigger.player, false);
+                        }
+                        //game.log("Cause By:", trigger.name);
+                    },
+                    ai: {
+                    }
+                },
+                recover: {
+                    inherit: "qsmx_tudiao_prompt",
+                    trigger: {
+                        global: 'recoverAfter'
+                    },
+                    filter: function (event, player) {
+                        if (!event.player.isIn()) return false;
+                        if (player == event.player) return false;
+                        var evt = event.getParent("dying");
+                        if (evt && evt.name == "dying") return false;
+                        return true;
+                    },
+                },
+                judge: {
+                    inherit: "qsmx_tudiao_prompt",
+                    trigger: {
+                        global: 'judgeAfter'
+                    },
+                    filter: function (event, player) {
+                        if (!event.player.isIn()) return false;
+                        if (player == event.player) return false;
+                        var evt = event.getParent("phaseJudge");
+                        if (evt && evt.name == "phaseJudge") return false;
+                        return true;
+                    },
+                },
+                gain: {
+                    inherit: "qsmx_tudiao_prompt",
+                    trigger: {
+                        global: 'gainAfter'
+                    },
+                    filter: function (event, player) {
+                        if (!event.player.isIn()) return false;
+                        if (player == event.player) return false;
+                        var evt = event.getParent("phaseDraw");
+                        if (evt && evt.name == "phaseDraw") return false;
+                        return true;
+                    },
+                },
+                useCard: {
+                    inherit: "qsmx_tudiao_prompt",
+                    trigger: {
+                        global: ['useCardAfter']
+                    },
+                    filter: function (event, player) {
+                        if (!event.player.isIn()) return false;
+                        if (player == event.player) return false;
+                        if (event.player.isPhaseUsing()) return false;
+                        return true;
+                    },
+                },
+                discard: {
+                    inherit: "qsmx_tudiao_prompt",
+                    trigger: {
+                        global: ['loseAfter', 'loseAsyncAfter']
+                    },
+                    filter: function (event, player) {
+                        if (!event.player.isIn()) return false;
+                        if (player == event.player) return false;
+                        if (event.type != 'discard' || !event.cards2) return false;
+                        var evt = event.getParent('phaseDiscard');
+                        if (evt && evt.name == "phaseDiscard") return false;
+                        return true;
+                    },
+                },
+                turnOver: {
+                    inherit: "qsmx_tudiao_prompt",
+                    trigger: {
+                        global: 'turnOverAfter'
+                    },
+                    filter: function (event, player) {
+                        if (!event.player.isIn()) return false;
+                        if (player == event.player) return false;
+                        var evt = event.getParent("phaseJieshu");
+                        if (evt && evt.name == "phaseJieshu") return false;
+                        return true;
+                    },
+                },
+                damageSource: {
+                    inherit: "qsmx_tudiao_prompt",
+                    trigger: {
+                        global: ['damageSource'],
+                    },
+                    filter: function (event, player) {
+                        if (player == event.source) return false;
+                        if (event.source == _status.currentPhase) return false;
+                        return true;
+                    },
+                },
+            }
+        },
+        "qsmx_qisha": {
+            forced: true,
+            trigger: {
+                player: 'useCard'
+            },
+            onremove: function (player, skill) {
+                var name = [player.name, player.name1, player.name2];
+                if (name.includes("qsmx_zhangxianzhong")) {
+                    player.addSkill(skill);
+                }
+            },
+            filter: function (event, player) {
+                var num = player.getAllHistory("useCard", function (event) {
+                    return event.card.name == 'sha'
+                }).length;
+                return num % 7 == 0 && event.card.name == 'sha';;
+            },
+            content() {
+                var targets = trigger.targets;
+                for (let target of targets) {
+                    let next = target.damage(player, 'annihailate');
+                    next.annihailate = true;
+                }
+            }
+        },
+        "qsmx_xianzhong": {
+            init: function (player, skill) {
+                player.addSkill('qsmx_resistance');
+                player.initCharacterLocker();
+                player.initControlResistance();
+                player.initmaxHpLocker(player.maxHp, true);
+                player.initControlResistance();
+                player.dieAfter = function () {
+                    var event = _status.event;
+                    if (game.shuffleNumber >= 7 && player == event.player && event.name == 'die') {
+                        event.finish();
+                        event._triggered = null;
+                        var tempHp = player.hp;
+                        lib.element.player.revive.apply(player, [null, false]);
+                        lib.element.player.changeHp.apply(player, [tempHp - 1, false]);
+                    } else {
+                        lib.element.player.dieAfter.apply(player);
+                    }
+                }
+            },
+            onremove: function (player, skill) {
+                var name = [player.name, player.name1, player.name2];
+                if (name.includes("qsmx_zhangxianzhong")) {
+                    player.addSkill(skill);
+                }
+            },
         }
     },
     translate: {
+        "qsmx_quanshi": "全视",
+        "qsmx_quanshi_info": "锁定技，牌堆顶一张牌始终对你可见。",
+        "qsmx_xianzhong": "献忠",
+        "qsmx_xianzhong_info": "汝之名为张献忠；<br>因屠戮而传世之人；<br>汝之上限恒为柒；<br>魅惑无用于汝；<br>本初之技无遗失之可能；<br>早已为癫狂之人，汝再无更癫狂之可能；<br>牌堆洗切柒次前，汝将立于世间，不畏万法所侵。",
+        "qsmx_qisha": "七杀",
+        "qsmx_qisha_info": "锁定技，你使用【杀】时，若你本局游戏使用的【杀】数和为7的倍数，你对此【杀】的所有目标造成一点湮灭伤害。",
+        "qsmx_tudiao": "屠道",
+        "qsmx_tudiao_info": "其他角色于濒死状态外回复体力后，你可视为对其使用一张【杀】；<br>其他角色于判定阶段外执行判定后，你可视为对其使用一张【杀】；<br>其他角色于摸牌阶段外获得卡牌后，你可视为对其使用一张【杀】；<br>其他角色于出牌阶段外使用卡牌后，你可视为对其使用一张【杀】；<br>其他角色于弃牌阶段外弃置卡牌后，你可视为对其使用一张【杀】；<br>其他角色于结束阶段外翻转将牌后，你可视为对其使用一张【杀】；<br>其他角色于行动回合外造成伤害后，你可视为对其使用一张【杀】；",
         "qsmx_xukong": "虚空",
         "qsmx_xukong_info": "锁定技，你防止你即将受到的伤害并流失一点体力，然后你进行一次判定，若结果为{红色/黑色}，你{回复一点体力/获得牌堆底一张牌}。",
         "qsmx_yizhao": "异兆",

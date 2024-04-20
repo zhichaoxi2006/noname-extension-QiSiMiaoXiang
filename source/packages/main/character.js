@@ -32,6 +32,7 @@ export const character = async function () {
             "qsmx_zhangliao": ["male", "wei", "4/4", ["qsmx_tuxi"], ["ext:奇思妙想/resource/image/character/qsmx_zhangliao.jpg"]],
             "qsmx_puyuan": ["male", "shu", "4/4", ['qsmx_shengong', 'qsmx_tianjiang'], ["ext:奇思妙想/resource/image/character/qsmx_puyuan.jpg"]],
             "qsmx_simashi": ["male", "jin", "3/4", ["qsmx_taoyin", "qsmx_yimie", "qsmx_tairan", "qsmx_ruilve"], ["ext:奇思妙想/resource/image/character/qsmx_simashi.jpg", "zhu", "hiddenSkill"]],
+            "qsmx_zhangxianzhong": ["male", "key", "4/7", ['qsmx_tudiao', 'qsmx_qisha', 'qsmx_xianzhong'], ["ext:奇思妙想/resource/image/character/qsmx_zhangxianzhong.jpg",]],
         },
         characterTitle: {
             "qsmx_longinus": "百夫长",
@@ -58,7 +59,7 @@ export const character = async function () {
                 "qsmx_junko_aura": ['qsmx_junko'],
                 "qsmx_HellOfResistance": ['qsmx_huangzhong', 'qsmx_baozheng', 'qsmx_SevenGod', 'qsmx_sunce', 'qsmx_jiaxu', 'qsmx_longinus', 'qsmx_mimidog', 'qsmx_simashi'],
                 "qsmx_huiwanxili": ['qsmx_xusha', 'qsmx_hw_zhonghui', 'qsmx_hw_sunquan'],
-                "qmsx_diy": ['qsmx_puyuan', 'qsmx_sunquan', 'qsmx_menghuo', 'qsmx_caorui', 'qsmx_caopi', 'qsmx_caocao', 'qsmx_huatuo', 'qsmx_zhangliao', 'qsmx_guanyu', 'qsmx_zhenji', 'qsmx_luxun', 'qsmx_cailun', 'qsmx_wangshuang', 'qsmx_nanhualaoxian', 'qsmx_cenhun'],
+                "qmsx_diy": ['qsmx_zhangxianzhong' ,'qsmx_puyuan', 'qsmx_sunquan', 'qsmx_menghuo', 'qsmx_caorui', 'qsmx_caopi', 'qsmx_caocao', 'qsmx_huatuo', 'qsmx_zhangliao', 'qsmx_guanyu', 'qsmx_zhenji', 'qsmx_luxun', 'qsmx_cailun', 'qsmx_wangshuang', 'qsmx_nanhualaoxian', 'qsmx_cenhun'],
                 "qsmx_touhou": ['qsmx_matara_okina', 'qsmx_zhengxie']
             }
         },
@@ -78,6 +79,7 @@ export const character = async function () {
             "qsmx_zhengxie": "鬼人正邪",
             "qsmx_menghuo": "妙孟获",
             "qsmx_caocao": "妙曹操",
+            "qsmx_zhangxianzhong": "张献忠",
             "qsmx_mimidog": "眯咪狗",
             "qsmx_guanyu": "妙关羽",
             "qsmx_zhenji": "妙甄宓",

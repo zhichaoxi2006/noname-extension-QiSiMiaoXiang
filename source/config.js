@@ -7,9 +7,9 @@ export const config = {
         "_name": "skill_delete"
     },
     "easter_egg": {
-        "name": "神秘功能",
+        "name": "红利模式",
         "init": false,
-        "intro": "某些没啥用的功能，开启可能会导致某些武将强度飙升。",
+        "intro": "基本没啥用的功能，开启可能会导致某些武将强度飙升。",
         "_name": "easter_egg"
     },
     "blue_shield": {

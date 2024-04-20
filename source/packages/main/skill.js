@@ -6158,12 +6158,11 @@ export const skill = {
                 player.initControlResistance();
                 player.dieAfter = function () {
                     var event = _status.event;
-                    if (game.shuffleNumber >= 7 && player == event.player && event.name == 'die') {
+                    if (!(game.shuffleNumber >= 7) && player == event.player && event.name == 'die') {
                         event.finish();
                         event._triggered = null;
-                        var tempHp = player.hp;
                         lib.element.player.revive.apply(player, [null, false]);
-                        lib.element.player.changeHp.apply(player, [tempHp - 1, false]);
+                        lib.element.player.changeHp.apply(player, [player.maxHp, false]);
                     } else {
                         lib.element.player.dieAfter.apply(player);
                     }

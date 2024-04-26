@@ -1535,7 +1535,7 @@ export async function content(config, pack) {
 		},
 	});
 	//nature
-	lib.nature.add("annihailate");
+	lib.nature.set("annihailate");
 	lib.translate["annihailate"] = "湮灭";
 	//MatationObserver
 	cardPileObsever();

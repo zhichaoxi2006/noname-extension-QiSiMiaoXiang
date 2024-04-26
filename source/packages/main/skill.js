@@ -7928,8 +7928,46 @@ export const skill = {
 				}
 			},
 		},
+		qsmx_paoxiao: {
+			audio: "paoxiao",
+			trigger: {
+				player: "useCard",
+			},
+			forced: true,
+			filter: function (event, player) {
+				return event.card.name == "sha";
+			},
+			content: function () {
+				trigger.effectCount += player.countUsed("sha");
+			},
+			mod: {
+				cardUsable: function (card, player, num) {
+					if (card.name == "sha") return Infinity;
+				},
+			},
+			_priority: 0,
+		},
+		qsmx_zhendan: {
+			trigger: {
+				source: "damageBegin2",
+			},
+			forced: true,
+			async content(event, trigger, player) {
+				if (trigger.num >= trigger.player.hp) {
+					await trigger.player.AntiResistanceDie(trigger);
+				} else {
+					await trigger.player.loseHp(trigger.num);
+				}
+			},
+		},
 	},
 	translate: {
+		qsmx_zhendan: "震胆",
+		qsmx_zhendan_info:
+			"锁定技，你造成伤害时，你令目标流失等同于伤害的体力（若此伤害为致命伤害，你改为将其击杀）。",
+		qsmx_paoxiao: "咆哮",
+		qsmx_paoxiao_info:
+			"锁定技，①你使用【杀】无次数限制②你使用的【杀】额外结算X次（X为你一回合内使用的【杀】数）。",
 		qsmx_quanshi: "全视",
 		qsmx_quanshi_info: "锁定技，牌堆顶一张牌始终对你可见。",
 		qsmx_xianzhong: "献忠",

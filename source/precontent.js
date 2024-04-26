@@ -58,6 +58,7 @@ export async function precontent(config, pack) {
 		});
 		const prefix = {
 			qsmx: [
+				'qsmx_zhangfei',
 				"qsmx_puyuan",
 				"qsmx_zhangliao",
 				"qsmx_simashi",

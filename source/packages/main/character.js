@@ -269,6 +269,15 @@ export const character = async function () {
 					"ext:奇思妙想/resource/image/character/qsmx_zhangxianzhong.jpg",
 				],
 			],
+			qsmx_zhangfei: [
+				"male",
+				"shu",
+				"4/4",
+				['qsmx_paoxiao','qsmx_zhendan'],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_zhangfei.jpg",
+				],
+			],
 		},
 		characterTitle: {
 			qsmx_longinus: "百夫长",
@@ -312,6 +321,7 @@ export const character = async function () {
 					"qsmx_hw_sunquan",
 				],
 				qmsx_diy: [
+					"qsmx_zhangfei",
 					"qsmx_zhangxianzhong",
 					"qsmx_puyuan",
 					"qsmx_sunquan",
@@ -340,6 +350,7 @@ export const character = async function () {
 			qsmx_hw_zhonghui: "会玩钟会",
 			qmsx_diy: "DIY武将",
 			qsmx_touhou: "东方武将",
+			qsmx_zhangfei: "妙张飞",
 			qsmx_caorui: "妙曹叡",
 			qsmx_puyuan: "妙蒲元",
 			qsmx_zhangliao: "妙张辽",

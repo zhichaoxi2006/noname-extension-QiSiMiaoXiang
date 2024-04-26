@@ -1529,8 +1529,7 @@ export async function content(config, pack) {
 			},
 			content: function () {
 				game.log(trigger.source, '对', trigger.player, '执行了', '#g【湮灭】');
-				var next = trigger.player.AntiResistanceDie();
-				next.source = player;
+				var next = trigger.player.AntiResistanceDie(trigger);
 			},
 			_priority: 0,
 		},

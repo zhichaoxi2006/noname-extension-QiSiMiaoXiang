@@ -1522,12 +1522,13 @@ export async function content(config, pack) {
 				return "是否强制击杀" + name + "？";
 			},
 			filter: function (event, player, name) {
-				return event.annihailate;
+				return event.annihailate || event.hasNature('annihailate');
 			},
 			check: function (event, player) {
 				return get.attitude(player, event.player) <= 0;
 			},
 			content: function () {
+				game.log(trigger.source, '对', trigger.player, '执行了', '#g【湮灭】');
 				var next = trigger.player.AntiResistanceDie();
 				next.source = player;
 			},

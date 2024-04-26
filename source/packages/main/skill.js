@@ -7784,7 +7784,7 @@ export const skill = {
 						global: "recoverAfter",
 					},
 					filter: function (event, player) {
-						if (!event.player.isIn()) return false;
+						if (!event.player?.isIn()) return false;
 						if (player == event.player) return false;
 						var evt = event.getParent("dying");
 						if (evt && evt.name == "dying") return false;
@@ -7797,7 +7797,7 @@ export const skill = {
 						global: "judgeAfter",
 					},
 					filter: function (event, player) {
-						if (!event.player.isIn()) return false;
+						if (!event.player?.isIn()) return false;
 						if (player == event.player) return false;
 						var evt = event.getParent("phaseJudge");
 						if (evt && evt.name == "phaseJudge") return false;
@@ -7810,7 +7810,7 @@ export const skill = {
 						global: "gainAfter",
 					},
 					filter: function (event, player) {
-						if (!event.player.isIn()) return false;
+						if (!event.player?.isIn()) return false;
 						if (player == event.player) return false;
 						var evt = event.getParent("phaseDraw");
 						if (evt && evt.name == "phaseDraw") return false;
@@ -7823,7 +7823,7 @@ export const skill = {
 						global: ["useCardAfter"],
 					},
 					filter: function (event, player) {
-						if (!event.player.isIn()) return false;
+						if (!event.player?.isIn()) return false;
 						if (player == event.player) return false;
 						if (event.player.isPhaseUsing()) return false;
 						return true;
@@ -7835,7 +7835,7 @@ export const skill = {
 						global: ["loseAfter", "loseAsyncAfter"],
 					},
 					filter: function (event, player) {
-						if (!event.player.isIn()) return false;
+						if (!event.player?.isIn()) return false;
 						if (player == event.player) return false;
 						if (event.type != "discard" || !event.cards2)
 							return false;
@@ -7850,7 +7850,7 @@ export const skill = {
 						global: "turnOverAfter",
 					},
 					filter: function (event, player) {
-						if (!event.player.isIn()) return false;
+						if (!event.player?.isIn()) return false;
 						if (player == event.player) return false;
 						var evt = event.getParent("phaseJieshu");
 						if (evt && evt.name == "phaseJieshu") return false;

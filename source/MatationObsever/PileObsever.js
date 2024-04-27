@@ -3,10 +3,18 @@ export async function cardPileObsever() {
 		const observerCallback = function (mutationsList, observer) {
 			if (_status.gameStarted) {
 				var next = game.createEvent("pileChanged", false);
+				var addedCards = [];
+				var removedCards = [];
 				mutationsList.forEach((mutation) => {
 					if (mutation.type === "childList") {
+						var addedNodes = Array.from(mutation.addedNodes);
+						var removedNodes = Array.from(mutation.removedNodes);
+						addedCards.addArray(addedNodes);
+						removedCards.addArray(removedNodes);
 					}
 				});
+				next.addedCards = addedCards;
+				next.removedCards = removedCards;
 				next.position = "c";
 				next.setContent("emptyEvent");
 			}
@@ -28,10 +36,18 @@ export async function discardPileObsever() {
 		const observerCallback = function (mutationsList, observer) {
 			if (_status.gameStarted) {
 				var next = game.createEvent("pileChanged", false);
+				var addedCards = [];
+				var removedCards = [];
 				mutationsList.forEach((mutation) => {
 					if (mutation.type === "childList") {
+						var addedNodes = Array.from(mutation.addedNodes);
+						var removedNodes = Array.from(mutation.removedNodes);
+						addedCards.addArray(addedNodes);
+						removedCards.addArray(removedNodes);
 					}
 				});
+				next.addedCards = addedCards;
+				next.removedCards = removedCards;
 				next.position = "d";
 				next.setContent("emptyEvent");
 			}
@@ -53,10 +69,18 @@ export async function orderingObsever() {
 		const observerCallback = function (mutationsList, observer) {
 			if (_status.gameStarted) {
 				var next = game.createEvent("pileChanged", false);
+				var addedCards = [];
+				var removedCards = [];
 				mutationsList.forEach((mutation) => {
 					if (mutation.type === "childList") {
+						var addedNodes = Array.from(mutation.addedNodes);
+						var removedNodes = Array.from(mutation.removedNodes);
+						addedCards.addArray(addedNodes);
+						removedCards.addArray(removedNodes);
 					}
 				});
+				next.addedCards = addedCards;
+				next.removedCards = removedCards;
 				next.position = "o";
 				next.setContent("emptyEvent");
 			}
@@ -78,10 +102,18 @@ export async function specialObsever() {
 		const observerCallback = function (mutationsList, observer) {
 			if (_status.gameStarted) {
 				var next = game.createEvent("pileChanged", false);
+				var addedCards = [];
+				var removedCards = [];
 				mutationsList.forEach((mutation) => {
 					if (mutation.type === "childList") {
+						var addedNodes = Array.from(mutation.addedNodes);
+						var removedNodes = Array.from(mutation.removedNodes);
+						addedCards.addArray(addedNodes);
+						removedCards.addArray(removedNodes);
 					}
 				});
+				next.addedCards = addedCards;
+				next.removedCards = removedCards;
 				next.position = "s";
 				next.setContent("emptyEvent");
 			}

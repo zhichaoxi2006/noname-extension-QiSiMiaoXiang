@@ -7287,7 +7287,7 @@ export const skill = {
 			async content(event, trigger, player) {
 				await player.loseHp();
 				var targets = trigger.targets;
-				trigger.excluded.add(targets);
+				trigger.excluded.addArray(targets);
 				for (let target of targets) {
 					let next = target.damage(player, "annihailate");
 					next.annihailate = true;
@@ -7392,6 +7392,20 @@ export const skill = {
 				trigger.cancel();
 				player.gain(trigger.cards);
 				trigger.player.addTempSkill("qsmx_tuxi_blocker");
+			},
+		},
+		qsmx_sp_tuxi: {
+			trigger: {
+				global: ["pileChanged"],
+			},
+			frequent:true,
+			filter: function (event, player) {
+				if (_status.currentPhase == player) return false;
+				return event.position == "o" && event.addedCards.length > 0;
+			},
+			content: function () {
+				var cards = trigger.addedCards;
+				player.gain(cards);
 			},
 		},
 		qsmx_taoyin: {
@@ -7960,8 +7974,289 @@ export const skill = {
 				}
 			},
 		},
+		qsmx_polu: {
+			forced: true,
+			trigger: {
+				player: "useCard",
+			},
+			filter: function (event, player) {
+				if (event.card.name != "sha") return false;
+				if (!event.cards) return false;
+				function isPrime(num) {
+					if (num <= 1) {
+						return false;
+					}
+					if (num === 2) {
+						return true;
+					}
+					if (num % 2 === 0) {
+						return false;
+					}
+					const sqrtNum = Math.floor(Math.sqrt(num));
+					for (let i = 3; i <= sqrtNum; i += 2) {
+						if (num % i === 0) {
+							return false;
+						}
+					}
+					return true;
+				}
+				var CardNameLength = 0;
+				var CardNumber = 0;
+				for (let card of event.cards) {
+					CardNameLength += get.cardNameLength(card);
+					CardNumber += get.number(card);
+				}
+				return isPrime(CardNameLength) && isPrime(CardNumber);
+			},
+			async content(event, trigger, player) {
+				var targets = trigger.targets;
+				trigger.excluded.addArray(targets);
+				for (let target of targets) {
+					let next = target.damage(player, "annihailate");
+					next.annihailate = true;
+					await next;
+				}
+			},
+		},
+		qsmx_juelie: {
+			locked: false,
+			enable: "phaseUse",
+			usable: 1,
+			position: "he",
+			filterCard: true,
+			filterTarget: function (card, player, target) {
+				if (target == player) return false;
+				return true;
+			},
+			selectCard: [1, Infinity],
+			prompt: "弃置任意张牌并令一名其他角色弃置等量的牌",
+			check: function (card) {
+				function isPrime(num) {
+					if (num <= 1) {
+						return false;
+					}
+					if (num === 2) {
+						return true;
+					}
+					if (num % 2 === 0) {
+						return false;
+					}
+					const sqrtNum = Math.floor(Math.sqrt(num));
+					for (let i = 3; i <= sqrtNum; i += 2) {
+						if (num % i === 0) {
+							return false;
+						}
+					}
+					return true;
+				}
+				var CardNameLength = 0;
+				var CardNumber = 0;
+				for (let cardx of ui.selected.cards) {
+					CardNameLength += get.cardNameLength(cardx);
+					CardNumber += get.number(cardx);
+				}
+				CardNameLength += get.cardNameLength(card);
+				CardNumber += get.number(card);
+				if (isPrime(CardNameLength) && isPrime(CardNumber)) {
+					return 2.5;
+				}
+				return -0.5;
+			},
+			content: function () {
+				"step 0";
+				event.player_discard = cards;
+				target.chooseToDiscard(cards.length, true, "he");
+				("step 1");
+				if (result.bool) {
+					event.target_discard = result.cards;
+				}
+				("step 2");
+				var discard = []
+					.concat(event.player_discard)
+					.concat(event.target_discard);
+				var next = player.chooseCardButton(
+					discard,
+					[1, Infinity],
+					"你可以将以下任意张牌当做一张无距离限制的【杀】使用",
+					true
+				);
+				next.set("ai", function (button) {
+					if (player.hasSkill("qsmx_polu")) {
+						function isPrime(num) {
+							if (num <= 1) {
+								return false;
+							}
+							if (num === 2) {
+								return true;
+							}
+							if (num % 2 === 0) {
+								return false;
+							}
+							const sqrtNum = Math.floor(Math.sqrt(num));
+							for (let i = 3; i <= sqrtNum; i += 2) {
+								if (num % i === 0) {
+									return false;
+								}
+							}
+							return true;
+						}
+						var CardNameLength = 0;
+						var CardNumber = 0;
+						for (let card of ui.selected.buttons) {
+							CardNameLength += get.cardNameLength(card);
+							CardNumber += get.number(card);
+						}
+						CardNameLength += get.cardNameLength(button.link);
+						CardNumber += get.number(button.link);
+						if (isPrime(CardNameLength) && isPrime(CardNumber)) {
+							return 2.5;
+						}
+						return -0.5;
+					}
+					return 1;
+				});
+				("step 3");
+				if (result.bool) {
+					player.chooseUseTarget(
+						{ name: "sha" },
+						result.links,
+						"nodistance"
+					);
+				}
+			},
+			group: "qsmx_juelie_clear",
+			subSkill: {
+				clear: {
+					trigger: {
+						player: "useCardAfter",
+					},
+					forced: true,
+					silent: true,
+					charlotte: true,
+					filter: function (event, player) {
+						return (
+							event.getParent(2).name == "qsmx_juelie" &&
+							event.addCount !== false &&
+							player.getHistory("sourceDamage", function (card) {
+								return card.card == event.card;
+							}).length == 0
+						);
+					},
+					content: function () {
+						trigger.addCount = false;
+						if (player.stat[player.stat.length - 1].card.sha > 0) {
+							player.stat[player.stat.length - 1].card.sha--;
+						}
+						var skill = "qsmx_juelie";
+						if (
+							player.hasSkill("counttrigger") &&
+							player.storage.counttrigger[skill] &&
+							player.storage.counttrigger[skill] >= 1
+						) {
+							delete player.storage.counttrigger[skill];
+						}
+						if (
+							typeof get.skillCount(skill) == "number" &&
+							get.skillCount(skill) >= 1
+						) {
+							delete player.getStat("skill")[skill];
+						}
+					},
+					popup: false,
+					_priority: 1,
+				},
+			},
+			ai: {
+				order: 9,
+				result: {
+					target: -1,
+				},
+				threaten: 6,
+			},
+			_priority: 0,
+		},
+		qsmx_yinghun: {
+			marktext: "魂",
+			intro: {
+				name2: "魂",
+				content: "mark",
+			},
+			group: ["qsmx_yinghun_draw", "qsmx_yinghun_damage"],
+			subSkill: {
+				draw: {
+					trigger: {
+						player: ["phaseZhunbeiBegin"],
+					},
+					frequent: true,
+					content() {
+						player.draw(player.getDamagedHp() + 1);
+					},
+				},
+				damage: {
+					trigger: {
+						player: ["phaseJieshuBegin"],
+					},
+					frequent: true,
+					content() {
+						"step 0";
+						var next = player.chooseTarget([
+							1,
+							player.getDamagedHp() + 1,
+						]);
+						next.set("ai", function (target) {
+							return get.attitude(player, target);
+						});
+						("step 1");
+						if (result.bool) {
+							for (let target of result.targets) {
+								target.addMark("qsmx_yinghun", 1);
+								target.addSkill("qsmx_yinghun_mark");
+							}
+						}
+					},
+				},
+				mark: {
+					trigger: {
+						player: ["damageBefore", "loseHpBefore"],
+					},
+					locked: true,
+					charlotte: true,
+					filter: function (event, player) {
+						return player.hasMark("qsmx_yinghun");
+					},
+					prompt2: "你可以弃置1枚“烈”并防止即将受到伤害或失去体力",
+					content: function () {
+						"step 0";
+						player.removeMark("qsmx_yinghun", 1);
+						trigger.cancel();
+						("step 1");
+						if (!player.hasMark("qsmx_yinghun"))
+							player.removeSkill("qsmx_yinghun_mark");
+					},
+					mod: {
+						maxHandcard: function (player, num) {
+							return num + player.countMark("qsmx_yinghun");
+						},
+					},
+					sub: true,
+					_priority: 0,
+				},
+			},
+		},
 	},
 	translate: {
+		qsmx_sp_tuxi: "突袭",
+		qsmx_sp_tuxi_info:
+			"你的回合外，当处理区进入牌后，你可以获得处理区中的所有牌。",
+		qsmx_yinghun: "英魂",
+		qsmx_yinghun_info:
+			"①{准备阶段/结束阶段}，你可以{摸[X+1]张牌/令至多[X+1]名角色获得一枚“魂”}。（X为你失去的体力，至少为1）<br>②状态技，一名有“魂”的角色即将受到伤害或流失体力时，其可以弃置一枚“魂”防止之；拥有“魂”的角色手牌上限+Y（Y为“魂”的数量）",
+		qsmx_juelie: "绝烈",
+		qsmx_juelie_info:
+			"出牌阶段限一次，你可以弃置任意张牌并令一名其他角色弃置等量的牌，然后你可以将以此法弃置的任意张牌当做一张无距离限制的【杀】使用，若此【杀】没有造成伤害，此【杀】不计入次数且此技能视为未发动过。",
+		qsmx_polu: "破虏",
+		qsmx_polu_info:
+			"锁定技，你使用【杀】时，若此【杀】的点数和与牌名字数和均为质数，你令此【杀】无效并对此【杀】的所有目标造成一点湮灭伤害。",
 		qsmx_zhendan: "震胆",
 		qsmx_zhendan_info:
 			"锁定技，你造成伤害时，你令目标流失等同于伤害的体力（若此伤害为致命伤害，你改为将其击杀）。",

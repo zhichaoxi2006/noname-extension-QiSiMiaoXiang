@@ -56,9 +56,13 @@ export async function precontent(config, pack) {
 			color: "#dcdcdc",
 			nature: "black",
 		});
+		lib.namePrefix.set("SP妙", {
+			getSpan: (prefix, name) =>
+				`${get.prefixSpan("SP")}${get.prefixSpan("妙")}`,
+		});
 		const prefix = {
 			qsmx: [
-				'qsmx_zhangfei',
+				"qsmx_zhangfei",
 				"qsmx_puyuan",
 				"qsmx_zhangliao",
 				"qsmx_simashi",
@@ -80,9 +84,12 @@ export async function precontent(config, pack) {
 				"qsmx_guanyu",
 				"qsmx_caocao",
 				"qsmx_caopi",
+				"qsmx_sunjian",
 			],
 			qsmx_hw: ["qsmx_hw_sunquan", "qsmx_hw_zhonghui"],
+			qsmx_sp: ['qsmx_sp_zhangliao'],
 		};
+		for (var i of prefix["qsmx_sp"]) lib.translate[i + "_prefix"] = "SP妙";
 		for (var i of prefix["qsmx"]) lib.translate[i + "_prefix"] = "妙";
 		for (var i of prefix["qsmx_hw"]) lib.translate[i + "_prefix"] = "会玩";
 	}

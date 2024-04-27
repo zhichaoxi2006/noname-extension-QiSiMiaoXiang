@@ -242,6 +242,13 @@ export const character = async function () {
 				["qsmx_tuxi"],
 				["ext:奇思妙想/resource/image/character/qsmx_zhangliao.jpg"],
 			],
+			qsmx_sp_zhangliao: [
+				"male",
+				"wei",
+				"4/4",
+				["qsmx_sp_tuxi"],
+				["ext:奇思妙想/resource/image/character/qsmx_sp_zhangliao.jpg"],
+			],
 			qsmx_puyuan: [
 				"male",
 				"shu",
@@ -276,6 +283,15 @@ export const character = async function () {
 				['qsmx_paoxiao','qsmx_zhendan'],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_zhangfei.jpg",
+				],
+			],
+			qsmx_sunjian: [
+				"male",
+				"wu",
+				"4/4",
+				['qsmx_polu', 'qsmx_juelie', 'qsmx_yinghun'],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_sunjian.jpg",
 				],
 			],
 		},
@@ -351,8 +367,10 @@ export const character = async function () {
 			qmsx_diy: "DIY武将",
 			qsmx_touhou: "东方武将",
 			qsmx_zhangfei: "妙张飞",
+			qsmx_sp_zhangliao: "SP妙张辽",
 			qsmx_caorui: "妙曹叡",
 			qsmx_puyuan: "妙蒲元",
+			qsmx_sunjian: "妙孙坚",
 			qsmx_zhangliao: "妙张辽",
 			qsmx_huatuo: "妙华佗",
 			qsmx_caopi: "妙曹丕",

@@ -1514,7 +1514,7 @@ export async function content(config, pack) {
 		_annihailate_damage: {
 			audio: 2,
 			trigger: {
-				source: ["damageCancelled", "damageZero", "damageAfter"],
+				source: ["damageCancelled", "damageZero", "damageSource"],
 			},
 			charlotte: true,
 			prompt: function (event, player) {

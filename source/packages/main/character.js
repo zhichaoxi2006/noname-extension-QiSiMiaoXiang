@@ -294,6 +294,15 @@ export const character = async function () {
 					"ext:奇思妙想/resource/image/character/qsmx_sunjian.jpg",
 				],
 			],
+			qsmx_shen_zhangjiao: [
+				"male",
+				"shen",
+				"3/3",
+				['qsmx_shen_yizhao', 'qsmx_sanshou', 'qsmx_sijun', 'qsmx_tianjie'],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_shen_zhangjiao.jpg",
+				],
+			]
 		},
 		characterTitle: {
 			qsmx_longinus: "百夫长",
@@ -337,6 +346,9 @@ export const character = async function () {
 					"qsmx_hw_sunquan",
 				],
 				qmsx_diy: [
+					"qsmx_shen_zhangjiao",
+					"qsmx_sunjian",
+					"qsmx_spzhangliao",
 					"qsmx_zhangfei",
 					"qsmx_zhangxianzhong",
 					"qsmx_puyuan",
@@ -378,6 +390,7 @@ export const character = async function () {
 			qsmx_menghuo: "妙孟获",
 			qsmx_caocao: "妙曹操",
 			qsmx_zhangxianzhong: "张献忠",
+			qsmx_shen_zhangjiao: "妙神张角",
 			qsmx_mimidog: "眯咪狗",
 			qsmx_guanyu: "妙关羽",
 			qsmx_zhenji: "妙甄宓",

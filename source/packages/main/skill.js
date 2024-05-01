@@ -3896,7 +3896,7 @@ export const skill = {
 			forceDie: true,
 			filter: function (event, player) {
 				if (event.name == "changeHp" && event.num > 0) return false;
-				return event.player.isIn();
+				return event.player?.isIn();
 			},
 			init: function (player, skill) {
 				var name = [player.name, player.name1, player.name2];
@@ -4206,61 +4206,6 @@ export const skill = {
 				delete trigger.source;
 			},
 			sub: true,
-			_priority: 0,
-		},
-		qsmx_leijie: {
-			audio: "ext:奇思妙想/resource/audio/skill/:1",
-			trigger: {
-				player: ["phaseJudgeBegin"],
-			},
-			direct: true,
-			filter: function (event, player) {
-				return true;
-			},
-			content: function () {
-				"step 0";
-				player
-					.chooseTarget(
-						"令一名角色进行反转【闪电】判定",
-						lib.filter.notMe
-					)
-					.set("ai", function (target) {
-						return -get.attitude(player, target);
-					});
-				("step 1");
-				if (result.bool) {
-					var target = result.targets[0];
-					player.logSkill("qmsx_leijie", target);
-					game.playAudio(
-						"ext:奇思妙想/resource/audio/skill/qsmx_leijie1.mp3"
-					);
-					var next = target.executeDelayCardEffect("shandian");
-					next.judge = (card) => -lib.card.shandian.judge(card) - 4;
-					next.judge2 = (result) => !lib.card.shandian.judge2(result);
-				}
-			},
-			group: ["qsmx_leijie_check"],
-			subSkill: {
-				check: {
-					trigger: {
-						global: "judgeFixing",
-					},
-					silent: true,
-					filter(event, player) {
-						if (event.result.bool) return false;
-						return (
-							event.getParent("qsmx_leijie").name ==
-								"qsmx_leijie" &&
-							event.getParent("qsmx_leijie")?.player == player
-						);
-					},
-					async content(event, trigger, player) {
-						player.draw();
-						player.useSkill("qsmx_leijie");
-					},
-					_priority: 0,
-				},
-			},
 			_priority: 0,
 		},
 		qsmx_shajue: {
@@ -6043,7 +5988,6 @@ export const skill = {
 			},
 			content: function () {
 				"step 0";
-				console.log(trigger);
 				trigger.cancel();
 				("step 1");
 				var target = trigger.player;
@@ -6093,7 +6037,7 @@ export const skill = {
 				}
 				player.draw(player.countMark("qsmx_jianxiong") + 1, "nodelay");
 				("step 1");
-				if (player.countMark("qsmx_jianxiong") < 4)
+				if (player.countMark("qsmx_jianxiong") < 6)
 					player.addMark("qsmx_jianxiong", 1, false);
 			},
 			marktext: "雄",
@@ -6255,10 +6199,10 @@ export const skill = {
 					content: function () {
 						trigger.cancel();
 						var next = player.discardPlayerCard(trigger.player);
-						next.filterButton = function (button) {
+						/*next.filterButton = function (button) {
 							var card = button.link;
 							if (card.hasGaintag("qsmx_fangzhu")) return true;
-						};
+						};*/
 					},
 				},
 			},
@@ -7377,28 +7321,41 @@ export const skill = {
 			subSkill: {
 				blocker: {
 					mark: true,
+					onremove: true,
+					marktext: "袭",
+					init:function(player, skill){
+						player.storage[skill]=[];
+					},
 					intro: {
-						content: "本回合已被妙张辽突袭",
+						name: "突袭",
+						mark: function (dialog, storage, player) {
+							if (!storage || !storage.length)
+								return "当前没有被突袭角色";
+							dialog.addSmall([storage, "player"]);
+						},
 					},
 				},
 			},
 			filter: function (event, player) {
 				return (
-					!event.player.hasSkill("qsmx_tuxi_blocker") &&
-					event.player != player
+					event.player != player &&
+					!player
+						.getStorage("qsmx_tuxi_blocker")
+						.includes(event.player)
 				);
 			},
 			async content(event, trigger, player) {
 				trigger.cancel();
-				player.gain(trigger.cards);
-				trigger.player.addTempSkill("qsmx_tuxi_blocker");
+				player.addTempSkill("qsmx_tuxi_blocker");
+				await player.gain(trigger.cards);
+				player.markAuto('qsmx_tuxi_blocker', trigger.player);
 			},
 		},
 		qsmx_sp_tuxi: {
 			trigger: {
 				global: ["pileChanged"],
 			},
-			frequent:true,
+			frequent: true,
 			filter: function (event, player) {
 				if (_status.currentPhase == player) return false;
 				return event.position == "o" && event.addedCards.length > 0;
@@ -7536,7 +7493,7 @@ export const skill = {
 			skillBlocker: function (skill, player) {
 				//排除有技能描述的技能
 				if (lib.translate[skill + "_info"]) return false;
-				//识别令武将进入疯狂的技能
+				//识别令武将进入混乱状态的技能
 				if (skill == "mad") {
 					player.removeSkill(skill);
 				}
@@ -7632,7 +7589,7 @@ export const skill = {
 			filter: function (event, player) {
 				return (
 					_status.currentPhase != player &&
-					_status.currentPhase.isIn()
+					_status.currentPhase?.isIn()
 				);
 			},
 			getIndex: function (event) {
@@ -7911,29 +7868,37 @@ export const skill = {
 		},
 		qsmx_xianzhong: {
 			init: function (player, skill) {
-				player.addSkill("qsmx_resistance");
-				player.initCharacterLocker();
-				player.initControlResistance();
-				player.initmaxHpLocker(player.maxHp, true);
-				player.initControlResistance();
-				player.dieAfter = function () {
-					var event = _status.event;
-					if (
-						!(game.shuffleNumber >= 7) &&
-						player == event.player &&
-						event.name == "die"
-					) {
-						event.finish();
-						event._triggered = null;
-						lib.element.player.revive.apply(player, [null, false]);
-						lib.element.player.changeHp.apply(player, [
-							player.maxHp,
-							false,
-						]);
-					} else {
-						lib.element.player.dieAfter.apply(player);
-					}
-				};
+				var name = [player.name, player.name1, player.name2];
+				if (name.includes("qsmx_zhangxianzhong")) {
+					player.addSkill("qsmx_resistance");
+					player.initCharacterLocker();
+					player.initControlResistance();
+					player.initmaxHpLocker(player.maxHp, true);
+					player.initControlResistance();
+					player.dieAfter = function () {
+						var event = _status.event;
+						if (
+							!(game.shuffleNumber >= 7) &&
+							player == event.player &&
+							event.name == "die"
+						) {
+							event.finish();
+							event._triggered = null;
+							lib.element.player.revive.apply(player, [
+								null,
+								false,
+							]);
+							lib.element.player.changeHp.apply(player, [
+								player.maxHp,
+								false,
+							]);
+						} else {
+							lib.element.player.dieAfter.apply(player);
+						}
+					};
+				} else {
+					player.removeSkill(skill);
+				}
 			},
 			onremove: function (player, skill) {
 				var name = [player.name, player.name1, player.name2];
@@ -8243,8 +8208,219 @@ export const skill = {
 				},
 			},
 		},
+		qsmx_sanshou: {
+			audio:'sanshou',
+			trigger:{
+				player:"damageBegin4",
+			},
+			locked:true,
+			check:function(event, player) {
+				return get.damageEffect(player, event.source, player, event.nature) <= 0;
+			},
+			content:function() {
+				"step 0";
+				var cards = game.cardsGotoOrdering(get.cards(3)).cards;
+				event.cards = cards;
+				player.showCards(cards, get.translation(player) + "发动了【三首】");
+				"step 1";
+				var types = [];
+				types.addArray(game.getGlobalHistory("useCard").map((evt) => get.type2(evt.card)));
+				if (cards.filter((card) => !types.includes(get.type2(card))).length) {
+					trigger.cancel();
+					player.gain(event.cards,'gain2');
+				}
+				game.delayx();
+			},
+			ai:{
+				effect:{
+					target:function(card, player, target) {
+						if (card.name == "shandian" || card.name == "fulei") return [0, 0.1];
+						if (!get.tag(card, "damage")) return;
+						var types = [],
+							bool = 0;
+						types.addArray(
+							game.getGlobalHistory("useCard").map((evt) => get.type2(evt.card))
+						);
+						if (!types.includes(get.type2(card))) bool = 1;
+						if (types.length < 2) return Math.min(1, 0.4 + (types.length + bool) * 0.2);
+					},
+				},
+			},
+			"_priority":0,
+		},
+		qsmx_shen_yizhao: {
+			audio:'yizhao',
+			trigger:{
+				player:["loseAfter"],
+			},
+			forced:true,
+			marktext:"黄",
+			intro:{
+				"name2":"黄",
+				content:"mark",
+				markcount:function(storage,player){
+					return (storage||0).toString().slice(-2);
+				},
+			},
+			content:function(){
+				'step 0'
+				event.num=player.countMark('qsmx_shen_yizhao');
+				for (const card of trigger.cards) {
+					player.addMark('qsmx_shen_yizhao',Math.max(1,get.number(card)));
+				}
+				'step 1'
+				var num=Math.floor(num/10)%10,num2=Math.floor(player.countMark('qsmx_shen_yizhao')/10)%10;
+				if(num!=num2) player.gain(get.cards(1));
+			},
+			mod:{
+				aiOrder:function(player,card,num){
+					if(Math.floor((get.number(card)+player.countMark('qsmx_shen_yizhao')%10)/10)==1) return num+10;
+				},
+			},
+			group:['qsmx_shen_yizhao_pileChanged'],
+			subSkill:{
+				pileChanged:{
+					trigger: {
+						global: "pileChanged",
+					},
+					charlotte:true,
+					forced:true,
+					filter: function (event, player) {
+						if (event.position == "c") {
+							return event.getParent().name != "draw";
+						}
+					},
+					content: function () {
+						player.draw();
+					},
+				}
+			},
+			ai:{
+				threaten:1.5,
+				effect:{
+					target:function(card,player,target,current){
+						if(get.type(card)=='equip'&&!get.cardtag(card,'gifts')) return [1,0.1];
+					},
+				},
+			},
+			"_priority":0,
+		},
+		qsmx_sijun: {
+			audio:'sijun',
+			trigger:{
+				global:"pileChanged",
+			},
+			filter:function(event, player) {
+				if(event.position!='c') return false;
+				return player.countMark("qsmx_shen_yizhao") > ui.cardPile.childNodes.length;
+			},
+			check:function(event, player) {
+				return ui.cardPile.childNodes.length;
+			},
+			content:function() {
+				"step 0";
+				player.removeMark("qsmx_shen_yizhao", ui.cardPile.childNodes.length);
+				game.washCard();
+				"step 1";
+				var pile = Array.from(ui.cardPile.childNodes);
+				if (pile.length < 3) return;
+				var bool = false,
+					max = Math.pow(2, Math.min(100, pile.length)),
+					index;
+				for (var i = 0; i < max; i++) {
+					var num = 0;
+					index = i.toString(2);
+					while (index.length < pile.length) {
+						index = "0" + index;
+					}
+					for (var k = 0; k < index.length; k++) {
+						if (index[k] == "1") num += get.number(pile[k]);
+						if (num > 36) break;
+					}
+					if (num == 36) {
+						bool = true;
+						break;
+					}
+				}
+				if (bool) {
+					var cards = [];
+					for (var k = 0; k < index.length; k++) {
+						if (index[k] == "1") cards.push(pile[k]);
+					}
+					player.gain(cards, "gain2");
+				}
+			},
+			ai:{
+				combo:"qsmx_shen_yizhao",
+			},
+			"_priority":0,
+		},
+		qsmx_tianjie: {
+			audio:'tianjie',
+			trigger:{
+				global:"pileWashed",
+			},
+			direct:true,
+			locked:true,
+			charlotte:true,
+			content:function(){
+				'step 0'
+				var str='对至多3名角色各造成X点雷电伤害(X为其手牌中【闪】的数量+1)';
+				player.chooseTarget(get.prompt('qsmx_tianjie'),str,[1,3]).set('ai',target=>{
+					var player=_status.event.player;
+					return get.damageEffect(target,player,player,'thunder')*Math.sqrt(Math.max(1,1+target.countCards('h','shan')));
+				});
+				'step 1'
+				if(result.bool){
+					var targets=result.targets;
+					targets.sortBySeat();
+					player.logSkill('qsmx_tianjie',targets);
+					for(var i of targets){
+						var num=i.countCards('hs','shan');
+						i.damage(num+1,'thunder');
+					}
+				}
+			},
+			subSkill:{
+				annihailate: {
+					charlotte:true,
+					silent:true,
+					forced:true,
+					trigger:{
+						source:['damageBefore']
+					},
+					filter:function(event, player){
+						var changeHp_history = game.getAllGlobalHistory('changeHp',function(event){
+							return event.getParent().name=='damage';
+						})
+						var damage_history = [];
+						for (const iterator of changeHp_history) {
+							damage_history.add(iterator.getParent());
+						}
+						damage_history = damage_history.filter(e=>e.hasNature());
+						var num = 0;
+						for (const iterator of damage_history) {
+							num+=iterator?.num;
+						}
+						return event.hasNature() && num >= 36;
+					},
+					content:function(){
+						trigger.set('annihailate', true);
+					}
+				}
+			},
+			"_priority":0,
+		}
 	},
 	translate: {
+		qsmx_tianjie: "天劫",
+		qsmx_tianjie_info: "牌堆洗切后，你可以对至多3名角色各造成[X+1]点雷电伤害（X为其手牌中的【闪】数）。",
+		qsmx_sijun: "肆军",
+		qsmx_sijun_info: "牌堆变动后，若“黄”数大于牌堆牌数，你可以移去X枚“黄”并洗牌，然后随机获得任意张点数和为36的牌。(X为牌堆牌数)",
+		qsmx_shen_yizhao: "异兆",
+		qsmx_shen_yizhao_info: "①锁定技，当你失去牌后，你获得X枚“黄”（X为失去牌的的点数和且至少为1），然后若“黄”的十位数发生变化，你获得牌堆顶一张牌。<br>②状态技，牌堆不因摸牌发生变动后，你摸一张牌。",
+		qsmx_sanshou: "三首",
+		qsmx_sanshou_info: "锁定技，你受到伤害时，你可以亮出牌堆顶3张牌，若其中有本回合未使用过的类型，你防止此伤害并获得亮出牌。",
 		qsmx_sp_tuxi: "突袭",
 		qsmx_sp_tuxi_info:
 			"你的回合外，当处理区进入牌后，你可以获得处理区中的所有牌。",
@@ -8341,12 +8517,12 @@ export const skill = {
 			"一名角色死亡后，你可以获得其武将牌上的任意个技能，然后增加一点体力上限并回复一点体力。",
 		qsmx_fangzhu: "放逐",
 		qsmx_fangzhu_info:
-			"你受到1点伤害后，你可以令一名其他角色摸X张牌标记为“放逐”并强制翻面；一名有“放逐”牌的角色翻面时，你弃置其一张“放逐”牌取消之。（X为你损失的体力值）",
+			"你受到1点伤害后，你可以令一名其他角色摸X张牌标记为“放逐”并强制翻面；一名有“放逐”牌的角色翻面时，你弃置其一张牌取消之。（X为你损失的体力值）",
 		qsmx_yibing: "义兵",
 		qsmx_yibing_info: "测试中",
 		qsmx_jianxiong: "奸雄",
 		qsmx_jianxiong_info:
-			"你受到伤害后，你可以获得造成伤害的牌、造成伤害的技能、转化造成伤害的牌的技能，然后你摸一张牌并令此技能的摸牌数+1（至多为5）。",
+			"你受到伤害后，你可以获得造成伤害的牌、造成伤害的技能、转化造成伤害的牌的技能，然后你摸一张牌并令此技能的摸牌数+1（至多为7）。",
 		qsmx_winwin: "赢麻",
 		qsmx_winwin_info:
 			"状态技，游戏将要结束时，你改为以你独自胜利结束本局游戏。",
@@ -8540,9 +8716,6 @@ export const skill = {
 			"出牌阶段，你可以弃置一张武器牌或坐骑牌，或流失一点体力，对一名其他角色造成X点伤害。（X为你与其的距离）",
 		qsmx_anjian: "暗箭",
 		qsmx_anjian_info: "锁定技，你即将造成的伤害均视为无来源伤害。",
-		qsmx_leijie: "雷劫",
-		qsmx_leijie_info:
-			"你的判定阶段开始时，你可以令一名其他角色进行一次反转【闪电】判定，此判定结果确认为失效时，你摸一张牌并重复此流程。",
 		qsmx_mishen: "秘神",
 		qsmx_mishen_info:
 			"<ins>你不是一名可选武将</ins>；你登场时，以你的阵营胜利结束本局游戏。",

@@ -1522,6 +1522,7 @@ export async function content(config, pack) {
 				return "是否强制击杀" + name + "？";
 			},
 			filter: function (event, player, name) {
+				if(!event.player?.isIn()) return false;
 				return event.annihailate || event.hasNature('annihailate');
 			},
 			check: function (event, player) {

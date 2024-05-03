@@ -3653,14 +3653,16 @@ export const skill = {
 		},
 		qsmx_test: {
 			trigger: {
-				player: ["NameChanged"],
+				global: ["useCard"],
 			},
 			fixed: true,
+			forceOut: true,
+			forceDie: true,
 			filter: function (event, player) {
-				return player.name1 != "qsmx_guanyu";
+				return true;
 			},
 			content: function () {
-				player.init(trigger.OriginalName[0]);
+				player.draw();
 			},
 		},
 		qsmx_shiyuan: {
@@ -7323,8 +7325,8 @@ export const skill = {
 					mark: true,
 					onremove: true,
 					marktext: "袭",
-					init:function(player, skill){
-						player.storage[skill]=[];
+					init: function (player, skill) {
+						player.storage[skill] = [];
 					},
 					intro: {
 						name: "突袭",
@@ -7348,7 +7350,7 @@ export const skill = {
 				trigger.cancel();
 				player.addTempSkill("qsmx_tuxi_blocker");
 				await player.gain(trigger.cards);
-				player.markAuto('qsmx_tuxi_blocker', trigger.player);
+				player.markAuto("qsmx_tuxi_blocker", trigger.player);
 			},
 		},
 		qsmx_sp_tuxi: {
@@ -8209,82 +8211,119 @@ export const skill = {
 			},
 		},
 		qsmx_sanshou: {
-			audio:'sanshou',
-			trigger:{
-				player:"damageBegin4",
+			audio: "sanshou",
+			trigger: {
+				player: "damageBegin4",
 			},
-			locked:true,
-			check:function(event, player) {
-				return get.damageEffect(player, event.source, player, event.nature) <= 0;
+			locked: true,
+			check: function (event, player) {
+				return (
+					get.damageEffect(
+						player,
+						event.source,
+						player,
+						event.nature
+					) <= 0
+				);
 			},
-			content:function() {
+			content: function () {
 				"step 0";
 				var cards = game.cardsGotoOrdering(get.cards(3)).cards;
 				event.cards = cards;
-				player.showCards(cards, get.translation(player) + "发动了【三首】");
-				"step 1";
+				player.showCards(
+					cards,
+					get.translation(player) + "发动了【三首】"
+				);
+				("step 1");
 				var types = [];
-				types.addArray(game.getGlobalHistory("useCard").map((evt) => get.type2(evt.card)));
-				if (cards.filter((card) => !types.includes(get.type2(card))).length) {
+				types.addArray(
+					game
+						.getGlobalHistory("useCard")
+						.map((evt) => get.type2(evt.card))
+				);
+				if (
+					cards.filter((card) => !types.includes(get.type2(card)))
+						.length
+				) {
 					trigger.cancel();
-					player.gain(event.cards,'gain2');
+					player.gain(event.cards, "gain2");
 				}
 				game.delayx();
 			},
-			ai:{
-				effect:{
-					target:function(card, player, target) {
-						if (card.name == "shandian" || card.name == "fulei") return [0, 0.1];
+			ai: {
+				effect: {
+					target: function (card, player, target) {
+						if (card.name == "shandian" || card.name == "fulei")
+							return [0, 0.1];
 						if (!get.tag(card, "damage")) return;
 						var types = [],
 							bool = 0;
 						types.addArray(
-							game.getGlobalHistory("useCard").map((evt) => get.type2(evt.card))
+							game
+								.getGlobalHistory("useCard")
+								.map((evt) => get.type2(evt.card))
 						);
 						if (!types.includes(get.type2(card))) bool = 1;
-						if (types.length < 2) return Math.min(1, 0.4 + (types.length + bool) * 0.2);
+						if (types.length < 2)
+							return Math.min(
+								1,
+								0.4 + (types.length + bool) * 0.2
+							);
 					},
 				},
 			},
-			"_priority":0,
+			_priority: 0,
 		},
 		qsmx_shen_yizhao: {
-			audio:'yizhao',
-			trigger:{
-				player:["loseAfter"],
+			audio: "yizhao",
+			trigger: {
+				player: ["loseAfter"],
 			},
-			forced:true,
-			marktext:"黄",
-			intro:{
-				"name2":"黄",
-				content:"mark",
-				markcount:function(storage,player){
-					return (storage||0).toString().slice(-2);
+			forced: true,
+			marktext: "黄",
+			intro: {
+				name2: "黄",
+				content: "mark",
+				markcount: function (storage, player) {
+					return (storage || 0).toString().slice(-2);
 				},
 			},
-			content:function(){
-				'step 0'
-				event.num=player.countMark('qsmx_shen_yizhao');
+			content: function () {
+				"step 0";
+				event.num = player.countMark("qsmx_shen_yizhao");
 				for (const card of trigger.cards) {
-					player.addMark('qsmx_shen_yizhao',Math.max(1,get.number(card)));
+					player.addMark(
+						"qsmx_shen_yizhao",
+						Math.max(1, get.number(card))
+					);
 				}
-				'step 1'
-				var num=Math.floor(num/10)%10,num2=Math.floor(player.countMark('qsmx_shen_yizhao')/10)%10;
-				if(num!=num2) player.gain(get.cards(1));
+				("step 1");
+				var num = Math.floor(num / 10) % 10,
+					num2 =
+						Math.floor(player.countMark("qsmx_shen_yizhao") / 10) %
+						10;
+				if (num != num2) player.gain(get.cards(1));
 			},
-			mod:{
-				aiOrder:function(player,card,num){
-					if(Math.floor((get.number(card)+player.countMark('qsmx_shen_yizhao')%10)/10)==1) return num+10;
+			mod: {
+				aiOrder: function (player, card, num) {
+					if (
+						Math.floor(
+							(get.number(card) +
+								(player.countMark("qsmx_shen_yizhao") % 10)) /
+								10
+						) == 1
+					)
+						return num + 10;
 				},
 			},
-			group:['qsmx_shen_yizhao_pileChanged'],
-			subSkill:{
-				pileChanged:{
+			group: ["qsmx_shen_yizhao_pileChanged"],
+			subSkill: {
+				pileChanged: {
 					trigger: {
 						global: "pileChanged",
 					},
-					charlotte:true,
-					forced:true,
+					charlotte: true,
+					forced: true,
 					filter: function (event, player) {
 						if (event.position == "c") {
 							return event.getParent().name != "draw";
@@ -8293,35 +8332,45 @@ export const skill = {
 					content: function () {
 						player.draw();
 					},
-				}
+				},
 			},
-			ai:{
-				threaten:1.5,
-				effect:{
-					target:function(card,player,target,current){
-						if(get.type(card)=='equip'&&!get.cardtag(card,'gifts')) return [1,0.1];
+			ai: {
+				threaten: 1.5,
+				effect: {
+					target: function (card, player, target, current) {
+						if (
+							get.type(card) == "equip" &&
+							!get.cardtag(card, "gifts")
+						)
+							return [1, 0.1];
 					},
 				},
 			},
-			"_priority":0,
+			_priority: 0,
 		},
 		qsmx_sijun: {
-			audio:'sijun',
-			trigger:{
-				global:"pileChanged",
+			audio: "sijun",
+			trigger: {
+				global: "pileChanged",
 			},
-			filter:function(event, player) {
-				if(event.position!='c') return false;
-				return player.countMark("qsmx_shen_yizhao") > ui.cardPile.childNodes.length;
+			filter: function (event, player) {
+				if (event.position != "c") return false;
+				return (
+					player.countMark("qsmx_shen_yizhao") >
+					ui.cardPile.childNodes.length
+				);
 			},
-			check:function(event, player) {
+			check: function (event, player) {
 				return ui.cardPile.childNodes.length;
 			},
-			content:function() {
+			content: function () {
 				"step 0";
-				player.removeMark("qsmx_shen_yizhao", ui.cardPile.childNodes.length);
+				player.removeMark(
+					"qsmx_shen_yizhao",
+					ui.cardPile.childNodes.length
+				);
 				game.washCard();
-				"step 1";
+				("step 1");
 				var pile = Array.from(ui.cardPile.childNodes);
 				if (pile.length < 3) return;
 				var bool = false,
@@ -8350,77 +8399,278 @@ export const skill = {
 					player.gain(cards, "gain2");
 				}
 			},
-			ai:{
-				combo:"qsmx_shen_yizhao",
+			ai: {
+				combo: "qsmx_shen_yizhao",
 			},
-			"_priority":0,
+			_priority: 0,
 		},
 		qsmx_tianjie: {
-			audio:'tianjie',
-			trigger:{
-				global:"pileWashed",
+			audio: "tianjie",
+			trigger: {
+				global: "pileWashed",
 			},
-			direct:true,
-			locked:true,
-			charlotte:true,
-			content:function(){
-				'step 0'
-				var str='对至多3名角色各造成X点雷电伤害(X为其手牌中【闪】的数量+1)';
-				player.chooseTarget(get.prompt('qsmx_tianjie'),str,[1,3]).set('ai',target=>{
-					var player=_status.event.player;
-					return get.damageEffect(target,player,player,'thunder')*Math.sqrt(Math.max(1,1+target.countCards('h','shan')));
-				});
-				'step 1'
-				if(result.bool){
-					var targets=result.targets;
+			direct: true,
+			locked: true,
+			charlotte: true,
+			content: function () {
+				"step 0";
+				var str =
+					"对至多3名角色各造成X点雷电伤害(X为其手牌中【闪】的数量+1)";
+				player
+					.chooseTarget(get.prompt("qsmx_tianjie"), str, [1, 3])
+					.set("ai", (target) => {
+						var player = _status.event.player;
+						return (
+							get.damageEffect(
+								target,
+								player,
+								player,
+								"thunder"
+							) *
+							Math.sqrt(
+								Math.max(1, 1 + target.countCards("h", "shan"))
+							)
+						);
+					});
+				("step 1");
+				if (result.bool) {
+					var targets = result.targets;
 					targets.sortBySeat();
-					player.logSkill('qsmx_tianjie',targets);
-					for(var i of targets){
-						var num=i.countCards('hs','shan');
-						i.damage(num+1,'thunder');
+					player.logSkill("qsmx_tianjie", targets);
+					for (var i of targets) {
+						var num = i.countCards("hs", "shan");
+						i.damage(num + 1, "thunder");
 					}
 				}
 			},
-			subSkill:{
+			subSkill: {
 				annihailate: {
-					charlotte:true,
-					silent:true,
-					forced:true,
-					trigger:{
-						source:['damageBefore']
+					charlotte: true,
+					silent: true,
+					forced: true,
+					trigger: {
+						source: ["damageBefore"],
 					},
-					filter:function(event, player){
-						var changeHp_history = game.getAllGlobalHistory('changeHp',function(event){
-							return event.getParent().name=='damage';
-						})
+					filter: function (event, player) {
+						var changeHp_history = game.getAllGlobalHistory(
+							"changeHp",
+							function (event) {
+								return event.getParent().name == "damage";
+							}
+						);
 						var damage_history = [];
 						for (const iterator of changeHp_history) {
 							damage_history.add(iterator.getParent());
 						}
-						damage_history = damage_history.filter(e=>e.hasNature());
+						damage_history = damage_history.filter((e) =>
+							e.hasNature()
+						);
 						var num = 0;
 						for (const iterator of damage_history) {
-							num+=iterator?.num;
+							num += iterator?.num;
 						}
 						return event.hasNature() && num >= 36;
 					},
-					content:function(){
-						trigger.set('annihailate', true);
-					}
+					content: function () {
+						trigger.set("annihailate", true);
+					},
+				},
+			},
+			_priority: 0,
+		},
+		qsmx_leijie: {
+			trigger: {
+				global: "judgeAfter",
+			},
+			forced: true,
+			mark:true,
+			marktext: "雷",
+			intro: {
+				name2: "雷",
+				content: "mark",
+				markcount: function (storage, player) {
+					var history = game.getAllGlobalHistory(
+						"everything",
+						function (event) {
+							return (
+								event.name == "judge" &&
+								event?.cardname == "shandian"
+							);
+						}
+					);
+					return history.length;
+				},
+			},
+			filter:function(event, player){
+				return event.getParent(2).name != 'qsmx_leijie';
+			},
+			content:function () {
+				'step 0'
+				player
+                    .chooseTarget("雷劫：是否令一名角色执行一次【闪电】效果？")
+                    .set("ai", (target) => {
+                        var player = _status.event.player;
+                        return get.attitude(player, target) <= 0;
+                    });
+				'step 1'
+				var target = result.targets[0];
+				target.executeDelayCardEffect("shandian");
+			},
+			group: ['qsmx_leijie_damage'],
+			subSkill: {
+				damage: {
+					trigger: {
+						global: "damageBefore",
+					},
+					forced: true,
+					filter: function (event, player) {
+						return event.hasNature() && !event.source;
+					},
+					content: function () {
+						trigger.set("source", player);
+						var history = game.getAllGlobalHistory(
+							"everything",
+							function (event) {
+								return (
+									event.name == "judge" &&
+									event?.cardname == "shandian"
+								);
+							}
+						);
+						if (history.length > 36) {
+							trigger.set("annihailate", true);
+						}
+					},
+				},
+			},
+		},
+		qsmx_tiandao: {
+			audio:2,
+			trigger:{
+				global:"judge",
+			},
+			filter:function (event, player) {
+				return player.countCards("hes");
+			},
+			direct:true,
+			content:function () {
+				"step 0";
+				player
+					.chooseCard(
+						get.translation(trigger.player) +
+							"的" +
+							(trigger.judgestr || "") +
+							"判定为" +
+							get.translation(trigger.player.judging[0]) +
+							"，" +
+							get.prompt("qsmx_tiandao"),
+						"hes",
+						function (card) {
+							var player = _status.event.player;
+							var mod2 = game.checkMod(card, player, "unchanged", "cardEnabled2", player);
+							if (mod2 != "unchanged") return mod2;
+							var mod = game.checkMod(card, player, "unchanged", "cardRespondable", player);
+							if (mod != "unchanged") return mod;
+							return true;
+						}
+					)
+					.set("ai", function (card) {
+						var trigger = _status.event.getTrigger();
+						var player = _status.event.player;
+						var judging = _status.event.judging;
+						var result = trigger.judge(card) - trigger.judge(judging);
+						var attitude = get.attitude(player, trigger.player);
+						if (attitude == 0 || result == 0) {
+							if (trigger.player != player) return 0;
+							var checkx = get.color(card, player) == get.color(judging);
+							if (checkx > 0) return checkx;
+							return 0;
+						}
+						return result * (attitude > 0 ? 1 : -1);
+					})
+					.set("judging", trigger.player.judging[0]);
+				"step 1";
+				if (result.bool) {
+					player.respond(result.cards, "highlight", "qsmx_tiandao", "noOrdering");
+				} else {
+					event.finish();
 				}
+				"step 2";
+				if (result.bool) {
+					player.$gain2(trigger.player.judging[0]);
+					player.gain(trigger.player.judging[0]);
+					var card = result.cards[0];
+					if (get.color(card, player) == get.color(trigger.player.judging[0]))
+						player.draw("nodelay");
+					trigger.player.judging[0] = result.cards[0];
+					trigger.orderingCards.addArray(result.cards);
+					game.log(trigger.player, "的判定牌改为", result.cards[0]);
+				}
+				"step 3";
+				game.delay(2);
+			},
+			group:['qsmx_tiandao_damage'],
+			subSkill: {
+				damage: {
+					trigger:{
+						player: 'damageBegin4'
+					},
+					frequent:true,
+					filter:function(event, player){
+						return event.card?.name != "shandian";
+					},
+					content:function () {
+						"step 0";
+						var next = (event.executeDelayCardEffect = player.executeDelayCardEffect("shandian"));
+						"step 1";
+						var executeDelayCardEffect = event.executeDelayCardEffect;
+						if (!player.hasHistory("damage", (evt) => evt.getParent(2) == executeDelayCardEffect)) {
+							trigger.cancel();		
+						}
+					},
+					ai:{
+						nofire:true,
+						nothunder:true,
+						nodamage:true,
+						effect:{
+							target:function (card, player, target, current) {
+								if (get.tag(card, "damage")) return [0, 1.5];
+							},
+						},
+					},
+				},
+			},
+			ai:{
+				rejudge:true,
+				tag:{
+					rejudge:1,
+				},
 			},
 			"_priority":0,
+		},
+		qsmx_huangtian: {
 		}
 	},
 	translate: {
+		qsmx_huangtian: "黄天",
+		qsmx_huangtian_info: "",
+		qsmx_tiandao: "天道",
+		qsmx_tiandao_info: "①一名角色的判定牌生效前，你可以打出一张牌作为判定牌并获得原判定牌。若你以此法打出的牌与原判定牌颜色相同，你摸一张牌。<br>②你受到渠道不为【闪电】的伤害D时，你可以执行一次【闪电】效果。若你未因此受到伤害，你防止伤害D。",
+		qsmx_leijie: "雷劫",
+		qsmx_leijie_info:
+			"①一名角色不因此技能进行的判定结算后，你可以令一名角色执行一次【闪电】效果。<br>②锁定技，一名角色即将受到无来源属性伤害时，你成为此伤害的伤害来源，若本局游戏执行【闪电】效果数不小于36次，此伤害视为湮灭伤害。",
 		qsmx_tianjie: "天劫",
-		qsmx_tianjie_info: "牌堆洗切后，你可以对至多3名角色各造成[X+1]点雷电伤害（X为其手牌中的【闪】数）。",
+		qsmx_tianjie_info:
+			"牌堆洗切后，你可以对至多3名角色各造成[X+1]点雷电伤害（X为其手牌中的【闪】数）。",
 		qsmx_sijun: "肆军",
-		qsmx_sijun_info: "牌堆变动后，若“黄”数大于牌堆牌数，你可以移去X枚“黄”并洗牌，然后随机获得任意张点数和为36的牌。(X为牌堆牌数)",
+		qsmx_sijun_info:
+			"牌堆变动后，若“黄”数大于牌堆牌数，你可以移去X枚“黄”并洗牌，然后随机获得任意张点数和为36的牌。(X为牌堆牌数)",
 		qsmx_shen_yizhao: "异兆",
-		qsmx_shen_yizhao_info: "①锁定技，当你失去牌后，你获得X枚“黄”（X为失去牌的的点数和且至少为1），然后若“黄”的十位数发生变化，你获得牌堆顶一张牌。<br>②状态技，牌堆不因摸牌发生变动后，你摸一张牌。",
+		qsmx_shen_yizhao_info:
+			"①锁定技，当你失去牌后，你获得X枚“黄”（X为失去牌的的点数和且至少为1），然后若“黄”的十位数发生变化，你获得牌堆顶一张牌。<br>②状态技，牌堆不因摸牌发生变动后，你摸一张牌。",
 		qsmx_sanshou: "三首",
-		qsmx_sanshou_info: "锁定技，你受到伤害时，你可以亮出牌堆顶3张牌，若其中有本回合未使用过的类型，你防止此伤害并获得亮出牌。",
+		qsmx_sanshou_info:
+			"锁定技，你受到伤害时，你可以亮出牌堆顶3张牌，若其中有本回合未使用过的类型，你防止此伤害并获得亮出牌。",
 		qsmx_sp_tuxi: "突袭",
 		qsmx_sp_tuxi_info:
 			"你的回合外，当处理区进入牌后，你可以获得处理区中的所有牌。",

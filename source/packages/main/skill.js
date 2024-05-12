@@ -8478,187 +8478,166 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		qsmx_leijie: {
+		qsmx_leiji: {
+			audio: "leiji",
 			trigger: {
-				global: "judgeAfter",
+				player: ["judgeEnd"],
 			},
-			forced: true,
-			mark:true,
-			marktext: "雷",
-			intro: {
-				name2: "雷",
-				content: "mark",
-				markcount: function (storage, player) {
-					var history = game.getAllGlobalHistory(
-						"everything",
-						function (event) {
-							return (
-								event.name == "judge" &&
-								event?.cardname == "shandian"
-							);
-						}
-					);
-					return history.length;
-				},
-			},
-			filter:function(event, player){
-				return event.getParent(2).name != 'qsmx_leijie';
-			},
-			content:function () {
-				'step 0'
+			frequent: true,
+			content: function () {
+				"step 0";
+				event.cards = get.cards(2);
 				player
-                    .chooseTarget("雷劫：是否令一名角色执行一次【闪电】效果？")
-                    .set("ai", (target) => {
-                        var player = _status.event.player;
-                        return get.attitude(player, target) <= 0;
-                    });
-				'step 1'
-				var target = result.targets[0];
-				target.executeDelayCardEffect("shandian");
+					.chooseCardButton("雷击：选择获得一张牌", event.cards, true)
+					.set("ai", function (button) {
+						return (
+							get.value(button.link, _status.event.player) *
+							((["club", "spade"].indexOf(
+								get.suit(button.links)
+							) +
+								2) *
+								3.5)
+						);
+					});
+				("step 1");
+				if (result.bool) {
+					game.cardsGotoPile(event.cards.remove(result.links));
+					player.gain(result.links, "gain2");
+					if (["spade", "club"].includes(get.suit(result.links))) {
+						event.num =
+							1 +
+							["club", "spade"].indexOf(get.suit(result.links));
+						event.logged = false;
+						if (event.num == 1) {
+							event.logged = true;
+							player.logSkill("qsmx_leiji");
+							player.changeHujia();
+						}
+						player.chooseTarget(
+							"雷击：是否对一名角色造成" +
+								event.num +
+								"点雷电伤害？"
+						).ai = function (target) {
+							var player = _status.event.player;
+							return get.damageEffect(
+								target,
+								player,
+								player,
+								"thunder"
+							);
+						};
+					} else {
+						event.finish();
+					}
+				}
+				("step 2");
+				if (result.bool && result.targets && result.targets.length) {
+					if (!event.logged)
+						player.logSkill("qsmx_leiji", result.targets);
+					else player.line(result.targets, "thunder");
+					result.targets[0].damage(event.num, "thunder");
+				}
 			},
-			group: ['qsmx_leijie_damage'],
+		},
+		qsmx_guidao: {
+			audio: "guidao",
+			trigger: {
+				global: "judgeBegin",
+			},
+			frequent: true,
+			content: function () {
+				"step 0";
+				event.cards = get.bottomCards(2);
+				player
+					.chooseCardButton("鬼道：选择获得一张牌", event.cards, true)
+					.set("ai", function (button) {
+						return get.value(button.link, _status.event.player);
+					});
+				("step 1");
+				if (result.bool) {
+					game.cardsGotoPile(
+						event.cards.remove(result.links),
+						"insert"
+					);
+					player.gain(result.links, "gain2");
+				}
+			},
+			group: "qsmx_guidao_useCard",
 			subSkill: {
-				damage: {
+				useCard: {
 					trigger: {
-						global: "damageBefore",
+						player: ["useCardAfter", "respondAfter"],
 					},
-					forced: true,
+					frequent: true,
 					filter: function (event, player) {
-						return event.hasNature() && !event.source;
+						return !get.tag(event.card, "damage");
 					},
 					content: function () {
-						trigger.set("source", player);
-						var history = game.getAllGlobalHistory(
-							"everything",
-							function (event) {
-								return (
-									event.name == "judge" &&
-									event?.cardname == "shandian"
-								);
-							}
-						);
-						if (history.length > 36) {
-							trigger.set("annihailate", true);
-						}
+						player.judge();
 					},
 				},
 			},
-		},
-		qsmx_tiandao: {
-			audio:2,
-			trigger:{
-				global:"judge",
-			},
-			filter:function (event, player) {
-				return player.countCards("hes");
-			},
-			direct:true,
-			content:function () {
-				"step 0";
-				player
-					.chooseCard(
-						get.translation(trigger.player) +
-							"的" +
-							(trigger.judgestr || "") +
-							"判定为" +
-							get.translation(trigger.player.judging[0]) +
-							"，" +
-							get.prompt("qsmx_tiandao"),
-						"hes",
-						function (card) {
-							var player = _status.event.player;
-							var mod2 = game.checkMod(card, player, "unchanged", "cardEnabled2", player);
-							if (mod2 != "unchanged") return mod2;
-							var mod = game.checkMod(card, player, "unchanged", "cardRespondable", player);
-							if (mod != "unchanged") return mod;
-							return true;
-						}
-					)
-					.set("ai", function (card) {
-						var trigger = _status.event.getTrigger();
-						var player = _status.event.player;
-						var judging = _status.event.judging;
-						var result = trigger.judge(card) - trigger.judge(judging);
-						var attitude = get.attitude(player, trigger.player);
-						if (attitude == 0 || result == 0) {
-							if (trigger.player != player) return 0;
-							var checkx = get.color(card, player) == get.color(judging);
-							if (checkx > 0) return checkx;
-							return 0;
-						}
-						return result * (attitude > 0 ? 1 : -1);
-					})
-					.set("judging", trigger.player.judging[0]);
-				"step 1";
-				if (result.bool) {
-					player.respond(result.cards, "highlight", "qsmx_tiandao", "noOrdering");
-				} else {
-					event.finish();
-				}
-				"step 2";
-				if (result.bool) {
-					player.$gain2(trigger.player.judging[0]);
-					player.gain(trigger.player.judging[0]);
-					var card = result.cards[0];
-					if (get.color(card, player) == get.color(trigger.player.judging[0]))
-						player.draw("nodelay");
-					trigger.player.judging[0] = result.cards[0];
-					trigger.orderingCards.addArray(result.cards);
-					game.log(trigger.player, "的判定牌改为", result.cards[0]);
-				}
-				"step 3";
-				game.delay(2);
-			},
-			group:['qsmx_tiandao_damage'],
-			subSkill: {
-				damage: {
-					trigger:{
-						player: 'damageBegin4'
-					},
-					frequent:true,
-					filter:function(event, player){
-						return event.card?.name != "shandian";
-					},
-					content:function () {
-						"step 0";
-						var next = (event.executeDelayCardEffect = player.executeDelayCardEffect("shandian"));
-						"step 1";
-						var executeDelayCardEffect = event.executeDelayCardEffect;
-						if (!player.hasHistory("damage", (evt) => evt.getParent(2) == executeDelayCardEffect)) {
-							trigger.cancel();		
-						}
-					},
-					ai:{
-						nofire:true,
-						nothunder:true,
-						nodamage:true,
-						effect:{
-							target:function (card, player, target, current) {
-								if (get.tag(card, "damage")) return [0, 1.5];
-							},
-						},
-					},
-				},
-			},
-			ai:{
-				rejudge:true,
-				tag:{
-					rejudge:1,
-				},
-			},
-			"_priority":0,
 		},
 		qsmx_huangtian: {
-		}
+			audio: "huangtian",
+			trigger: {
+				global: ["damageSource"],
+			},
+			zhuSkill: true,
+			direct: true,
+			getIndex: function (event, player, triggername) {
+				return event.num;
+			},
+			filter: function (event, player) {
+				if (!event.hasNature()) return false;
+				if (event.source != player && event.source.group != "qun")
+					return false;
+				return true;
+			},
+			content: function () {
+				"step 0";
+				var source = trigger.source;
+				if (source == player) {
+					event.goto(1);
+				} else {
+					event.goto(3);
+				}
+				("step 1");
+				player.chooseToDiscard("黄天：请选择一张牌重铸", "chooseonly");
+				("step 2");
+				if (result.bool) {
+					player.logSkill("qsmx_huangtian");
+					player.recast(result.cards);
+				}
+				event.finish();
+				("step 3");
+				source
+					.chooseBool(
+						"是否令" +
+							get.translation(player.name) +
+							"进行一次判定？"
+					)
+					.set("ai", function () {
+						return get.attitude(source, player);
+					});
+				("step 4");
+				if (result.bool) {
+					player.logSkill("qsmx_huangtian");
+					player.judge();
+				}
+			},
+		},
 	},
 	translate: {
+		qsmx_leiji: "雷击",
+		qsmx_leiji_info:
+			"你的判定牌生效后，你可以观看牌堆顶2张牌，然后你获得其中一张牌并将另一张牌置于牌堆底。若你以此法获得的牌花色为：♠.你可以对一名角色造成2点雷电伤害，♣.你获得一点护甲并可以对一名角色造成1点雷电伤害。",
+		qsmx_guidao: "鬼道",
+		qsmx_guidao_info:
+			"①你使用或打出的非伤害类牌结算后，你可以进行一次判定。<br>②一名角色判定时，你可以观看牌堆底2张牌，然后你获得其中一张并将另一张置于牌堆顶。",
 		qsmx_huangtian: "黄天",
-		qsmx_huangtian_info: "",
-		qsmx_tiandao: "天道",
-		qsmx_tiandao_info: "①一名角色的判定牌生效前，你可以打出一张牌作为判定牌并获得原判定牌。若你以此法打出的牌与原判定牌颜色相同，你摸一张牌。<br>②你受到渠道不为【闪电】的伤害D时，你可以执行一次【闪电】效果。若你未因此受到伤害，你防止伤害D。",
-		qsmx_leijie: "雷劫",
-		qsmx_leijie_info:
-			"①一名角色不因此技能进行的判定结算后，你可以令一名角色执行一次【闪电】效果。<br>②锁定技，一名角色即将受到无来源属性伤害时，你成为此伤害的伤害来源，若本局游戏执行【闪电】效果数不小于36次，此伤害视为湮灭伤害。",
+		qsmx_huangtian_info:
+			"主公技，{你/一名其他群势力角色}造成1点属性伤害后，{你/其}可以{重铸1张牌/令你进行一次判定}。",
 		qsmx_tianjie: "天劫",
 		qsmx_tianjie_info:
 			"牌堆洗切后，你可以对至多3名角色各造成[X+1]点雷电伤害（X为其手牌中的【闪】数）。",

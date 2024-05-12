@@ -306,8 +306,8 @@ export const character = async function () {
 			qsmx_zhangjiao: [
 				"male",
 				"qun",
-				"3/3",
-				['qsmx_leijie', 'qsmx_tiandao'],
+				"3/3/1",
+				['qsmx_leiji', 'qsmx_guidao', 'qsmx_huangtian'],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_zhangjiao.jpg",
 					"zhu"

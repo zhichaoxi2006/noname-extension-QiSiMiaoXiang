@@ -4,13 +4,7 @@
 			"path": "."
 		},
 		{
-			"path": "../../node_modules"
-		},
-		{
-			"path": "../../noname"
-		},
-		{
-			"path": "../../image"
+			"path": "../.."
 		}
 	],
 	"settings": {}

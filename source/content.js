@@ -488,8 +488,6 @@ export async function content(config, pack) {
 	});
 	//lib.element.player
 	Object.assign(lib.element.player, {
-		AntiResistanceDieAfter: lib.element.player.dieAfter,
-		AntiResistanceDieAfter2: lib.element.player.dieAfter2,
 		AntiResistanceDie: function (reason) {
 			if (get.mode() == "boss" && this == game.boss) {
 				var next = game.createEvent("AntiResistanceDieBoss");
@@ -498,11 +496,12 @@ export async function content(config, pack) {
 				return next;
 			} else {
 				this.resetFuction();
-				var next = game.createEvent("AntiResistanceDie");
+				var next = game.createEvent("die");
 				next.player = this;
 				next.reason = reason;
 				if (reason) next.source = reason.source;
-				next.setContent("AntiResistanceDie");
+				delete next._triggered;
+				next.setContent("die");
 				//this.revive = function () { this.popup('失效') }
 				return next;
 			}
@@ -526,10 +525,10 @@ export async function content(config, pack) {
 			};
 			this.delete = function () {};
 			this.remove = function () {};
-			Object.defineProperty(this, "dieAfter", {
+			/*Object.defineProperty(this, "dieAfter", {
 				configurable: false,
 				writable: false,
-			});
+			});*/
 			Object.defineProperty(this, "delete", {
 				configurable: false,
 				writable: false,
@@ -730,7 +729,7 @@ export async function content(config, pack) {
 			});
 		},
 		resetFuction: function () {
-			var object = lib.element.player;
+			var object = lib.element.Player.prototype;
 			for (const key in object) {
 				if (Object.hasOwnProperty.call(object, key)) {
 					const element = object[key];

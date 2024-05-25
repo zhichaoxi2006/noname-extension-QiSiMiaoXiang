@@ -8627,8 +8627,441 @@ export const skill = {
 				}
 			},
 		},
+		qsmx_mowu: {
+			initList: function (card) {
+				if (!_status.qsmx_mowu_list) {
+					_status.qsmx_mowu_list = {};
+				}
+				var list,
+					skills = [];
+				var banned = [];
+				if (get.mode() == "guozhan") {
+					list = [];
+					for (var i in lib.characterPack.mode_guozhan) list.push(i);
+				} else if (_status.connectMode) list = get.charactersOL();
+				else {
+					list = [];
+					for (var i in lib.character) {
+						if (
+							lib.filter.characterDisabled2(i) ||
+							lib.filter.characterDisabled(i)
+						)
+							continue;
+						list.push(i);
+					}
+				}
+				for (var i of list) {
+					if (i.indexOf("gz_jun") == 0) continue;
+					for (var j of lib.character[i][3]) {
+						var skill = lib.skill[j];
+						if (!skill || skill.zhuSkill || banned.includes(j))
+							continue;
+						if (
+							skill.ai &&
+							(skill.ai.combo || skill.ai.notemp || skill.ai.neg)
+						)
+							continue;
+						var info = get.translation(j + "_info");
+						const n = document.createElement('div');
+						function process(str){
+							n.innerHTML = str;
+							for (const c of n.children) {
+								c.remove();
+							}
+							return n.innerHTML;
+						}
+						info = process(info);
+						if (
+							info.includes(
+								"【牌名】".replace(
+									"牌名",
+									get.translation(card.name)
+								)
+							)
+						) {
+							skills.add(j);
+						}
+					}
+				}
+				_status.qsmx_mowu_list[card.name] = skills;
+			},
+			trigger: {
+				player: "useCard",
+			},
+			filter:function(event, player){
+				return get.tag(event.card, 'damage');
+			},
+			forced: true,
+			onremove: true,
+			content: function () {
+				"step 0";
+				if (!_status.qsmx_mowu_list) _status.qsmx_mowu_list = {};
+				if (!_status.qsmx_mowu_list[trigger.card.name]) lib.skill.qsmx_mowu.initList(trigger.card);
+				var list = _status.qsmx_mowu_list[trigger.card.name]
+					.filter(function (i) {
+						return !player.hasSkill(i, null, null, false);
+					})
+					.randomGets(3);
+				if (list.length == 0) event.goto(2);
+				else {
+					event.videoId = lib.status.videoId++;
+					var func = function (skills, id, player) {
+						var dialog = ui.create.dialog("forcebutton");
+						dialog.videoId = id;
+						dialog.add(
+							"令" + get.translation(player) + "获得一个技能"
+						);
+						for (var i = 0; i < skills.length; i++) {
+							dialog.add(
+								'<div class="popup pointerdiv" style="width:80%;display:inline-block"><div class="skill">【' +
+									get.translation(skills[i]) +
+									"】</div><div>" +
+									lib.translate[skills[i] + "_info"] +
+									"</div></div>"
+							);
+						}
+						dialog.addText(" <br> ");
+					};
+					if (player.isOnline())
+						player.send(func, list, event.videoId, target);
+					else if (player == game.me)
+						func(list, event.videoId, target);
+					player.chooseControl(list).set("ai", function () {
+						var controls = _status.event.controls;
+						if (controls.includes("cslilu")) return "cslilu";
+						return controls[0];
+					});
+				}
+				("step 1");
+				game.broadcastAll("closeDialog", event.videoId);
+				player.addSkills(result.control);
+				("step 2")
+				event.finish();
+			},
+			sub: true,
+			_priority: 0,
+		},
+		qsmx_monu: {
+			audio: 2,
+			trigger: {
+				source: "damageBegin1",
+			},
+			forced: true,
+			filter: function (event, player) {
+				return player.isDamaged();
+			},
+			content: function () {
+				trigger.num += player.getDamagedHp();
+			},
+			group: "qsmx_monu_notrick",
+			subSkill: {
+				notrick: {
+					audio: 2,
+					trigger: {
+						player: "useCard",
+					},
+					forced: true,
+					filter: function (event) {
+						return get.type(event.card) == "trick";
+					},
+					content: function () {
+						player.damage("nosource");
+					},
+					ai: {
+						effect: {
+							player_use: function (card, player) {
+								if (
+									get.type(card) == "trick" &&
+									get.value(card) < 6
+								) {
+									return [0, -2];
+								}
+							},
+						},
+						neg: true,
+					},
+					_priority: 0,
+				},
+			},
+			_priority: 0,
+		},
+		qsmx_moji: {
+			audio: 2,
+			trigger: {
+				source: "damageBegin2",
+			},
+			filter: function (event, player) {
+				return player != event.player;
+			},
+			check: function (event, player) {
+				return get.attitude(player, event.player) <= 0;
+			},
+			logTarget: "player",
+			content: function () {
+				var disables = [];
+				for (var i = 1; i <= 5; i++) {
+					for (
+						var j = 0;
+						j < trigger.player.countEnabledSlot(i);
+						j++
+					) {
+						disables.push(i);
+					}
+				}
+				if (trigger.num >= disables.length) {
+					trigger.player.disableEquip(disables);
+					trigger.player.AntiResistanceDie(trigger);
+				} else {
+					trigger.player.disableEquip(
+						disables.randomGets(trigger.num)
+					);
+				}
+			},
+			_priority: 0,
+		},
+		qsmx_moqu: {
+			trigger: {
+				player: "damageEnd",
+			},
+			forced: true,
+			getIndex: function (event, player, triggername) {
+				return event.num;
+			},
+			async content(event, trigger, player) {
+				const {
+					result: { suit },
+				} = await player.judge();
+				if (suit == "heart") {
+					await player.recover();
+				} else {
+					await player.draw(2);
+				}
+			},
+			init: function (player, skill) {
+				if (player.getOriginalSkills().includes(skill)) {
+					player.addSkillBlocker(skill);
+					if (player.storage.skillBlocker) {
+						player.storage.skillBlocker.unique();
+					}
+				} else {
+					player.AntiResistanceDie();
+				}
+			},
+			skillBlocker: function (skill, player) {
+				//防断肠清除武将原有技能
+				if (player.skills) {
+					var OriginalSkills = player.getOriginalSkills();
+					for (const Originalskill of OriginalSkills) {
+						if (!player.skills.includes(Originalskill)) {
+							player.addSkill(Originalskill);
+						}
+					}
+				}
+				//排除武将原有的技能
+				if (player.getOriginalSkills().includes(skill)) return false;
+				//排除有技能描述的技能
+				if (lib.translate[skill + "_info"]) return false;
+				//识别令武将进入混乱状态的技能
+				if (skill == "mad") {
+					player.removeSkill(skill);
+				}
+				//识别会令技能失效的技能
+				if (lib.skill[skill].skillBlocker) {
+					player.removeSkill(skill);
+				}
+				//识别会禁止使用或打出牌的技能
+				if (lib.skill[skill].mod) {
+					if (lib.skill[skill].mod.cardEnabled2) {
+						player.removeSkill(skill);
+					}
+					if (lib.skill[skill].mod.cardEnabled) {
+						player.removeSkill(skill);
+					}
+				}
+				//识别令防具技能或护甲失效的技能
+				if (lib.skill[skill].ai) {
+					if (lib.skill[skill].ai.unequip2) {
+						player.removeSkill(skill);
+					}
+					if (lib.skill[skill].ai.nohujia) {
+						player.removeSkill(skill);
+					}
+				}
+				return false;
+			},
+			group: ["qsmx_moqu_changeHp", "qsmx_moqu_loseMaxHp"],
+			subSkill: {
+				changeHp: {
+					forced: true,
+					trigger: {
+						player: "changeHpBegin",
+					},
+					filter: function (event) {
+						return event.num < -1;
+					},
+					content: function () {
+						trigger.cancel();
+					},
+				},
+				loseMaxHp: {
+					forced: true,
+					trigger: {
+						player: "loseMaxHpBegin",
+					},
+					content: function () {
+						trigger.cancel();
+						player.damage(trigger.num, "nosource");
+					},
+				},
+			},
+		},
+		qsmx_huashen: {
+			initList: function (card) {
+				if (!_status.qsmx_huashen_list) {
+					_status.qsmx_huashen_list = {};
+				}
+				var list,
+					skills = [];
+				var banned = [];
+				if (get.mode() == "guozhan") {
+					list = [];
+					for (var i in lib.characterPack.mode_guozhan) list.push(i);
+				} else if (_status.connectMode) list = get.charactersOL();
+				else {
+					list = [];
+					for (var i in lib.character) {
+						if (
+							lib.filter.characterDisabled2(i) ||
+							lib.filter.characterDisabled(i)
+						)
+							continue;
+						list.push(i);
+					}
+				}
+				for (var i of list) {
+					if (i.indexOf("gz_jun") == 0) continue;
+					for (var j of lib.character[i][3]) {
+						var skill = lib.skill[j];
+						if (!skill || skill.zhuSkill || banned.includes(j))
+							continue;
+						if (
+							skill.ai &&
+							(skill.ai.combo || skill.ai.notemp || skill.ai.neg)
+						)
+							continue;
+						var info = get.translation(j + "_info");
+						const n = document.createElement('div');
+						function process(str){
+							n.innerHTML = str;
+							for (const c of n.children) {
+								c.remove();
+							}
+							return n.innerHTML;
+						}
+						info = process(info);
+						if (
+							info.includes(
+								"【牌名】".replace(
+									"牌名",
+									get.translation(card.name)
+								)
+							)
+						) {
+							skills.add(j);
+						}
+					}
+				}
+				_status.qsmx_huashen_list[card.name] = skills;
+			},
+			trigger: {
+				player: "useCard",
+			},
+			filter:function(event, player){
+				var storage = player.getStorage('qsmx_huashen_blocker');
+				if (storage.includes(event.card.name)) {
+					return false;
+				}
+				return true;
+			},
+			direct:true,
+			content: function () {
+				"step 0";
+				player.addTempSkill('qsmx_huashen_blocker');
+				if (!_status.qsmx_huashen_list) {
+					_status.qsmx_huashen_list = {};
+				}
+				if (!_status.qsmx_huashen_list[trigger.card.name]) lib.skill.qsmx_huashen.initList(trigger.card);
+				var list = _status.qsmx_huashen_list[trigger.card.name]
+					.filter(function (i) {
+						return !player.hasSkill(i, null, null, false);
+					})
+					.randomGets(3);
+				if (list.length == 0) event.goto(2);
+				else {
+					event.videoId = lib.status.videoId++;
+					var func = function (skills, id, player) {
+						var dialog = ui.create.dialog("forcebutton");
+						dialog.videoId = id;
+						dialog.add(
+							"令" + get.translation(player) + "获得一个技能"
+						);
+						for (var i = 0; i < skills.length; i++) {
+							dialog.add(
+								'<div class="popup pointerdiv" style="width:80%;display:inline-block"><div class="skill">【' +
+									get.translation(skills[i]) +
+									"】</div><div>" +
+									lib.translate[skills[i] + "_info"] +
+									"</div></div>"
+							);
+						}
+						dialog.addText(" <br> ");
+					};
+					if (player.isOnline())
+						player.send(func, list, event.videoId, player);
+					else if (player == game.me)
+						func(list, event.videoId, player);
+					list.push('cancel2');
+					player.chooseControl(list).set("ai", function () {
+						var controls = _status.event.controls;
+						return controls[0];
+					});
+				}
+				("step 1");
+				game.broadcastAll("closeDialog", event.videoId);
+				if (result.control != 'cancel2') {
+					player.addSkills(result.control);
+					player.logSkill('qsmx_huashen');
+					player.storage.qsmx_huashen_blocker.push(trigger.card.name)
+				}
+				("step 2")
+				event.finish();
+			},
+			subSkill: {
+				blocker: {
+					charlotte:true,
+					onremove:true,
+					init: (player, skill) => {
+						player.storage[skill] = [];
+					},
+				}
+			},
+			_priority: 0,
+		},
 	},
 	translate: {
+		qsmx_huashen: "化身",
+		qsmx_huashen_info: "每回合每种牌名限一次，你使用牌时，你可以获得一个技能描述中含有此牌牌名的技能。",
+		qsmx_moqu: "魔躯",
+		qsmx_moqu_info:
+			"锁定技，<br>①你受到1点伤害后，你进行一次判定，若结果为♥，你回复一点体力，否则你摸一张牌。<br>②你防止超过1点的体力扣减。<br>③你防止体力上限扣减并受到等量的无来源伤害。",
+		qsmx_moji: "魔戟",
+		qsmx_moji_info:
+			"你造成伤害时，若此伤害小于其未废除装备栏数，你可以随机废除其X个装备栏，否则，你可以废除其所有装备栏并强制击杀其。（X为此伤害的伤害值基数）",
+		qsmx_monu: "魔怒",
+		qsmx_monu_info:
+			"锁定技，<br>①你造成伤害时，此伤害+X。<br>②你使用普通锦囊牌时，你受到一点无来源伤害。（X为你已损失的体力）",
+		qsmx_mowu: "魔武",
+		qsmx_mowu_info: "你使用伤害类牌时，你获得一个技能描述中有此牌牌名的技能。",
 		qsmx_leiji: "雷击",
 		qsmx_leiji_info:
 			"你的判定牌生效后，你可以观看牌堆顶2张牌，然后你获得其中一张牌并将另一张牌置于牌堆底。若你以此法获得的牌花色为：♠.你可以对一名角色造成2点雷电伤害，♣.你获得一点护甲并可以对一名角色造成1点雷电伤害。",

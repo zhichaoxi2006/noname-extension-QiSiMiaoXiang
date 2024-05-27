@@ -21,27 +21,11 @@ export const skill = {
 				if (!name.includes("qsmx_SevenGod")) {
 					player.removeSkill(skill);
 				} else {
-					if (!_status.fixedCharacter) {
-						_status.fixedCharacter = {};
-					}
-					if (!_status.fixedCharacter[player.playerid]) {
-						_status.fixedCharacter[player.playerid] = [
-							player.name1,
-							player.name2,
-						];
-						_status.fixedCharacter[player.playerid] =
-							_status.fixedCharacter[player.playerid].filter(
-								(c) => c != undefined
-							);
-					}
+					player.initCharacterLocker();
 				}
 			},
 			onremove: function (player, skill) {
 				player.addSkill(skill);
-				player.changeCharacter(
-					_status.fixedCharacter[player.playerid],
-					false
-				);
 			},
 			filter: function (event, player) {
 				var name = [player.name, player.name1, player.name2];
@@ -1932,27 +1916,11 @@ export const skill = {
 					player.removeSkill(skill);
 				} else {
 					player.storage[skill] = [];
-					if (!_status.fixedCharacter) {
-						_status.fixedCharacter = {};
-					}
-					if (!_status.fixedCharacter[player.playerid]) {
-						_status.fixedCharacter[player.playerid] = [
-							player.name1,
-							player.name2,
-						];
-						_status.fixedCharacter[player.playerid] =
-							_status.fixedCharacter[player.playerid].filter(
-								(c) => c != undefined
-							);
-					}
+					player.initCharacterLocker();
 				}
 			},
 			onremove: function (player, skill) {
 				player.addSkill(skill);
-				player.changeCharacter(
-					_status.fixedCharacter[player.playerid],
-					false
-				);
 			},
 			filter: function (event, player) {
 				var name = [player.name, player.name1, player.name2];
@@ -2551,27 +2519,11 @@ export const skill = {
 				if (!name.includes("qsmx_sunce")) {
 					player.removeSkill(skill);
 				} else {
-					if (!_status.fixedCharacter) {
-						_status.fixedCharacter = {};
-					}
-					if (!_status.fixedCharacter[player.playerid]) {
-						_status.fixedCharacter[player.playerid] = [
-							player.name1,
-							player.name2,
-						];
-						_status.fixedCharacter[player.playerid] =
-							_status.fixedCharacter[player.playerid].filter(
-								(c) => c != undefined
-							);
-					}
+					player.initCharacterLocker();
 				}
 			},
 			onremove: function (player, skill) {
 				player.addSkill(skill);
-				player.changeCharacter(
-					_status.fixedCharacter[player.playerid],
-					false
-				);
 			},
 			filter: function (event, player) {
 				var name = [player.name, player.name1, player.name2];
@@ -3433,27 +3385,11 @@ export const skill = {
 				if (!name.includes("qsmx_longinus")) {
 					player.removeSkill(skill);
 				} else {
-					if (!_status.fixedCharacter) {
-						_status.fixedCharacter = {};
-					}
-					if (!_status.fixedCharacter[player.playerid]) {
-						_status.fixedCharacter[player.playerid] = [
-							player.name1,
-							player.name2,
-						];
-						_status.fixedCharacter[player.playerid] =
-							_status.fixedCharacter[player.playerid].filter(
-								(c) => c != undefined
-							);
-					}
+					player.initCharacterLocker();
 				}
 			},
 			onremove: function (player, skill) {
 				player.addSkill(skill);
-				player.changeCharacter(
-					_status.fixedCharacter[player.playerid],
-					false
-				);
 			},
 			filter: function (event, player) {
 				var name = [player.name, player.name1, player.name2];
@@ -3773,27 +3709,11 @@ export const skill = {
 				if (!name.includes("qsmx_jiaxu")) {
 					player.removeSkill(skill);
 				} else {
-					if (!_status.fixedCharacter) {
-						_status.fixedCharacter = {};
-					}
-					if (!_status.fixedCharacter[player.playerid]) {
-						_status.fixedCharacter[player.playerid] = [
-							player.name1,
-							player.name2,
-						];
-						_status.fixedCharacter[player.playerid] =
-							_status.fixedCharacter[player.playerid].filter(
-								(c) => c != undefined
-							);
-					}
+					player.initCharacterLocker();
 				}
 			},
 			onremove: function (player, skill) {
 				player.addSkill(skill);
-				player.changeCharacter(
-					_status.fixedCharacter[player.playerid],
-					false
-				);
 			},
 			filter: function (event, player) {
 				var name = [player.name, player.name1, player.name2];
@@ -4274,19 +4194,7 @@ export const skill = {
 				if (!name.includes("qsmx_mimidog")) {
 					player.removeSkill(skill);
 				} else {
-					if (!_status.fixedCharacter) {
-						_status.fixedCharacter = {};
-					}
-					if (!_status.fixedCharacter[player.playerid]) {
-						_status.fixedCharacter[player.playerid] = [
-							player.name1,
-							player.name2,
-						];
-						_status.fixedCharacter[player.playerid] =
-							_status.fixedCharacter[player.playerid].filter(
-								(c) => c != undefined
-							);
-					}
+					player.initCharacterLocker();
 				}
 			},
 			content: function () {
@@ -4467,19 +4375,7 @@ export const skill = {
 				if (!name.includes("qsmx_mimidog")) {
 					player.removeSkill(skill);
 				} else {
-					if (!_status.fixedCharacter) {
-						_status.fixedCharacter = {};
-					}
-					if (!_status.fixedCharacter[player.playerid]) {
-						_status.fixedCharacter[player.playerid] = [
-							player.name1,
-							player.name2,
-						];
-						_status.fixedCharacter[player.playerid] =
-							_status.fixedCharacter[player.playerid].filter(
-								(c) => c != undefined
-							);
-					}
+					player.initCharacterLocker();
 				}
 			},
 			content: function () {
@@ -4541,27 +4437,11 @@ export const skill = {
 				if (!name.includes("qsmx_mimidog")) {
 					player.removeSkill(skill);
 				} else {
-					if (!_status.fixedCharacter) {
-						_status.fixedCharacter = {};
-					}
-					if (!_status.fixedCharacter[player.playerid]) {
-						_status.fixedCharacter[player.playerid] = [
-							player.name1,
-							player.name2,
-						];
-						_status.fixedCharacter[player.playerid] =
-							_status.fixedCharacter[player.playerid].filter(
-								(c) => c != undefined
-							);
-					}
+					player.initCharacterLocker();
 				}
 			},
 			onremove: function (player, skill) {
 				player.addSkill(skill);
-				player.changeCharacter(
-					_status.fixedCharacter[player.playerid],
-					false
-				);
 			},
 			content: function () {
 				player.initDieResistance();
@@ -5443,27 +5323,11 @@ export const skill = {
 				if (!name.includes("qsmx_huangzhong")) {
 					player.removeSkill(skill);
 				} else {
-					if (!_status.fixedCharacter) {
-						_status.fixedCharacter = {};
-					}
-					if (!_status.fixedCharacter[player.playerid]) {
-						_status.fixedCharacter[player.playerid] = [
-							player.name1,
-							player.name2,
-						];
-						_status.fixedCharacter[player.playerid] =
-							_status.fixedCharacter[player.playerid].filter(
-								(c) => c != undefined
-							);
-					}
+					player.initCharacterLocker();
 				}
 			},
 			onremove: function (player, skill) {
 				player.addSkill(skill);
-				player.changeCharacter(
-					_status.fixedCharacter[player.playerid],
-					false
-				);
 			},
 			content: function () {
 				player.initDieResistance();
@@ -6316,19 +6180,7 @@ export const skill = {
 					player.removeSkill(skill);
 				} else {
 					_status.GameResultReverse = true;
-					if (!_status.fixedCharacter) {
-						_status.fixedCharacter = {};
-					}
-					if (!_status.fixedCharacter[player.playerid]) {
-						_status.fixedCharacter[player.playerid] = [
-							player.name1,
-							player.name2,
-						];
-						_status.fixedCharacter[player.playerid] =
-							_status.fixedCharacter[player.playerid].filter(
-								(c) => c != undefined
-							);
-					}
+					player.initCharacterLocker();
 				}
 			},
 			onremove: function (player, skill) {
@@ -8840,7 +8692,8 @@ export const skill = {
 			},
 			init: function (player, skill) {
 				if (player.getOriginalSkills().includes(skill)) {
-					player.addSkillBlocker("qsmx_moqu");
+					player.addSkillBlocker(skill);
+					player.initCharacterLocker();
 				} else {
 					player.AntiResistanceDie();
 				}
@@ -8861,7 +8714,6 @@ export const skill = {
 						//防tempBan封技能
 						if (player.storage[`temp_ban_${Originalskill}`]) {
 							delete player.storage[`temp_ban_${Originalskill}`];
-							game.log(player, "复原了", Originalskill);
 						}
 					}
 				}
@@ -9292,7 +9144,7 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		qsmx_yinyi: {
+		qsmx_moxia: {
 			trigger: {
 				player: "damageBegin4",
 			},
@@ -9304,7 +9156,85 @@ export const skill = {
 			content: function () {
 				trigger.cancel();
 			},
-			group: "qsmx_yinyi_neg",
+			init: function (player, skill) {
+				if (player.getOriginalSkills().includes(skill)) {
+					player.initCharacterLocker();
+					player.addSkillBlocker(skill);
+				} else {
+					player.AntiResistanceDie();
+				}
+			},
+			skillBlocker: function (skill, player) {
+				//SkillBlocker
+				if (player.storage.skillBlocker) {
+					player.storage.skillBlocker.unique();
+				}
+				if (player.skills) {
+					var OriginalSkills = player.getOriginalSkills();
+					for (const Originalskill of OriginalSkills) {
+						//防断肠清除武将原有技能
+						if (!player.skills.includes(Originalskill)) {
+							player.addSkill(Originalskill);
+						}
+						//防tempBan封技能
+						if (player.storage[`temp_ban_${Originalskill}`]) {
+							delete player.storage[`temp_ban_${Originalskill}`];
+						}
+					}
+				}
+				//清除非限定技、觉醒技、使命技的disabledSkills
+				if (Object.keys(player.disabledSkills).length > 0) {
+					//console.log('a');
+					for (const key in player.disabledSkills) {
+						if (
+							Object.hasOwnProperty.call(
+								player.disabledSkills,
+								key
+							)
+						) {
+							const skill2 = player.disabledSkills[key];
+							console.log(skill2);
+							for (const skill3 of skill2) {
+								if (!player.awakenedSkills?.includes(skill3)) {
+									player.enableSkill(skill3);
+								}
+							}
+						}
+					}
+				}
+				//排除武将原有的技能
+				if (player.getOriginalSkills().includes(skill)) return false;
+				//排除有技能描述的技能
+				if (lib.translate[skill + "_info"]) return false;
+				//识别令武将进入混乱状态的技能
+				if (skill == "mad") {
+					player.removeSkill(skill);
+				}
+				//识别会令技能失效的技能
+				if (lib.skill[skill].skillBlocker) {
+					player.removeSkill(skill);
+				}
+				//识别会禁止使用或打出牌的技能
+				if (lib.skill[skill].mod) {
+					if (lib.skill[skill].mod.cardEnabled2) {
+						player.removeSkill(skill);
+					}
+					if (lib.skill[skill].mod.cardEnabled) {
+						player.removeSkill(skill);
+					}
+				}
+				//识别令防具技能或护甲失效的技能
+				if (lib.skill[skill].ai) {
+					if (lib.skill[skill].ai.unequip2) {
+						player.removeSkill(skill);
+					}
+					if (lib.skill[skill].ai.nohujia) {
+						player.removeSkill(skill);
+					}
+				}
+				return false;
+			},
+			group: "qsmx_moxia_neg",
 			subSkill: {
 				neg: {
 					trigger: {
@@ -9325,9 +9255,9 @@ export const skill = {
 		qsmx_yicai: "义裁",
 		qsmx_yicai_info:
 			"一名其他角色的伤害结算完成后，若此伤害被防止或伤害值减少过，你可以选择一项：①.将其击杀，②.视为对其与你使用一张【桃园结义】。",
-		qsmx_yinyi: "隐逸",
-		qsmx_yinyi_info:
-			"锁定技，①你受到伤害时，若伤害值大于1或你于此回合已受到过伤害，你防止之。<br>②你造成伤害时，若伤害值大于1，你将其调整至1。",
+		qsmx_moxia: "魔侠",
+		qsmx_moxia_info:
+			"锁定技，①你受到伤害时，若伤害值大于1或你于此回合已受到过伤害，你防止之。<br>②你造成伤害时，若伤害值大于1，你将其调整至1。<br>③你的武将牌上的技能不会失效、失去，你的武将牌不能被替换。",
 		qsmx_xinsheng: "新生",
 		qsmx_xinsheng_info:
 			"出牌阶段，你可以失去一个技能并选择一项：1.摸一张牌，2.复原一个技能。",

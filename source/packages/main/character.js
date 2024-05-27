@@ -331,11 +331,11 @@ export const character = async function () {
 					"ext:奇思妙想/resource/image/character/qsmx_zuoci.jpg",
 				],
 			],
-			qsmx_yemo: [
+			qsmx_yemoxia: [
 				"male",
 				"key",
 				"6/6",
-				['qsmx_yicai', 'qsmx_yinyi'],
+				['qsmx_yicai', 'qsmx_moxia'],
 				[
 
 				],
@@ -441,7 +441,7 @@ export const character = async function () {
 			qsmx_simashi: "妙司马师",
 			qsmx_huangzhong: "妙黄忠",
 			qsmx_longinus: "朗基努斯",
-			qsmx_yemo: "夜魔",
+			qsmx_yemoxia: "夜魔侠",
 			qsmx_baozheng: "妙包拯",
 			qsmx_sunce: "妙孙策",
 			qsmx_xusha: "妙许劭",

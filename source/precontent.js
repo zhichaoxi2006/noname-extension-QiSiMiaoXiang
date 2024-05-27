@@ -102,4 +102,15 @@ export async function precontent(config, pack) {
 		for (var i of prefix["qsmx"]) lib.translate[i + "_prefix"] = "妙";
 		for (var i of prefix["qsmx_hw"]) lib.translate[i + "_prefix"] = "会玩";
 	}
+	//skill test
+	lib._skill = {};
+	/*Object.defineProperty(lib, 'skill',{
+		get:function(){
+			return lib._skill
+		},
+		set:function(newValue){
+			lib._skill = newValue;
+			console.log(newValue);
+		}
+	})*/
 }

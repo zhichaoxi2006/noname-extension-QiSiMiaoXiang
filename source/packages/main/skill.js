@@ -8662,8 +8662,8 @@ export const skill = {
 						)
 							continue;
 						var info = get.translation(j + "_info");
-						const n = document.createElement('div');
-						function process(str){
+						const n = document.createElement("div");
+						function process(str) {
 							n.innerHTML = str;
 							for (const c of n.children) {
 								c.remove();
@@ -8688,15 +8688,16 @@ export const skill = {
 			trigger: {
 				player: "useCard",
 			},
-			filter:function(event, player){
-				return get.tag(event.card, 'damage');
+			filter: function (event, player) {
+				return get.tag(event.card, "damage");
 			},
 			forced: true,
 			onremove: true,
 			content: function () {
 				"step 0";
 				if (!_status.qsmx_mowu_list) _status.qsmx_mowu_list = {};
-				if (!_status.qsmx_mowu_list[trigger.card.name]) lib.skill.qsmx_mowu.initList(trigger.card);
+				if (!_status.qsmx_mowu_list[trigger.card.name])
+					lib.skill.qsmx_mowu.initList(trigger.card);
 				var list = _status.qsmx_mowu_list[trigger.card.name]
 					.filter(function (i) {
 						return !player.hasSkill(i, null, null, false);
@@ -8735,7 +8736,7 @@ export const skill = {
 				("step 1");
 				game.broadcastAll("closeDialog", event.videoId);
 				player.addSkills(result.control);
-				("step 2")
+				("step 2");
 				event.finish();
 			},
 			sub: true,
@@ -8839,21 +8840,48 @@ export const skill = {
 			},
 			init: function (player, skill) {
 				if (player.getOriginalSkills().includes(skill)) {
-					player.addSkillBlocker(skill);
-					if (player.storage.skillBlocker) {
-						player.storage.skillBlocker.unique();
-					}
+					player.addSkillBlocker("qsmx_moqu");
 				} else {
 					player.AntiResistanceDie();
 				}
 			},
 			skillBlocker: function (skill, player) {
-				//防断肠清除武将原有技能
+				//SkillBlocker
+				if (player.storage.skillBlocker) {
+					player.storage.skillBlocker.unique();
+				}
+				
 				if (player.skills) {
 					var OriginalSkills = player.getOriginalSkills();
 					for (const Originalskill of OriginalSkills) {
+						//防断肠清除武将原有技能
 						if (!player.skills.includes(Originalskill)) {
 							player.addSkill(Originalskill);
+						}
+						//防tempBan封技能
+						if (player.storage[`temp_ban_${Originalskill}`]) {
+							delete player.storage[`temp_ban_${Originalskill}`];
+							game.log(player, "复原了", Originalskill);
+						}
+					}
+				}
+				//清除非限定技、觉醒技、使命技的disabledSkills
+				if (Object.keys(player.disabledSkills).length > 0) {
+					//console.log('a');
+					for (const key in player.disabledSkills) {
+						if (
+							Object.hasOwnProperty.call(
+								player.disabledSkills,
+								key
+							)
+						) {
+							const skill2 = player.disabledSkills[key];
+							console.log(skill2);
+							for (const skill3 of skill2) {
+								if (!player.awakenedSkills?.includes(skill3)) {
+									player.enableSkill(skill3);
+								}
+							}
 						}
 					}
 				}
@@ -8950,8 +8978,8 @@ export const skill = {
 						)
 							continue;
 						var info = get.translation(j + "_info");
-						const n = document.createElement('div');
-						function process(str){
+						const n = document.createElement("div");
+						function process(str) {
 							n.innerHTML = str;
 							for (const c of n.children) {
 								c.remove();
@@ -8976,21 +9004,22 @@ export const skill = {
 			trigger: {
 				player: "useCard",
 			},
-			filter:function(event, player){
-				var storage = player.getStorage('qsmx_huashen_blocker');
+			filter: function (event, player) {
+				var storage = player.getStorage("qsmx_huashen_blocker");
 				if (storage.includes(event.card.name)) {
 					return false;
 				}
 				return true;
 			},
-			direct:true,
+			direct: true,
 			content: function () {
 				"step 0";
-				player.addTempSkill('qsmx_huashen_blocker');
+				player.addTempSkill("qsmx_huashen_blocker");
 				if (!_status.qsmx_huashen_list) {
 					_status.qsmx_huashen_list = {};
 				}
-				if (!_status.qsmx_huashen_list[trigger.card.name]) lib.skill.qsmx_huashen.initList(trigger.card);
+				if (!_status.qsmx_huashen_list[trigger.card.name])
+					lib.skill.qsmx_huashen.initList(trigger.card);
 				var list = _status.qsmx_huashen_list[trigger.card.name]
 					.filter(function (i) {
 						return !player.hasSkill(i, null, null, false);
@@ -9020,7 +9049,7 @@ export const skill = {
 						player.send(func, list, event.videoId, player);
 					else if (player == game.me)
 						func(list, event.videoId, player);
-					list.push('cancel2');
+					list.push("cancel2");
 					player.chooseControl(list).set("ai", function () {
 						var controls = _status.event.controls;
 						return controls[0];
@@ -9028,29 +9057,283 @@ export const skill = {
 				}
 				("step 1");
 				game.broadcastAll("closeDialog", event.videoId);
-				if (result.control != 'cancel2') {
+				if (result.control != "cancel2") {
 					player.addSkills(result.control);
-					player.logSkill('qsmx_huashen');
-					player.storage.qsmx_huashen_blocker.push(trigger.card.name)
+					player.logSkill("qsmx_huashen");
+					player.storage.qsmx_huashen_blocker.push(trigger.card.name);
 				}
-				("step 2")
+				("step 2");
 				event.finish();
 			},
 			subSkill: {
 				blocker: {
-					charlotte:true,
-					onremove:true,
+					charlotte: true,
+					onremove: true,
 					init: (player, skill) => {
 						player.storage[skill] = [];
 					},
+				},
+			},
+			_priority: 0,
+		},
+		qsmx_xinsheng: {
+			enable: "phaseUse",
+			direct: true,
+			async content(event, trigger, player) {
+				var list = ["摸一张牌", "复原一个技能"];
+				var skills = player
+					.getSkills(null, false, false)
+					.filter((skill) => {
+						var info = get.info(skill);
+						if (
+							!info ||
+							info.charlotte ||
+							get.skillInfoTranslation(skill, player).length == 0
+						)
+							return false;
+						return true;
+					});
+				const {
+					result: { control },
+				} = await player
+					.chooseControl(skills, "cancel2")
+					.set(
+						"choiceList",
+						skills.map((i) => {
+							return (
+								'<div class="skill">【' +
+								get.translation(
+									lib.translate[i + "_ab"] ||
+										get.translation(i).slice(0, 2)
+								) +
+								"】</div><div>" +
+								get.skillInfoTranslation(i, player) +
+								"</div>"
+							);
+						})
+					)
+					.set("displayIndex", false)
+					.set("prompt", "新生：失去一个技能")
+					.set("ai", () => {
+						var player = _status.event.player,
+							choices = _status.event.controls.slice();
+						var negs = choices.filter((i) => {
+							var info = get.info(i);
+							if (!info || !info.ai) return false;
+							return info.ai.neg || info.ai.halfneg;
+						});
+						if (negs.length) return negs.randomGet();
+					});
+				if (control != "cancel2") {
+					await player.removeSkills(control);
+					const { result } = await player
+						.chooseControlList(list)
+						.set("ai", () => {
+							var controls = _status.event.controls.slice();
+							return "选项一";
+						});
+					if (result.control == "选项一") {
+						player.draw();
+					} else if (result.control == "选项二") {
+						var restoreskills = player
+							.getSkills(null, false, false)
+							.filter((skill) => {
+								var info = get.info(skill);
+								if (
+									!info ||
+									info.charlotte ||
+									get.skillInfoTranslation(skill, player)
+										.length == 0
+								)
+									return false;
+								return true;
+							});
+						const { result } = await player
+							.chooseControl(restoreskills, "cancel2")
+							.set(
+								"choiceList",
+								restoreskills.map((i) => {
+									return (
+										'<div class="skill">【' +
+										get.translation(
+											lib.translate[i + "_ab"] ||
+												get.translation(i).slice(0, 2)
+										) +
+										"】</div><div>" +
+										get.skillInfoTranslation(i, player) +
+										"</div>"
+									);
+								})
+							)
+							.set("displayIndex", false)
+							.set("prompt", "新生：复原一个技能")
+							.set("ai", () => {
+								var player = _status.event.player,
+									choices = _status.event.controls.slice();
+								var negs = choices.filter((i) => {
+									var info = get.info(i);
+									if (!info || !info.ai) return false;
+									return info.ai.neg || info.ai.halfneg;
+								});
+								if (negs.length) return negs.randomGet();
+							});
+						if (result.control != "cancel2") {
+							var restoreskill = [result.control];
+							game.expandSkills(restoreskill);
+							var resetSkills = [];
+							var suffixs = ["used", "round", "block", "blocker"];
+							for (let restoreskill of skills) {
+								var info = get.info(restoreskill);
+								if (typeof info.usable == "number") {
+									if (
+										player.hasSkill("counttrigger") &&
+										player.storage.counttrigger[
+											restoreskill
+										] &&
+										player.storage.counttrigger[
+											restoreskill
+										] >= 1
+									) {
+										delete player.storage.counttrigger[
+											restoreskill
+										];
+										resetSkills.add(restoreskill);
+									}
+									if (
+										typeof get.skillCount(restoreskill) ==
+											"number" &&
+										get.skillCount(restoreskill) >= 1
+									) {
+										delete player.getStat("skill")[
+											restoreskill
+										];
+										resetSkills.add(restoreskill);
+									}
+								}
+								if (
+									info.round &&
+									player.storage[restoreskill + "_roundcount"]
+								) {
+									delete player.storage[
+										restoreskill + "_roundcount"
+									];
+									resetSkills.add(restoreskill);
+								}
+								if (player.storage[`temp_ban_${skill}`]) {
+									delete player.storage[`temp_ban_${skill}`];
+								}
+								if (player.awakenedSkills.includes(skill)) {
+									player.restoreSkill(restoreskill);
+									resetSkills.add(restoreskill);
+								}
+								for (var suffix of suffixs) {
+									if (
+										player.hasSkill(
+											restoreskill + "_" + suffix
+										)
+									) {
+										player.removeSkill(
+											restoreskill + "_" + suffix
+										);
+										resetSkills.add(restoreskill);
+									}
+								}
+							}
+							if (resetSkills.length) {
+								var str = "";
+								for (var i of resetSkills) {
+									str += "【" + get.translation(i) + "】、";
+								}
+								game.log(
+									player,
+									"重置了技能",
+									"#g" + str.slice(0, -1)
+								);
+							}
+						}
+					}
+				}
+			},
+		},
+		qsmx_yicai: {
+			audio: 2,
+			trigger: {
+				global: ["damageCancelled", "damageZero", "damageAfter"],
+			},
+			direct: true,
+			filter: function (event, player, name) {
+				if (event.player == player) return false;
+				if (name == "damageCancelled") return true;
+				for (var i of event.change_history) {
+					if (i < 0) return true;
+				}
+				return false;
+			},
+			async content(event, trigger, player) {
+				var target = trigger.player;
+				var list = ["将其击杀", "视为对其与你使用一张【桃园结义】"];
+				const {
+					result: { control },
+				} = await player.chooseControlList(list).set("ai", () => {
+					var controls = _status.event.controls.slice();
+					if (get.attitude(player, target) <= 0) return "选项一";
+					return controls.randomGet();
+				});
+				if (control == "选项一") {
+					player.logSkill("qsmx_yicai", target);
+					target.AntiResistanceDie().set("source", player);
+				} else if (control == "选项二") {
+					player.logSkill("qsmx_yicai");
+					player.useCard({ name: "taoyuan", isCard: true }, [
+						player,
+						target,
+					]);
 				}
 			},
 			_priority: 0,
 		},
+		qsmx_yinyi: {
+			trigger: {
+				player: "damageBegin4",
+			},
+			forced: true,
+			filter: function (event, player) {
+				if (event.num > 1) return true;
+				if (player.getHistory("damage").length > 0) return true;
+			},
+			content: function () {
+				trigger.cancel();
+			},
+			group: "qsmx_yinyi_neg",
+			subSkill: {
+				neg: {
+					trigger: {
+						source: "damageBegin1",
+					},
+					forced: true,
+					filter: function (event, player) {
+						return event.num > 1;
+					},
+					content: function () {
+						trigger.num = 1;
+					},
+				},
+			},
+		},
 	},
 	translate: {
+		qsmx_yicai: "义裁",
+		qsmx_yicai_info:
+			"一名其他角色的伤害结算完成后，若此伤害被防止或伤害值减少过，你可以选择一项：①.将其击杀，②.视为对其与你使用一张【桃园结义】。",
+		qsmx_yinyi: "隐逸",
+		qsmx_yinyi_info:
+			"锁定技，①你受到伤害时，若伤害值大于1或你于此回合已受到过伤害，你防止之。<br>②你造成伤害时，若伤害值大于1，你将其调整至1。",
+		qsmx_xinsheng: "新生",
+		qsmx_xinsheng_info:
+			"出牌阶段，你可以失去一个技能并选择一项：1.摸一张牌，2.复原一个技能。",
 		qsmx_huashen: "化身",
-		qsmx_huashen_info: "每回合每种牌名限一次，你使用牌时，你可以获得一个技能描述中含有此牌牌名的技能。",
+		qsmx_huashen_info:
+			"每回合每种牌名限一次，你使用牌时，你可以获得一个技能描述中含有此牌牌名的技能。",
 		qsmx_moqu: "魔躯",
 		qsmx_moqu_info:
 			"锁定技，<br>①你受到1点伤害后，你进行一次判定，若结果为♥，你回复一点体力，否则你摸一张牌。<br>②你防止超过1点的体力扣减。<br>③你防止体力上限扣减并受到等量的无来源伤害。",
@@ -9061,7 +9344,8 @@ export const skill = {
 		qsmx_monu_info:
 			"锁定技，<br>①你造成伤害时，此伤害+X。<br>②你使用普通锦囊牌时，你受到一点无来源伤害。（X为你已损失的体力）",
 		qsmx_mowu: "魔武",
-		qsmx_mowu_info: "你使用伤害类牌时，你获得一个技能描述中有此牌牌名的技能。",
+		qsmx_mowu_info:
+			"你使用伤害类牌时，你获得一个技能描述中有此牌牌名的技能。",
 		qsmx_leiji: "雷击",
 		qsmx_leiji_info:
 			"你的判定牌生效后，你可以观看牌堆顶2张牌，然后你获得其中一张牌并将另一张牌置于牌堆底。若你以此法获得的牌花色为：♠.你可以对一名角色造成2点雷电伤害，♣.你获得一点护甲并可以对一名角色造成1点雷电伤害。",

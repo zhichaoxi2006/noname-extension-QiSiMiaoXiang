@@ -2083,52 +2083,6 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		qsmx_jijun: {
-			usable: 1,
-			enable: "phaseUse",
-			complexCard: true,
-			selectCard: [1, Infinity],
-			check: function (card) {
-				return true;
-			},
-			filterCard: function (card) {
-				return true;
-			},
-			discard: false,
-			lose: false,
-			onremove: function (player, skill) {
-				var cards = player.getExpansions(skill);
-				if (cards.length) player.loseToDiscardpile(cards);
-			},
-			marktext: "军",
-			intro: {
-				content: "expansion",
-				markcount: "expansion",
-			},
-			content: function () {
-				player
-					.addToExpansion(player, cards, "give")
-					.gaintag.add(event.name);
-				player.addTempSkill("qsmx_dingjun_temp");
-			},
-			subSkill: {
-				temp: {
-					onremove: function (player, skill) {
-						var cards = player.getExpansions("qsmx_dingjun");
-						if (cards.length) player.gain(cards);
-					},
-					sub: true,
-					_priority: 0,
-				},
-			},
-			ai: {
-				order: 1,
-				result: {
-					player: 1,
-				},
-			},
-			_priority: 0,
-		},
 		qsmx_tieqi: {
 			forced: true,
 			charlotte: true,
@@ -5147,39 +5101,6 @@ export const skill = {
 		},
 		qsmx_qingguo: {
 			locked: false,
-			mod: {
-				aiValue(player, card, num) {
-					if (get.name(card) != "shan" && get.color(card) != "black")
-						return;
-					const cards = player.getCards(
-						"hs",
-						(card) =>
-							get.name(card) == "shan" ||
-							get.color(card) == "black"
-					);
-					cards.sort((a, b) => {
-						return (
-							(get.name(b) == "shan" ? 1 : 2) -
-							(get.name(a) == "shan" ? 1 : 2)
-						);
-					});
-					const geti = () => {
-						if (cards.includes(card)) cards.indexOf(card);
-						return cards.length;
-					};
-					if (get.name(card) == "shan")
-						return (
-							Math.min(num, [6, 4, 3][Math.min(geti(), 2)]) * 0.6
-						);
-					return Math.max(num, [6.5, 4, 3][Math.min(geti(), 2)]);
-				},
-				aiUseful() {
-					return lib.skill.qsmx_qingguo.mod.aiValue.apply(
-						this,
-						arguments
-					);
-				},
-			},
 			audio: "ext:奇思妙想/resource/audio/skill/:2",
 			enable: ["chooseToRespond", "chooseToUse"],
 			filterCard: function (card) {
@@ -8703,7 +8624,7 @@ export const skill = {
 				if (player.storage.skillBlocker) {
 					player.storage.skillBlocker.unique();
 				}
-				
+
 				if (player.skills) {
 					var OriginalSkills = player.getOriginalSkills();
 					for (const Originalskill of OriginalSkills) {
@@ -9250,8 +9171,231 @@ export const skill = {
 				},
 			},
 		},
+		qsmx_jijun: {
+			audio: 'xinfu_jijun',
+			trigger: {
+				player: ["useCard", "respond"],
+			},
+			frequent: true,
+			async content(event, trigger, player) {
+				var cards = get.cards(2);
+				const { result } = await player.chooseCardButton(cards, [
+					1,
+					Infinity,
+				]);
+				if (result.bool) {
+					await player.gain(result.links);
+					if (result.links.length > 1) {
+						const { result } = await player
+							.chooseCard("将一张牌置入牌堆底", "he", true)
+							.set("ai", function (card) {
+								if (get.color(card) == "black") {
+									return 3;
+								}
+								return 0;
+							});
+						await player.loseToDiscardpile(
+							result.cards[0],
+							ui.cardPile
+						);
+					}
+				}
+			},
+		},
+		qsmx_fangtong: {
+			audio: 'xinfu_fangtong',
+			trigger: {
+				player: "phaseJieshuBegin",
+			},
+			async content(event, trigger, player) {
+				while (true) {
+					var cards = get.bottomCards();
+					await player.showCards(cards);
+					if (get.color(cards) != "black") {
+						break;
+					} else {
+						const {
+							result: { bool },
+						} = await player.chooseBool("是否重复此流程");
+						if (bool) {
+							player.gain(cards);
+						} else {
+							break;
+						}
+					}
+				}
+			},
+		},
+		qsmx_liudian: {
+			trigger: {
+				player: "showCardsEnd",
+			},
+			direct: true,
+			filter: function (event, player) {
+				return event.cards.map((c) => get.suit(c)).includes("spade");
+			},
+			async content(event, trigger, player) {
+				const {
+					result: { targets, bool },
+				} = await player
+					.chooseTarget("对一名角色造成一点雷电伤害")
+					.set("ai", function (target) {
+						return get.damageEffect(
+							target,
+							player,
+							player,
+							"thunder"
+						);
+					});
+				if (bool) {
+					player.logSkill("qsmx_liudian", targets);
+					targets[0].damage(player, "thunder");
+				}
+			},
+		},
+		qsmx_chengxiang: {
+			enable: "phaseUse",
+			content: function () {
+				/*var cards = [
+					game.createCard({name:'wuzhong', number:6}),
+					game.createCard({name:'wuzhong', number:6}),
+					game.createCard({name:'wuzhong', number:6}),
+					game.createCard({name:'wuzhong', number:6}),
+				];*/
+				var cards = get.cards(4);
+				var cards2 = [
+					cards[0],
+					game.createCard({
+						name: "qsmx_addition",
+						suit: "none",
+						number: 0,
+					}),
+					cards[1],
+					game.createCard({
+						name: "qsmx_addition",
+						suit: "none",
+						number: 0,
+					}),
+					cards[2],
+					game.createCard({
+						name: "qsmx_addition",
+						suit: "none",
+						number: 0,
+					}),
+					cards[3],
+				];
+				var operator = [
+					game.createCard({
+						name: "qsmx_subtraction",
+						suit: "none",
+						number: 0,
+					}),
+					game.createCard({
+						name: "qsmx_mult",
+						suit: "none",
+						number: 0,
+					}),
+					game.createCard({
+						name: "qsmx_division",
+						suit: "none",
+						number: 0,
+					}),
+					game.createCard({
+						name: "qsmx_subtraction",
+						suit: "none",
+						number: 0,
+					}),
+					game.createCard({
+						name: "qsmx_mult",
+						suit: "none",
+						number: 0,
+					}),
+					game.createCard({
+						name: "qsmx_division",
+						suit: "none",
+						number: 0,
+					}),
+					game.createCard({
+						name: "qsmx_subtraction",
+						suit: "none",
+						number: 0,
+					}),
+					game.createCard({
+						name: "qsmx_mult",
+						suit: "none",
+						number: 0,
+					}),
+					game.createCard({
+						name: "qsmx_division",
+						suit: "none",
+						number: 0,
+					}),
+				];
+				game.cardsGotoOrdering(cards2);
+				var next = player.chooseToMove(true, "称象");
+				next.set("list", [
+					["亮出牌", cards2],
+					["运算符", operator],
+				]);
+				next.set("filterMove", function (from, to, moved) {
+					if (typeof to == "number") return false;
+					if (
+						get.type(from.link) == "operator" &&
+						get.type(to.link) == "operator"
+					)
+						return true;
+					if (
+						get.type(from.link) != "operator" &&
+						get.type(to.link) != "operator"
+					)
+						return true;
+					return false;
+				});
+				next.set("filterOk", function (moved) {
+					var cards = moved[0];
+					var numberList = [
+						cards[0].number,
+						cards[2].number,
+						cards[4].number,
+						cards[6].number,
+					];
+					var operatorList = [
+						cards[1].name,
+						cards[3].name,
+						cards[5].name,
+					];
+					var index = {
+						qsmx_addition: "+",
+						qsmx_subtraction: "-",
+						qsmx_mult: "*",
+						qsmx_division: "/",
+					};
+					var str =
+						"return " +
+						numberList[0] +
+						index[operatorList[0]] +
+						numberList[1] +
+						index[operatorList[1]] +
+						numberList[2] +
+						index[operatorList[2]] +
+						numberList[3];
+					result = new Function(str);
+					return result() == 24;
+				});
+			},
+		},
 	},
 	translate: {
+		qsmx_chengxiang: "称象",
+		qsmx_liudian: "流电",
+		qsmx_liudian_info:
+			"你展示牌时，若展示牌中的花色存在♠，你可以对一名角色造成一点雷电伤害。",
+		qsmx_fangtong: "方统",
+		qsmx_fangtong_info:
+			"结束阶段，你可以亮出牌堆底一张牌，若此牌为黑色，你可以获得之并重复此流程。",
+		qsmx_jijun: "集军",
+		qsmx_jijun_info:
+			"你使用或打出牌时，你可以观看牌堆顶两张牌并获得其中任意张，若你获得了其中所有牌，你将一张牌置入牌堆顶。",
 		qsmx_yicai: "义裁",
 		qsmx_yicai_info:
 			"一名其他角色的伤害结算完成后，若此伤害被防止或伤害值减少过，你可以选择一项：①.将其击杀，②.视为对其与你使用一张【桃园结义】。",
@@ -9526,9 +9670,6 @@ export const skill = {
 		qsmx_tiemian: "铁面",
 		qsmx_tiemian_info:
 			"锁定技。当你成为【杀】的目标后，你进行判定。若结果为黑色，则取消此目标。",
-		qsmx_jijun: "集军",
-		qsmx_jijun_info:
-			"出牌阶段限一次，你可以将任意张花色不同的牌置入你的武将牌，称之为“军”；结束阶段，你获得所有“军”。",
 		qsmx_tieqi: "铁骑",
 		qsmx_tieqi_info: "当你使用牌指定一名角色为目标后，你还原其函数。",
 		qsmx_dinghhuo: "绽火",

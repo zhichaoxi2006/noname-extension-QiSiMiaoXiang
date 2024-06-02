@@ -339,7 +339,26 @@ export const character = async function () {
 				[
 
 				],
-			]
+			],
+			qsmx_shen_zhangliao: [
+				"male",
+				"shen",
+				"4/4",
+				[],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_shen_zhangliao.jpg",
+					"unseen"
+				],
+			],
+			qsmx_zhangliang: [
+				"male",
+				"qun",
+				"4/4",
+				['qsmx_jijun', 'qsmx_fangtong', 'qsmx_liudian'],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_zhangliang.jpg",
+				],
+			],
 		},
 		characterTitle: {
 			qsmx_longinus: "百夫长",
@@ -383,6 +402,9 @@ export const character = async function () {
 					"qsmx_hw_sunquan",
 				],
 				qmsx_diy: [
+					"qsmx_zhangliang",
+					"qsmx_shen_zhangliao",
+					"qsmx_yemoxia",
 					"qsmx_zuoci",
 					"qsmx_lvbu",
 					"qsmx_zhangjiao",
@@ -416,6 +438,7 @@ export const character = async function () {
 			qsmx_huiwanxili: "会玩系列武将",
 			qsmx_hw_sunquan: "会玩孙权",
 			qsmx_hw_zhonghui: "会玩钟会",
+			qsmx_shen_zhangliao: "妙神张辽",
 			qmsx_diy: "DIY武将",
 			qsmx_touhou: "东方武将",
 			qsmx_zhangfei: "妙张飞",
@@ -426,6 +449,7 @@ export const character = async function () {
 			qsmx_sunjian: "妙孙坚",
 			qsmx_zhangliao: "妙张辽",
 			qsmx_huatuo: "妙华佗",
+			qsmx_zhangliang: "妙张梁",
 			qsmx_caopi: "妙曹丕",
 			qsmx_zhengxie: "鬼人正邪",
 			qsmx_menghuo: "妙孟获",

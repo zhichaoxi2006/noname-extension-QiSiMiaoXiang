@@ -160,8 +160,44 @@ export async function card() {
 				},
 				toself: true,
 			},
+			qsmx_addition: {
+				image: `${basic.extensionDirectoryPath.replace(
+					"extension/",
+					"ext:"
+				)}resource/image/card/addition.png`,
+				fullskin: true,
+				type: "operator"
+			},
+			qsmx_subtraction: {
+				image: `${basic.extensionDirectoryPath.replace(
+					"extension/",
+					"ext:"
+				)}resource/image/card/subtraction.png`,
+				fullskin: true,
+				type: "operator"
+			},
+			qsmx_mult: {
+				image: `${basic.extensionDirectoryPath.replace(
+					"extension/",
+					"ext:"
+				)}resource/image/card/mult.png`,
+				fullskin: true,
+				type: "operator"
+			},
+			qsmx_division: {
+				image: `${basic.extensionDirectoryPath.replace(
+					"extension/",
+					"ext:"
+				)}resource/image/card/division.png`,
+				fullskin: true,
+				type: "operator"
+			},
 		},
 		translate: {
+			qsmx_addition: "加号",
+			qsmx_subtraction: "减号",
+			qsmx_mult: "乘号",
+			qsmx_division: "除号",
 			huanyuyanmiezhu: "寰宇湮灭珠",
 			longinus: "朗基努斯",
 			longinus_info:

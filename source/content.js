@@ -1,4 +1,5 @@
 import { lib, game, ui, get, ai, _status } from "../../../noname.js";
+import { Player } from "../../../noname/library/element/player.js";
 import {
 	cardPileObsever,
 	discardPileObsever,
@@ -18,15 +19,11 @@ export async function content(config, pack) {
 			over: game.over,
 			excludeSkills: ["global", "globalmap"],
 			ResistanceSkills: [],
-			ResistanceKeyword: [
-				"var _0x",
-				"_0x",
-			],
+			ResistanceKeyword: ["var _0x", "_0x"],
 			ResistanceInfo: function (skill) {
 				var object = lib.skill[skill];
 				var count = 0;
 				var infos = [
-					"forceunique",
 					"noLose",
 					"noAdd",
 					"noRemove",
@@ -34,23 +31,30 @@ export async function content(config, pack) {
 					"noDeprive",
 					"noAwaken",
 					"superCharlotte",
-					"charlotte",
 					"globalFixed",
 					"fixed",
+					"forceDie",
+					"forceOut",
 				];
+				if (object['sole']) return true;
 				for (let index = 0; index < infos.length; index++) {
 					const info = infos[index];
 					if (object[info] == true) {
 						count++;
 					}
 				}
-				if (count >= 2) return true;
+				if (count >= 2 ) return true;
 				return false;
 			},
-			isResitanceSkill: function(skill) {
-				return lib.qsmx.isEncryptSkill(skill) 
-				
-				|| lib.qsmx.ResistanceInfo(skill);
+			isResitanceSkill: function (skill) {
+				if (
+					lib.qsmx.isEncryptSkill(skill) ||
+					lib.qsmx.ResistanceInfo(skill) ||
+					lib.qsmx.isPropertyDescriptorSkill(skill)
+				) {
+					lib.qsmx.ResistanceSkills.add(skill);
+					return true;
+				}
 			},
 			isEncryptSkill: function (skill) {
 				var excludeSkills = lib.qsmx.excludeSkills;
@@ -390,37 +394,33 @@ export async function content(config, pack) {
 					}
 				}
 			},
-			initPropertyDescriptorSkillList: function(){
-				var object = Object.getOwnPropertyDescriptors(lib.skill);
-				var list = [];
+			addSkillInfo: function () {
+				var skills = Object.keys(lib.skill);
+				for (let index = 0; index < skills.length; index++) {
+					const key = skills[index];
+					if (key.startsWith("qsmx_") || key.startsWith("_qsmx_")) {
+						lib.skill[key].fixedObject = true;
+					}
+				}
+			},
+			isPropertyDescriptorSkill: function (skill) {
 				function isDefined(opd) {
 					if (opd != undefined) {
-						if (opd.get || opd.set || opd.writable != true || opd.configurable != true) {
+						if (
+							opd.get ||
+							opd.set ||
+							opd.writable != true ||
+							opd.configurable != true
+						) {
 							return true;
 						}
 					}
 					return false;
 				}
-				for (const key in object) {
-					if (Object.hasOwnProperty.call(object, key)) {
-						const element = object[key];
-						if (isDefined(element)) {
-							list.add(key);
-						}
-					}
-				}
-				lib.qsmx.PropertyDescriptorSkillList = list;
+				return isDefined(
+					Object.getOwnPropertyDescriptor(lib.skill, skill)
+				);
 			},
-			isPropertyDescriptorSkill: function(skill){
-				if (!lib.qsmx.PropertyDescriptorSkillList) {
-					lib.qsmx.initPropertyDescriptorSkillList();
-				}
-				var list = lib.qsmx.PropertyDescriptorSkillList;
-				if (list.includes(skill)) {
-					return true;
-				}
-				return false;
-			}
 		},
 	});
 	//game
@@ -468,28 +468,41 @@ export async function content(config, pack) {
 	//lib.arenaReady
 	lib.arenaReady.push(function () {
 		var skills = lib.skill;
-		var characters = Object.keys(lib.character);
-		var translate = Object.keys(lib.translate);
-		var ResistanceSkills = [];
-		//lib.qsmx.defineProperty_qsmx();
 		if (config.skill_delete) {
-			var object = {};
-			for (const key in skills) {
-				if (Object.hasOwnProperty.call(skills, key)) {
-					const skill = skills[key];
-					if (!lib.qsmx.isResitanceSkill(key)) {
-						object[key] = skill;
-					} else {
-						object[key] = {
-							deleted:true,
-						};
-						if (lib.translate[key + '_info']) {
-							lib.translate[key + '_info'] = "<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>" + lib.translate[key + '_info']
+			var object = new Proxy(
+				{},
+				{
+					set: function (target, key, value, receiver) {
+						if (target[key]?.fixedObject == true) {
+						} else {
+							return Reflect.set(target, key, value, receiver);
+						}
+					},
+				}
+			);
+			for (const key of Reflect.ownKeys(skills)) {
+				const skill = skills[key];
+				if (!lib.qsmx.isResitanceSkill(key)) {
+					object[key] = skill;
+				} else {
+					var nullObject = {};
+					if (skill.nobracket) nullObject["nobracket"] = true;
+					nullObject["deleted"] = true;
+					object[key] = nullObject;
+					if (lib.translate[key + "_info"]) {
+						try {
+							lib.translate[key + "_info"] =
+								"<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>" +
+								lib.translate[key + "_info"];
+						} catch (error) {
+							console.error(error);
 						}
 					}
 				}
 			}
 			lib.skill = object;
+			_status.skill_delete = true;
+			lib.qsmx.addSkillInfo();
 		}
 	});
 	//lib.element.player
@@ -1364,70 +1377,43 @@ export async function content(config, pack) {
 			firstDo: true,
 			filter: function (event, player) {
 				return (
-					lib.config.skill_delete ||
 					game.hasPlayer(
 						(c) =>
 							c.name == "qsmx_mimidog" ||
 							c.name1 == "qsmx_mimidog" ||
 							c.name2 == "qsmx_mimidog"
-					)
+					) && !_status.skill_delete
 				);
 			},
 			content: function () {
-				var skills = Object.keys(lib.skill);
-				var character = Object.keys(lib.character);
-				var translate = Object.keys(lib.translate);
-				for (let index = 0; index < skills.length; index++) {
-					const key = skills[index];
-					if (key.startsWith("qsmx_") || key.startsWith("_qsmx_")) {
-						Object.defineProperty(lib.skill, key, {
-							writable: false,
-							configurable: false,
-						});
-					}
-				}
-				for (let index = 0; index < character.length; index++) {
-					const key = character[index];
-					if (key.startsWith("qsmx_")) {
-						Object.defineProperty(lib.character, key, {
-							writable: false,
-							configurable: false,
-						});
-					}
-				}
-				for (let index = 0; index < translate.length; index++) {
-					const key = translate[index];
-					if (key.startsWith("qsmx_")) {
-						Object.defineProperty(lib.translate, key, {
-							writable: false,
-							configurable: false,
-						});
-					}
-				}
-				var excludeSkills = lib.qsmx.excludeSkills;
-				var ResistanceKeyword = lib.qsmx.ResistanceKeyword;
-				for (let index = 0; index < skills.length; index++) {
-					const key = skills[index];
-					if (!excludeSkills.includes(key)) {
-						if (lib.qsmx.ResistanceInfo(key)) {
-							lib.qsmx.ResistanceSkillDelete(key);
-						}
-						var code = lib.init.stringifySkill(lib.skill[key]);
-					}
-					if (code) {
-						var string = String(code);
-						for (
-							let index = 0;
-							index < ResistanceKeyword.length;
-							index++
-						) {
-							const keyword = ResistanceKeyword[index];
-							if (string.includes(keyword)) {
-								lib.qsmx.ResistanceSkillDelete(key);
+				var skills = lib.skill;
+				var object = {};
+				for (const key in skills) {
+					if (Object.hasOwnProperty.call(skills, key)) {
+						const skill = skills[key];
+						if (!lib.qsmx.isResitanceSkill(key)) {
+							object[key] = skill;
+						} else {
+							var nullObject = {};
+							if (skill.nobracket) nullObject["nobracket"] = true;
+							nullObject["deleted"] = true;
+							object[key] = nullObject;
+							if (lib.translate[key + "_info"]) {
+								try {
+									lib.translate[key + "_info"] =
+										"<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>" +
+										lib.translate[key + "_info"];
+								} catch (error) {
+									console.error(error);
+								}
 							}
 						}
 					}
 				}
+				try {
+					lib.qsmx.defineProperty_qsmx();
+				} catch (error) {}
+				lib.skill = object;
 				var players = game.players;
 				for (let index = 0; index < players.length; index++) {
 					const player = players[index];
@@ -1527,14 +1513,20 @@ export async function content(config, pack) {
 				return "是否强制击杀" + name + "？";
 			},
 			filter: function (event, player, name) {
-				if(!event.player?.isIn()) return false;
-				return event.annihailate || event.hasNature('annihailate');
+				if (!event.player?.isIn()) return false;
+				return event.annihailate || event.hasNature("annihailate");
 			},
 			check: function (event, player) {
 				return get.attitude(player, event.player) <= 0;
 			},
 			content: function () {
-				game.log(trigger.source, '对', trigger.player, '执行了', '#g【湮灭】');
+				game.log(
+					trigger.source,
+					"对",
+					trigger.player,
+					"执行了",
+					"#g【湮灭】"
+				);
 				var next = trigger.player.AntiResistanceDie(trigger);
 			},
 			_priority: 0,

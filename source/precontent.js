@@ -66,6 +66,7 @@ export async function precontent(config, pack) {
 		});
 		const prefix = {
 			qsmx: [
+				"qsmx_zhangliang",
 				"qsmx_zuoci",
 				"qsmx_lvbu",
 				"qsmx_zhangjiao",
@@ -95,22 +96,11 @@ export async function precontent(config, pack) {
 			],
 			qsmx_hw: ["qsmx_hw_sunquan", "qsmx_hw_zhonghui"],
 			qsmx_sp: ['qsmx_sp_zhangliao'],
-			qsmx_shen: ['qsmx_shen_zhangjiao'],
+			qsmx_shen: ['qsmx_shen_zhangjiao', 'qsmx_shen_zhangliao'],
 		};
 		for (var i of prefix["qsmx_sp"]) lib.translate[i + "_prefix"] = "SP妙";
 		for (var i of prefix["qsmx_shen"]) lib.translate[i + "_prefix"] = "妙神";
 		for (var i of prefix["qsmx"]) lib.translate[i + "_prefix"] = "妙";
 		for (var i of prefix["qsmx_hw"]) lib.translate[i + "_prefix"] = "会玩";
 	}
-	//skill test
-	lib._skill = {};
-	/*Object.defineProperty(lib, 'skill',{
-		get:function(){
-			return lib._skill
-		},
-		set:function(newValue){
-			lib._skill = newValue;
-			console.log(newValue);
-		}
-	})*/
 }

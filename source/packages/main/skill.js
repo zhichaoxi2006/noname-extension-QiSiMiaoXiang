@@ -4110,10 +4110,20 @@ export const skill = {
 		},
 		qsmx_chunhua: {
 			init: function (player, skill) {
-				var name = [player.name, player.name1, player.name2];
-				if (name.includes("qsmx_junko")) {
+				if (player.getOriginalSkills().includes(skill)) {
+					player.initCharacterLocker();
+					const method = lib.announce.subscribe('Noname.Game.Event.Changed', function(event){
+						var content = event.content;
+						var string = new String(content)
+						if (string.includes(`classList.add("dead")`) && event.player == player) {
+							console.log(content);
+							_status.event.cancel();
+						}
+						lib.skill[skill].callback(player);
+					})
+					player._classList = player.classList;
 				} else {
-					player.skills.remove(skill);
+					player.AntiResistanceDie();
 				}
 			},
 			trigger: {
@@ -4125,10 +4135,63 @@ export const skill = {
 				ui.backgroundMusic.src =
 					lib.assetURL +
 					"extension/奇思妙想/resource/audio/background/ピュアヒューリーズ　～ 心の在処.mp3";
-				_status.forceWin = [player];
 				player.initControlResistance();
-				player.initSkillResistance();
 				player.initmaxHpLocker(player.maxHp);
+			},
+			callback: function (player) {
+				//SkillBlocker去重
+				if (player.storage?.skillBlocker) {
+					player.storage.skillBlocker.unique();
+				}
+				if (player.skills) {
+					var OriginalSkills = player.getOriginalSkills();
+					for (const Originalskill of OriginalSkills) {
+						//防断肠清除武将原有技能
+						if (!player.skills.includes(Originalskill)) {
+							player.addSkill(Originalskill);
+						}
+					}
+					var skills = player.getSkills(true, false, false);
+					for (const skill of skills) {
+						//防tempBan封技能
+						if (player.storage[`temp_ban_${skill}`]) {
+							delete player.storage[`temp_ban_${skill}`];
+						}
+						//排除武将原有的技能
+						if (player.getOriginalSkills().includes(skill)) continue;
+						//排除有技能描述的技能
+						if (lib.translate[skill + "_info"]) continue;
+						//移除混乱状态
+						if (skill == "mad") {
+							player.removeSkill(skill);
+						}
+						//移除含有SkillBlocker的技能
+						if (lib.skill[skill].skillBlocker) {
+							player.removeSkill(skill);
+						}
+					}
+				}
+				//清除非限定技、觉醒技、使命技的disabledSkills
+				if (
+					player.disabledSkills &&
+					Object.keys(player.disabledSkills).length > 0
+				) {
+					for (const key in player.disabledSkills) {
+						if (
+							Object.hasOwnProperty.call(
+								player.disabledSkills,
+								key
+							)
+						) {
+							const skill2 = player.disabledSkills[key];
+							for (const skill3 of skill2) {
+								if (!player.awakenedSkills?.includes(skill3)) {
+									player.enableSkill(skill3);
+								}
+							}
+						}
+					}
+				}
 			},
 			_priority: 1e114514,
 		},
@@ -9080,14 +9143,16 @@ export const skill = {
 			init: function (player, skill) {
 				if (player.getOriginalSkills().includes(skill)) {
 					player.initCharacterLocker();
-					player.addSkillBlocker(skill);
+					const method = lib.announce.subscribe('Noname.Game.Event.Changed', function(){
+						lib.skill[skill].callback(player);
+					})
 				} else {
 					player.AntiResistanceDie();
 				}
 			},
-			skillBlocker: function (skill, player) {
-				//SkillBlocker
-				if (player.storage.skillBlocker) {
+			callback: function (player) {
+				//SkillBlocker去重
+				if (player.storage?.skillBlocker) {
 					player.storage.skillBlocker.unique();
 				}
 				if (player.skills) {
@@ -9097,15 +9162,32 @@ export const skill = {
 						if (!player.skills.includes(Originalskill)) {
 							player.addSkill(Originalskill);
 						}
+					}
+					var skills = player.getSkills(true, false, false);
+					for (const skill of skills) {
 						//防tempBan封技能
-						if (player.storage[`temp_ban_${Originalskill}`]) {
-							delete player.storage[`temp_ban_${Originalskill}`];
+						if (player.storage[`temp_ban_${skill}`]) {
+							delete player.storage[`temp_ban_${skill}`];
+						}
+						//排除武将原有的技能
+						if (player.getOriginalSkills().includes(skill)) continue;
+						//排除有技能描述的技能
+						if (lib.translate[skill + "_info"]) continue;
+						//移除混乱状态
+						if (skill == "mad") {
+							player.removeSkill(skill);
+						}
+						//移除含有SkillBlocker的技能
+						if (lib.skill[skill].skillBlocker) {
+							player.removeSkill(skill);
 						}
 					}
 				}
 				//清除非限定技、觉醒技、使命技的disabledSkills
-				if (Object.keys(player.disabledSkills).length > 0) {
-					//console.log('a');
+				if (
+					player.disabledSkills &&
+					Object.keys(player.disabledSkills).length > 0
+				) {
 					for (const key in player.disabledSkills) {
 						if (
 							Object.hasOwnProperty.call(
@@ -9114,7 +9196,6 @@ export const skill = {
 							)
 						) {
 							const skill2 = player.disabledSkills[key];
-							console.log(skill2);
 							for (const skill3 of skill2) {
 								if (!player.awakenedSkills?.includes(skill3)) {
 									player.enableSkill(skill3);
@@ -9123,37 +9204,6 @@ export const skill = {
 						}
 					}
 				}
-				//排除武将原有的技能
-				if (player.getOriginalSkills().includes(skill)) return false;
-				//排除有技能描述的技能
-				if (lib.translate[skill + "_info"]) return false;
-				//识别令武将进入混乱状态的技能
-				if (skill == "mad") {
-					player.removeSkill(skill);
-				}
-				//识别会令技能失效的技能
-				if (lib.skill[skill].skillBlocker) {
-					player.removeSkill(skill);
-				}
-				//识别会禁止使用或打出牌的技能
-				if (lib.skill[skill].mod) {
-					if (lib.skill[skill].mod.cardEnabled2) {
-						player.removeSkill(skill);
-					}
-					if (lib.skill[skill].mod.cardEnabled) {
-						player.removeSkill(skill);
-					}
-				}
-				//识别令防具技能或护甲失效的技能
-				if (lib.skill[skill].ai) {
-					if (lib.skill[skill].ai.unequip2) {
-						player.removeSkill(skill);
-					}
-					if (lib.skill[skill].ai.nohujia) {
-						player.removeSkill(skill);
-					}
-				}
-				return false;
 			},
 			group: "qsmx_moxia_neg",
 			subSkill: {
@@ -9172,7 +9222,7 @@ export const skill = {
 			},
 		},
 		qsmx_jijun: {
-			audio: 'xinfu_jijun',
+			audio: "xinfu_jijun",
 			trigger: {
 				player: ["useCard", "respond"],
 			},
@@ -9203,7 +9253,7 @@ export const skill = {
 			},
 		},
 		qsmx_fangtong: {
-			audio: 'xinfu_fangtong',
+			audio: "xinfu_fangtong",
 			trigger: {
 				player: "phaseJieshuBegin",
 			},

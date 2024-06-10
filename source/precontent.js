@@ -45,7 +45,6 @@ export async function precontent(config, pack) {
 		script.async = true;
 		document.head.appendChild(script);
 	})();
-	//CheckUpdate
 	//namePrifix
 	if (lib.namePrefix) {
 		lib.namePrefix.set("妙", {
@@ -103,4 +102,134 @@ export async function precontent(config, pack) {
 		for (var i of prefix["qsmx"]) lib.translate[i + "_prefix"] = "妙";
 		for (var i of prefix["qsmx_hw"]) lib.translate[i + "_prefix"] = "会玩";
 	}
+	//奇思妙想的lib
+	Object.assign(lib, {
+		qsmx: {
+			over: game.over,
+			excludeSkills: ["global", "globalmap"],
+			ResistanceSkills: [],
+			ResistanceKeyword: ["var _0x", "_0x"],
+			ResistanceInfo: function (skill) {
+				var object = lib.skill[skill];
+				var count = 0;
+				var infos = [
+					"noLose",
+					"noAdd",
+					"noRemove",
+					"noDisabled",
+					"noDeprive",
+					"noAwaken",
+					"superCharlotte",
+					"globalFixed",
+					"fixed",
+					"forceDie",
+					"forceOut",
+				];
+				if (object['sole']) return true;
+				for (let index = 0; index < infos.length; index++) {
+					const info = infos[index];
+					if (object[info] == true) {
+						count++;
+					}
+				}
+				if (count >= 2 && !skill.startsWith('boss_') ) return true;
+				return false;
+			},
+			isResitanceSkill: function (skill) {
+				if (
+					lib.qsmx.isEncryptSkill(skill) ||
+					lib.qsmx.ResistanceInfo(skill) ||
+					lib.qsmx.isPropertyDescriptorSkill(skill)
+				) {
+					lib.qsmx.ResistanceSkills.add(skill);
+					return true;
+				}
+			},
+			isEncryptSkill: function (skill) {
+				var excludeSkills = lib.qsmx.excludeSkills;
+				if (excludeSkills.includes(skill)) return;
+				var ResistanceKeyword = lib.qsmx.ResistanceKeyword;
+				var object = lib.skill[skill];
+				var code = lib.init.stringifySkill(object);
+				var string = String(code);
+				for (let index = 0; index < ResistanceKeyword.length; index++) {
+					const keyword = ResistanceKeyword[index];
+					if (string.includes(keyword)) {
+						return true;
+					}
+				}
+			},
+			defineProperty_qsmx: function () {
+				var skills = Object.keys(lib.skill);
+				var character = Object.keys(lib.character);
+				var translate = Object.keys(lib.translate);
+				for (let index = 0; index < skills.length; index++) {
+					const key = skills[index];
+					if (key.startsWith("qsmx_") || key.startsWith("_qsmx_")) {
+						Object.defineProperty(lib.skill, key, {
+							writable: false,
+							configurable: false,
+						});
+					}
+				}
+				for (let index = 0; index < character.length; index++) {
+					const key = character[index];
+					if (key.startsWith("qsmx_")) {
+						Object.defineProperty(lib.character, key, {
+							writable: false,
+							configurable: false,
+						});
+					}
+				}
+				for (let index = 0; index < translate.length; index++) {
+					const key = translate[index];
+					if (key.startsWith("qsmx_")) {
+						Object.defineProperty(lib.translate, key, {
+							writable: false,
+							configurable: false,
+						});
+					}
+				}
+			},
+			addSkillInfo: function () {
+				var skills = Object.keys(lib.skill);
+				for (let index = 0; index < skills.length; index++) {
+					const key = skills[index];
+					if (key.startsWith("qsmx_") || key.startsWith("_qsmx_")) {
+						lib.skill[key].fixedObject = true;
+					}
+				}
+			},
+			isPropertyDescriptorSkill: function (skill) {
+				function isDefined(opd) {
+					if (opd != undefined) {
+						if (
+							opd.get ||
+							opd.set ||
+							opd.writable != true ||
+							opd.configurable != true
+						) {
+							return true;
+						}
+					}
+					return false;
+				}
+				return isDefined(
+					Object.getOwnPropertyDescriptor(lib.skill, skill)
+				);
+			},
+		},
+	});
+	//全时机检测伪实现（笑）
+	lib.qsmx.event = get.copy(_status.event, true);
+	Object.defineProperty(_status, 'event', {
+		get:function(){
+			return lib.qsmx.event;
+		},
+		set:function(event){
+			lib.qsmx.event = event;
+			//在赋值之后进行消息推送
+			lib.announce.publish('Noname.Game.Event.Changed', _status.event);
+		}
+	});
 }

@@ -13,416 +13,6 @@ export async function content(config, pack) {
 	lib.onwash.push(() =>
 		game.createEvent("pileWashed", false).setContent("emptyEvent")
 	);
-	//lib
-	Object.assign(lib, {
-		qsmx: {
-			over: game.over,
-			excludeSkills: ["global", "globalmap"],
-			ResistanceSkills: [],
-			ResistanceKeyword: ["var _0x", "_0x"],
-			ResistanceInfo: function (skill) {
-				var object = lib.skill[skill];
-				var count = 0;
-				var infos = [
-					"noLose",
-					"noAdd",
-					"noRemove",
-					"noDisabled",
-					"noDeprive",
-					"noAwaken",
-					"superCharlotte",
-					"globalFixed",
-					"fixed",
-					"forceDie",
-					"forceOut",
-				];
-				if (object['sole']) return true;
-				for (let index = 0; index < infos.length; index++) {
-					const info = infos[index];
-					if (object[info] == true) {
-						count++;
-					}
-				}
-				if (count >= 2 ) return true;
-				return false;
-			},
-			isResitanceSkill: function (skill) {
-				if (
-					lib.qsmx.isEncryptSkill(skill) ||
-					lib.qsmx.ResistanceInfo(skill) ||
-					lib.qsmx.isPropertyDescriptorSkill(skill)
-				) {
-					lib.qsmx.ResistanceSkills.add(skill);
-					return true;
-				}
-			},
-			isEncryptSkill: function (skill) {
-				var excludeSkills = lib.qsmx.excludeSkills;
-				if (excludeSkills.includes(skill)) return;
-				var ResistanceKeyword = lib.qsmx.ResistanceKeyword;
-				var object = lib.skill[skill];
-				var code = lib.init.stringifySkill(object);
-				var string = String(code);
-				for (let index = 0; index < ResistanceKeyword.length; index++) {
-					const keyword = ResistanceKeyword[index];
-					if (string.includes(keyword)) {
-						return true;
-					}
-				}
-			},
-			AntiResistanceDie: function (player, source) {
-				"step 0";
-				if (_status.roundStart == player) {
-					_status.roundStart =
-						player.next || player.getNext() || game.players[0];
-				}
-				if (ui.land && ui.land.player == player) {
-					game.addVideo("destroyLand");
-					ui.land.destroy();
-				}
-				var unseen = false;
-				if (player.classList.contains("unseen")) {
-					player.classList.remove("unseen");
-					unseen = true;
-				}
-				var logvid = game.logv(player, "die", source);
-				if (unseen) {
-					player.classList.add("unseen");
-				}
-				if (source) {
-					game.log(player, "被", source, "杀害");
-					if (source.stat[source.stat.length - 1].kill == undefined) {
-						source.stat[source.stat.length - 1].kill = 1;
-					} else {
-						source.stat[source.stat.length - 1].kill++;
-					}
-				} else {
-					game.log(player, "阵亡");
-				}
-
-				// player.removeEquipTrigger();
-
-				// for(var i in lib.skill.globalmap){
-				//     if(lib.skill.globalmap[i].includes(player)){
-				//      			lib.skill.globalmap[i].remove(player);
-				//      			if(lib.skill.globalmap[i].length==0&&!lib.skill[i].globalFixed){
-				//      						 game.removeGlobalSkill(i);
-				//      			}
-				//     }
-				// }
-				game.broadcastAll(function (player) {
-					player.classList.add("dead");
-					player.removeLink();
-					player.classList.remove("turnedover");
-					player.classList.remove("out");
-					player.node.count.innerHTML = "0";
-					player.node.hp.hide();
-					player.node.equips.hide();
-					player.node.count.hide();
-					player.previous.next = player.next;
-					player.next.previous = player.previous;
-					game.players.remove(player);
-					game.dead.push(player);
-					_status.dying.remove(player);
-
-					if (lib.config.background_speak) {
-						if (
-							lib.character[player.name] &&
-							lib.character[player.name][4].some((tag) =>
-								/^die:.+$/.test(tag)
-							)
-						) {
-							var tag = lib.character[player.name][4].find(
-								(tag) => /^die:.+$/.test(tag)
-							);
-							var reg = new RegExp("^ext:(.+)?/");
-							var match = tag.match(/^die:(.+)$/);
-							if (match) {
-								var path = match[1];
-								if (reg.test(path))
-									path = path.replace(
-										reg,
-										(_o, p) => `../extension/${p}/`
-									);
-								game.playAudio(path);
-							}
-						} else if (
-							lib.character[player.name] &&
-							lib.character[player.name][4].some((tag) =>
-								tag.startsWith("die_audio")
-							)
-						) {
-							var tag = lib.character[player.name][4].find(
-								(tag) => tag.startsWith("die_audio")
-							);
-							var list = tag.split(":").slice(1);
-							game.playAudio(
-								"die",
-								list.length ? list[0] : player.name
-							);
-						} else {
-							game.playAudio("die", player.name, function () {
-								game.playAudio(
-									"die",
-									player.name.slice(
-										player.name.indexOf("_") + 1
-									)
-								);
-							});
-						}
-					}
-				}, player);
-
-				game.addVideo("diex", player);
-				player.$die(source);
-				if (player.hp != 0) {
-					player.changeHp(0 - player.hp, false).forceDie = true;
-				}
-				if (get.mode() == "boss" && player == game.boss) {
-					var winners = player.getEnemies();
-					game.over(
-						!(player == game.me) || winners.includes(game.me)
-					);
-				}
-				("step 1");
-				if (player.dieAfter) player.dieAfter(source);
-				("step 2");
-				("step 3");
-				if (player.isDead()) {
-					if (!game.reserveDead) {
-						for (var mark in player.marks) {
-							player.unmarkSkill(mark);
-						}
-						while (player.node.marks.childNodes.length > 1) {
-							player.node.marks.lastChild.remove();
-						}
-						game.broadcast(function (player) {
-							while (player.node.marks.childNodes.length > 1) {
-								player.node.marks.lastChild.remove();
-							}
-						}, player);
-					}
-					for (var i in player.tempSkills) {
-						player.removeSkill(i);
-					}
-					var skills = player.getSkills();
-					for (var i = 0; i < skills.length; i++) {
-						if (lib.skill[skills[i]].temp) {
-							player.removeSkill(skills[i]);
-						}
-					}
-					if (_status.characterlist) {
-						if (
-							lib.character[player.name] &&
-							!player.name.startsWith("gz_shibing") &&
-							!player.name.startsWith("gz_jun_")
-						)
-							_status.characterlist.add(player.name);
-						if (
-							lib.character[player.name1] &&
-							!player.name1.startsWith("gz_shibing") &&
-							!player.name1.startsWith("gz_jun_")
-						)
-							_status.characterlist.add(player.name1);
-						if (
-							lib.character[player.name2] &&
-							!player.name2.startsWith("gz_shibing") &&
-							!player.name2.startsWith("gz_jun_")
-						)
-							_status.characterlist.add(player.name2);
-					}
-					var cards = player.getCards("hejsx");
-					if (cards.length) {
-						player.discard(cards).forceDie = true;
-						//player.$throw(event.cards,1000);
-					}
-				}
-				("step 4");
-				if (player.dieAfter2) player.dieAfter2(source);
-				("step 5");
-				game.broadcastAll(function (player) {
-					if (
-						game.online &&
-						player == game.me &&
-						!_status.over &&
-						!game.controlOver &&
-						!ui.exit
-					) {
-						if (lib.mode[lib.configOL.mode].config.dierestart) {
-							ui.create.exit();
-						}
-					}
-				}, player);
-				if (
-					!_status.connectMode &&
-					player == game.me &&
-					!_status.over &&
-					!game.controlOver
-				) {
-					ui.control.show();
-					if (
-						get.config("revive") &&
-						lib.mode[lib.config.mode].config.revive &&
-						!ui.revive
-					) {
-						ui.revive = ui.create.control(
-							"revive",
-							ui.click.dierevive
-						);
-					}
-					if (
-						get.config("continue_game") &&
-						!ui.continue_game &&
-						lib.mode[lib.config.mode].config.continue_game &&
-						!_status.brawl &&
-						!game.no_continue_game
-					) {
-						ui.continue_game = ui.create.control(
-							"再战",
-							game.reloadCurrent
-						);
-					}
-					if (
-						get.config("dierestart") &&
-						lib.mode[lib.config.mode].config.dierestart &&
-						!ui.restart
-					) {
-						ui.restart = ui.create.control("restart", game.reload);
-					}
-				}
-
-				if (
-					!_status.connectMode &&
-					player == game.me &&
-					!game.modeSwapPlayer
-				) {
-					// _status.auto=false;
-					if (ui.auto) {
-						// ui.auto.classList.remove('glow');
-						ui.auto.hide();
-					}
-					if (ui.wuxie) ui.wuxie.hide();
-				}
-
-				if (
-					typeof _status.coin == "number" &&
-					source &&
-					!_status.auto
-				) {
-					if (source == game.me || source.isUnderControl()) {
-						_status.coin += 10;
-					}
-				}
-				if (
-					source &&
-					lib.config.border_style == "auto" &&
-					(lib.config.autoborder_count == "kill" ||
-						lib.config.autoborder_count == "mix")
-				) {
-					switch (source.node.framebg.dataset.auto) {
-						case "gold":
-						case "silver":
-							source.node.framebg.dataset.auto = "gold";
-							break;
-						case "bronze":
-							source.node.framebg.dataset.auto = "silver";
-							break;
-						default:
-							source.node.framebg.dataset.auto =
-								lib.config.autoborder_start || "bronze";
-					}
-					if (lib.config.autoborder_count == "kill") {
-						source.node.framebg.dataset.decoration =
-							source.node.framebg.dataset.auto;
-					} else {
-						var dnum = 0;
-						for (var j = 0; j < source.stat.length; j++) {
-							if (source.stat[j].damage != undefined)
-								dnum += source.stat[j].damage;
-						}
-						source.node.framebg.dataset.decoration = "";
-						switch (source.node.framebg.dataset.auto) {
-							case "bronze":
-								if (dnum >= 4)
-									source.node.framebg.dataset.decoration =
-										"bronze";
-								break;
-							case "silver":
-								if (dnum >= 8)
-									source.node.framebg.dataset.decoration =
-										"silver";
-								break;
-							case "gold":
-								if (dnum >= 12)
-									source.node.framebg.dataset.decoration =
-										"gold";
-								break;
-						}
-					}
-					source.classList.add("topcount");
-				}
-			},
-			defineProperty_qsmx: function () {
-				var skills = Object.keys(lib.skill);
-				var character = Object.keys(lib.character);
-				var translate = Object.keys(lib.translate);
-				for (let index = 0; index < skills.length; index++) {
-					const key = skills[index];
-					if (key.startsWith("qsmx_") || key.startsWith("_qsmx_")) {
-						Object.defineProperty(lib.skill, key, {
-							writable: false,
-							configurable: false,
-						});
-					}
-				}
-				for (let index = 0; index < character.length; index++) {
-					const key = character[index];
-					if (key.startsWith("qsmx_")) {
-						Object.defineProperty(lib.character, key, {
-							writable: false,
-							configurable: false,
-						});
-					}
-				}
-				for (let index = 0; index < translate.length; index++) {
-					const key = translate[index];
-					if (key.startsWith("qsmx_")) {
-						Object.defineProperty(lib.translate, key, {
-							writable: false,
-							configurable: false,
-						});
-					}
-				}
-			},
-			addSkillInfo: function () {
-				var skills = Object.keys(lib.skill);
-				for (let index = 0; index < skills.length; index++) {
-					const key = skills[index];
-					if (key.startsWith("qsmx_") || key.startsWith("_qsmx_")) {
-						lib.skill[key].fixedObject = true;
-					}
-				}
-			},
-			isPropertyDescriptorSkill: function (skill) {
-				function isDefined(opd) {
-					if (opd != undefined) {
-						if (
-							opd.get ||
-							opd.set ||
-							opd.writable != true ||
-							opd.configurable != true
-						) {
-							return true;
-						}
-					}
-					return false;
-				}
-				return isDefined(
-					Object.getOwnPropertyDescriptor(lib.skill, skill)
-				);
-			},
-		},
-	});
 	//game
 	game.over = function () {
 		if (!_status.forceWin.length && !_status.GameResultReverse) {
@@ -1047,7 +637,284 @@ export async function content(config, pack) {
 			}
 		},
 		AntiResistanceDieBoss: function () {
-			lib.qsmx.AntiResistanceDie(player);
+			"step 0";
+			if (_status.roundStart == player) {
+				_status.roundStart =
+					player.next || player.getNext() || game.players[0];
+			}
+			if (ui.land && ui.land.player == player) {
+				game.addVideo("destroyLand");
+				ui.land.destroy();
+			}
+			var unseen = false;
+			if (player.classList.contains("unseen")) {
+				player.classList.remove("unseen");
+				unseen = true;
+			}
+			var logvid = game.logv(player, "die", source);
+			if (unseen) {
+				player.classList.add("unseen");
+			}
+			if (source) {
+				game.log(player, "被", source, "杀害");
+				if (source.stat[source.stat.length - 1].kill == undefined) {
+					source.stat[source.stat.length - 1].kill = 1;
+				} else {
+					source.stat[source.stat.length - 1].kill++;
+				}
+			} else {
+				game.log(player, "阵亡");
+			}
+
+			// player.removeEquipTrigger();
+
+			// for(var i in lib.skill.globalmap){
+			//     if(lib.skill.globalmap[i].includes(player)){
+			//      			lib.skill.globalmap[i].remove(player);
+			//      			if(lib.skill.globalmap[i].length==0&&!lib.skill[i].globalFixed){
+			//      						 game.removeGlobalSkill(i);
+			//      			}
+			//     }
+			// }
+			game.broadcastAll(function (player) {
+				player.classList.add("dead");
+				player.removeLink();
+				player.classList.remove("turnedover");
+				player.classList.remove("out");
+				player.node.count.innerHTML = "0";
+				player.node.hp.hide();
+				player.node.equips.hide();
+				player.node.count.hide();
+				player.previous.next = player.next;
+				player.next.previous = player.previous;
+				game.players.remove(player);
+				game.dead.push(player);
+				_status.dying.remove(player);
+
+				if (lib.config.background_speak) {
+					if (
+						lib.character[player.name] &&
+						lib.character[player.name][4].some((tag) =>
+							/^die:.+$/.test(tag)
+						)
+					) {
+						var tag = lib.character[player.name][4].find((tag) =>
+							/^die:.+$/.test(tag)
+						);
+						var reg = new RegExp("^ext:(.+)?/");
+						var match = tag.match(/^die:(.+)$/);
+						if (match) {
+							var path = match[1];
+							if (reg.test(path))
+								path = path.replace(
+									reg,
+									(_o, p) => `../extension/${p}/`
+								);
+							game.playAudio(path);
+						}
+					} else if (
+						lib.character[player.name] &&
+						lib.character[player.name][4].some((tag) =>
+							tag.startsWith("die_audio")
+						)
+					) {
+						var tag = lib.character[player.name][4].find((tag) =>
+							tag.startsWith("die_audio")
+						);
+						var list = tag.split(":").slice(1);
+						game.playAudio(
+							"die",
+							list.length ? list[0] : player.name
+						);
+					} else {
+						game.playAudio("die", player.name, function () {
+							game.playAudio(
+								"die",
+								player.name.slice(player.name.indexOf("_") + 1)
+							);
+						});
+					}
+				}
+			}, player);
+
+			game.addVideo("diex", player);
+			player.$die(source);
+			if (player.hp != 0) {
+				player.changeHp(0 - player.hp, false).forceDie = true;
+			}
+			if (get.mode() == "boss" && player == game.boss) {
+				var winners = player.getEnemies();
+				game.over(!(player == game.me) || winners.includes(game.me));
+			}
+			("step 1");
+			if (player.dieAfter) player.dieAfter(source);
+			("step 2");
+			("step 3");
+			if (player.isDead()) {
+				if (!game.reserveDead) {
+					for (var mark in player.marks) {
+						player.unmarkSkill(mark);
+					}
+					while (player.node.marks.childNodes.length > 1) {
+						player.node.marks.lastChild.remove();
+					}
+					game.broadcast(function (player) {
+						while (player.node.marks.childNodes.length > 1) {
+							player.node.marks.lastChild.remove();
+						}
+					}, player);
+				}
+				for (var i in player.tempSkills) {
+					player.removeSkill(i);
+				}
+				var skills = player.getSkills();
+				for (var i = 0; i < skills.length; i++) {
+					if (lib.skill[skills[i]].temp) {
+						player.removeSkill(skills[i]);
+					}
+				}
+				if (_status.characterlist) {
+					if (
+						lib.character[player.name] &&
+						!player.name.startsWith("gz_shibing") &&
+						!player.name.startsWith("gz_jun_")
+					)
+						_status.characterlist.add(player.name);
+					if (
+						lib.character[player.name1] &&
+						!player.name1.startsWith("gz_shibing") &&
+						!player.name1.startsWith("gz_jun_")
+					)
+						_status.characterlist.add(player.name1);
+					if (
+						lib.character[player.name2] &&
+						!player.name2.startsWith("gz_shibing") &&
+						!player.name2.startsWith("gz_jun_")
+					)
+						_status.characterlist.add(player.name2);
+				}
+				var cards = player.getCards("hejsx");
+				if (cards.length) {
+					player.discard(cards).forceDie = true;
+					//player.$throw(event.cards,1000);
+				}
+			}
+			("step 4");
+			if (player.dieAfter2) player.dieAfter2(source);
+			("step 5");
+			game.broadcastAll(function (player) {
+				if (
+					game.online &&
+					player == game.me &&
+					!_status.over &&
+					!game.controlOver &&
+					!ui.exit
+				) {
+					if (lib.mode[lib.configOL.mode].config.dierestart) {
+						ui.create.exit();
+					}
+				}
+			}, player);
+			if (
+				!_status.connectMode &&
+				player == game.me &&
+				!_status.over &&
+				!game.controlOver
+			) {
+				ui.control.show();
+				if (
+					get.config("revive") &&
+					lib.mode[lib.config.mode].config.revive &&
+					!ui.revive
+				) {
+					ui.revive = ui.create.control("revive", ui.click.dierevive);
+				}
+				if (
+					get.config("continue_game") &&
+					!ui.continue_game &&
+					lib.mode[lib.config.mode].config.continue_game &&
+					!_status.brawl &&
+					!game.no_continue_game
+				) {
+					ui.continue_game = ui.create.control(
+						"再战",
+						game.reloadCurrent
+					);
+				}
+				if (
+					get.config("dierestart") &&
+					lib.mode[lib.config.mode].config.dierestart &&
+					!ui.restart
+				) {
+					ui.restart = ui.create.control("restart", game.reload);
+				}
+			}
+
+			if (
+				!_status.connectMode &&
+				player == game.me &&
+				!game.modeSwapPlayer
+			) {
+				// _status.auto=false;
+				if (ui.auto) {
+					// ui.auto.classList.remove('glow');
+					ui.auto.hide();
+				}
+				if (ui.wuxie) ui.wuxie.hide();
+			}
+
+			if (typeof _status.coin == "number" && source && !_status.auto) {
+				if (source == game.me || source.isUnderControl()) {
+					_status.coin += 10;
+				}
+			}
+			if (
+				source &&
+				lib.config.border_style == "auto" &&
+				(lib.config.autoborder_count == "kill" ||
+					lib.config.autoborder_count == "mix")
+			) {
+				switch (source.node.framebg.dataset.auto) {
+					case "gold":
+					case "silver":
+						source.node.framebg.dataset.auto = "gold";
+						break;
+					case "bronze":
+						source.node.framebg.dataset.auto = "silver";
+						break;
+					default:
+						source.node.framebg.dataset.auto =
+							lib.config.autoborder_start || "bronze";
+				}
+				if (lib.config.autoborder_count == "kill") {
+					source.node.framebg.dataset.decoration =
+						source.node.framebg.dataset.auto;
+				} else {
+					var dnum = 0;
+					for (var j = 0; j < source.stat.length; j++) {
+						if (source.stat[j].damage != undefined)
+							dnum += source.stat[j].damage;
+					}
+					source.node.framebg.dataset.decoration = "";
+					switch (source.node.framebg.dataset.auto) {
+						case "bronze":
+							if (dnum >= 4)
+								source.node.framebg.dataset.decoration =
+									"bronze";
+							break;
+						case "silver":
+							if (dnum >= 8)
+								source.node.framebg.dataset.decoration =
+									"silver";
+							break;
+						case "gold":
+							if (dnum >= 12)
+								source.node.framebg.dataset.decoration = "gold";
+							break;
+					}
+				}
+				source.classList.add("topcount");
+			}
 		},
 		OverDie: function () {
 			"step 0";

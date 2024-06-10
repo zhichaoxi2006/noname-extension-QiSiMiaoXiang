@@ -139,7 +139,17 @@ export const character = async function () {
 					"die:ext:奇思妙想/resource/audio/die/qsmx_nanhua.mp3",
 				],
 			],
-			//"qsmx_junko": ["female", "shen", "4/4", ["qsmx_chunhua"], ["ext:奇思妙想/resource/image/character/qsmx_junko.jpg" ,'boss', 'bossallowed']],
+			qsmx_junko: [
+				"female",
+				"shen",
+				"4/4",
+				["qsmx_chunhua"],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_junko.jpg",
+					"boss",
+					"bossallowed",
+				],
+			],
 			qsmx_matara_okina: [
 				"female",
 				"shen",
@@ -280,25 +290,26 @@ export const character = async function () {
 				"male",
 				"shu",
 				"4/4",
-				['qsmx_paoxiao','qsmx_zhendan'],
-				[
-					"ext:奇思妙想/resource/image/character/qsmx_zhangfei.jpg",
-				],
+				["qsmx_paoxiao", "qsmx_zhendan"],
+				["ext:奇思妙想/resource/image/character/qsmx_zhangfei.jpg"],
 			],
 			qsmx_sunjian: [
 				"male",
 				"wu",
 				"4/4",
-				['qsmx_polu', 'qsmx_juelie', 'qsmx_yinghun'],
-				[
-					"ext:奇思妙想/resource/image/character/qsmx_sunjian.jpg",
-				],
+				["qsmx_polu", "qsmx_juelie", "qsmx_yinghun"],
+				["ext:奇思妙想/resource/image/character/qsmx_sunjian.jpg"],
 			],
 			qsmx_shen_zhangjiao: [
 				"male",
 				"shen",
 				"3/3",
-				['qsmx_shen_yizhao', 'qsmx_sanshou', 'qsmx_sijun', 'qsmx_tianjie'],
+				[
+					"qsmx_shen_yizhao",
+					"qsmx_sanshou",
+					"qsmx_sijun",
+					"qsmx_tianjie",
+				],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_shen_zhangjiao.jpg",
 				],
@@ -307,38 +318,32 @@ export const character = async function () {
 				"male",
 				"qun",
 				"3/3/1",
-				['qsmx_leiji', 'qsmx_guidao', 'qsmx_huangtian'],
+				["qsmx_leiji", "qsmx_guidao", "qsmx_huangtian"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_zhangjiao.jpg",
-					"zhu"
+					"zhu",
 				],
 			],
 			qsmx_lvbu: [
 				"male",
 				"qun",
 				"6/6",
-				['qsmx_mowu', 'qsmx_monu', 'qsmx_moji', 'qsmx_moqu'],
-				[
-					"ext:奇思妙想/resource/image/character/qsmx_lvbu.jpg",
-				],
+				["qsmx_mowu", "qsmx_monu", "qsmx_moji", "qsmx_moqu"],
+				["ext:奇思妙想/resource/image/character/qsmx_lvbu.jpg"],
 			],
 			qsmx_zuoci: [
 				"male",
 				"qun",
 				"3/3",
-				['qsmx_huashen', 'qsmx_xinsheng'],
-				[
-					"ext:奇思妙想/resource/image/character/qsmx_zuoci.jpg",
-				],
+				["qsmx_huashen", "qsmx_xinsheng"],
+				["ext:奇思妙想/resource/image/character/qsmx_zuoci.jpg"],
 			],
 			qsmx_yemoxia: [
 				"male",
 				"key",
 				"6/6",
-				['qsmx_yicai', 'qsmx_moxia'],
-				[
-
-				],
+				["qsmx_yicai", "qsmx_moxia"],
+				[],
 			],
 			qsmx_shen_zhangliao: [
 				"male",
@@ -347,17 +352,15 @@ export const character = async function () {
 				[],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_shen_zhangliao.jpg",
-					"unseen"
+					"unseen",
 				],
 			],
 			qsmx_zhangliang: [
 				"male",
 				"qun",
 				"4/4",
-				['qsmx_jijun', 'qsmx_fangtong', 'qsmx_liudian'],
-				[
-					"ext:奇思妙想/resource/image/character/qsmx_zhangliang.jpg",
-				],
+				["qsmx_jijun", "qsmx_fangtong", "qsmx_liudian"],
+				["ext:奇思妙想/resource/image/character/qsmx_zhangliang.jpg"],
 			],
 		},
 		characterTitle: {

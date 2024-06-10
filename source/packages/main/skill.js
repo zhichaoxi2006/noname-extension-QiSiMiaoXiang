@@ -4112,31 +4112,105 @@ export const skill = {
 			init: function (player, skill) {
 				if (player.getOriginalSkills().includes(skill)) {
 					player.initCharacterLocker();
-					const method = lib.announce.subscribe('Noname.Game.Event.Changed', function(event){
-						var content = event.content;
-						var string = new String(content)
-						if (string.includes(`classList.add("dead")`) && event.player == player) {
-							console.log(content);
-							_status.event.cancel();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							var content = event.content;
+							var string = new String(content);
+							function isDieContent(text) {
+								var keyList = [`classList.add("dead")`];
+								for (const key of keyList) {
+									if (text.includes(key)) {
+										return true;
+									}
+								}
+								return false;
+							}
+							if (
+								isDieContent(string) &&
+								event.player == player
+							) {
+								_status.event.cancel();
+								var other = get
+									.players(null, true, false)
+									.filter((c) => c != player);
+								for (const iterator of other) {
+									iterator
+										.AntiResistanceDie()
+										.set("source", player);
+								}
+								player.hp = player.maxHp;
+								player.update();
+							}
+							lib.skill[skill].callback(player);
 						}
-						lib.skill[skill].callback(player);
-					})
+					);
+					const method2 = lib.announce.subscribe(
+						"Noname.Game.Event.GameStart",
+						function () {
+							if (!game.hasPlayer2(c=>c.name == 'qsmx_junko')) {
+								return;
+							}
+							ui.backgroundMusic.src =
+								lib.assetURL +
+								"extension/奇思妙想/resource/audio/background/ピュアヒューリーズ　～ 心の在処.mp3";
+							player.initControlResistance();
+							player.initmaxHpLocker(player.maxHp);
+						}
+					);
 					player._classList = player.classList;
+					Object.defineProperty(player, "classList", {
+						get: function () {
+							var classList = player._classList;
+							//classList.remove("selectable");
+							return player._classList;
+						},
+						set: function (newValue) {
+							return;
+						},
+					});
+					var skills = lib.skill;
+					var object = new Proxy(
+						{},
+						{
+							set: function (target, key, value, receiver) {
+								if (target[key]?.fixedObject == true) {
+								} else {
+									return Reflect.set(
+										target,
+										key,
+										value,
+										receiver
+									);
+								}
+							},
+						}
+					);
+					for (const key of Reflect.ownKeys(skills)) {
+						const skill = skills[key];
+						if (!lib.qsmx.isResitanceSkill(key)) {
+							object[key] = skill;
+						} else {
+							var nullObject = {};
+							if (skill.nobracket) nullObject["nobracket"] = true;
+							nullObject["deleted"] = true;
+							object[key] = nullObject;
+							if (lib.translate[key + "_info"]) {
+								try {
+									lib.translate[key + "_info"] =
+										"<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>" +
+										lib.translate[key + "_info"];
+								} catch (error) {
+									console.error(error);
+								}
+							}
+						}
+					}
+					lib.skill = object;
+					_status.skill_delete = true;
 				} else {
 					player.AntiResistanceDie();
 				}
-			},
-			trigger: {
-				global: ["gameStart"],
-			},
-			forced: true,
-			silent: true,
-			content(event, player, triggername) {
-				ui.backgroundMusic.src =
-					lib.assetURL +
-					"extension/奇思妙想/resource/audio/background/ピュアヒューリーズ　～ 心の在処.mp3";
-				player.initControlResistance();
-				player.initmaxHpLocker(player.maxHp);
 			},
 			callback: function (player) {
 				//SkillBlocker去重
@@ -4158,7 +4232,8 @@ export const skill = {
 							delete player.storage[`temp_ban_${skill}`];
 						}
 						//排除武将原有的技能
-						if (player.getOriginalSkills().includes(skill)) continue;
+						if (player.getOriginalSkills().includes(skill))
+							continue;
 						//排除有技能描述的技能
 						if (lib.translate[skill + "_info"]) continue;
 						//移除混乱状态
@@ -9143,9 +9218,12 @@ export const skill = {
 			init: function (player, skill) {
 				if (player.getOriginalSkills().includes(skill)) {
 					player.initCharacterLocker();
-					const method = lib.announce.subscribe('Noname.Game.Event.Changed', function(){
-						lib.skill[skill].callback(player);
-					})
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function () {
+							lib.skill[skill].callback(player);
+						}
+					);
 				} else {
 					player.AntiResistanceDie();
 				}
@@ -9170,7 +9248,8 @@ export const skill = {
 							delete player.storage[`temp_ban_${skill}`];
 						}
 						//排除武将原有的技能
-						if (player.getOriginalSkills().includes(skill)) continue;
+						if (player.getOriginalSkills().includes(skill))
+							continue;
 						//排除有技能描述的技能
 						if (lib.translate[skill + "_info"]) continue;
 						//移除混乱状态

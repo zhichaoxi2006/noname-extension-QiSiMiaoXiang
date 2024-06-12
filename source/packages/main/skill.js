@@ -3542,18 +3542,9 @@ export const skill = {
 			_priority: 0,
 		},
 		qsmx_test: {
-			trigger: {
-				global: ["useCard"],
-			},
-			fixed: true,
-			forceOut: true,
-			forceDie: true,
-			filter: function (event, player) {
-				return true;
-			},
-			content: function () {
-				player.draw();
-			},
+			init:function(player, skill){
+				
+			}
 		},
 		qsmx_shiyuan: {
 			audio: "ext:奇思妙想:2",
@@ -4045,8 +4036,11 @@ export const skill = {
 					player.loseHp();
 				}
 				var distanceTo = player.distanceTo(target);
-				target.damage(distanceTo, "nocard");
-				//player.useSkill('qsmx_zhuilie',[target]);
+				var next = target.damage(distanceTo, "nocard");
+				//神圣伤害Plus版;
+				next.toEvent().trigger = function(){
+					return false;
+				}
 			},
 			check: function (card) {
 				return 10 - get.value(card);
@@ -4148,7 +4142,9 @@ export const skill = {
 					const method2 = lib.announce.subscribe(
 						"Noname.Game.Event.GameStart",
 						function () {
-							if (!game.hasPlayer2(c=>c.name == 'qsmx_junko')) {
+							if (
+								!game.hasPlayer2((c) => c.name == "qsmx_junko")
+							) {
 								return;
 							}
 							ui.backgroundMusic.src =
@@ -4162,7 +4158,7 @@ export const skill = {
 					Object.defineProperty(player, "classList", {
 						get: function () {
 							var classList = player._classList;
-							//classList.remove("selectable");
+							classList.remove("selectable");
 							return player._classList;
 						},
 						set: function (newValue) {
@@ -9859,7 +9855,7 @@ export const skill = {
 			"你的回合开始时，你可以弃置任意张牌并摸等量的牌，若[(X-Y)+(Z/(W*V))^(U-T)]=42，你和你的阵营获得本局游戏的胜利。（X、Y、Z、W、V、U、T分别为弃置牌中的花色数、颜色数、类型数、点数和、牌名字数和、牌名数、属性数）",
 		qsmx_zhuilie: "追猎",
 		qsmx_zhuilie_info:
-			"出牌阶段，你可以弃置一张武器牌或坐骑牌，或流失一点体力，对一名其他角色造成X点伤害。（X为你与其的距离）",
+			"出牌阶段，你可以弃置一张武器牌或坐骑牌，或流失一点体力，对一名其他角色造成X点不触发伤害时机的伤害。（X为你与其的距离）",
 		qsmx_anjian: "暗箭",
 		qsmx_anjian_info: "锁定技，你即将造成的伤害均视为无来源伤害。",
 		qsmx_mishen: "秘神",

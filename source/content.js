@@ -8,7 +8,6 @@ import {
 } from "./MatationObsever/PileObsever.js";
 
 export async function content(config, pack) {
-	//get
 	//pileWashed
 	lib.onwash.push(() =>
 		game.createEvent("pileWashed", false).setContent("emptyEvent")
@@ -58,42 +57,43 @@ export async function content(config, pack) {
 	//lib.arenaReady
 	lib.arenaReady.push(function () {
 		var skills = lib.skill;
-		if (config.skill_delete) {
-			var object = new Proxy(
-				{},
-				{
-					set: function (target, key, value, receiver) {
-						if (target[key]?.fixedObject == true) {
-						} else {
-							return Reflect.set(target, key, value, receiver);
-						}
-					},
-				}
-			);
-			for (const key of Reflect.ownKeys(skills)) {
-				const skill = skills[key];
-				if (!lib.qsmx.isResitanceSkill(key)) {
-					object[key] = skill;
-				} else {
-					var nullObject = {};
-					if (skill.nobracket) nullObject["nobracket"] = true;
-					nullObject["deleted"] = true;
-					object[key] = nullObject;
-					if (lib.translate[key + "_info"]) {
-						try {
-							lib.translate[key + "_info"] =
-								"<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>" +
-								lib.translate[key + "_info"];
-						} catch (error) {
-							console.error(error);
-						}
+		//Proxy化lib.skills
+		var object = new Proxy(
+			{},
+			{
+				set: function (target, key, value, receiver) {
+					if (target[key]?.fixedObject == true) {
+					} else {
+						return Reflect.set(target, key, value, receiver);
+					}
+				},
+			}
+		);
+		for (const key of Reflect.ownKeys(skills)) {
+			const skill = skills[key];
+			if (!lib.qsmx.isResitanceSkill(key) || !config.skill_delete) {
+				object[key] = skill;
+			} else {
+				var nullObject = {};
+				if (skill.nobracket) nullObject["nobracket"] = true;
+				nullObject["deleted"] = true;
+				object[key] = nullObject;
+				if (lib.translate[key + "_info"]) {
+					try {
+						lib.translate[key + "_info"] =
+							"<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>" +
+							lib.translate[key + "_info"];
+					} catch (error) {
+						console.error(error);
 					}
 				}
 			}
-			lib.skill = object;
-			_status.skill_delete = true;
-			lib.qsmx.addSkillInfo();
 		}
+		lib.skill = object;
+		if (config.skill_delete) {
+			_status.skill_delete = true;
+		}
+		lib.qsmx.addSkillInfo();
 	});
 	//lib.element.player
 	Object.assign(lib.element.player, {
@@ -108,10 +108,13 @@ export async function content(config, pack) {
 				var next = game.createEvent("die");
 				next.player = this;
 				next.reason = reason;
+				//取消不掉的事件（实际可以取消）
+				next.toEvent().cancel = function(){
+					return false;
+				}
 				if (reason) next.source = reason.source;
 				delete next._triggered;
 				next.setContent("die");
-				//this.revive = function () { this.popup('失效') }
 				return next;
 			}
 		},
@@ -128,16 +131,37 @@ export async function content(config, pack) {
 			this.goMad = function () {};
 		},
 		initDieResistance: function () {
-			this.dieAfter = function () {
-				this.revive = lib.element.player.revive;
-				this.revive();
-			};
+			var player = this;
+			//牢狐那照搬的（
+			var base64 = [
+			];
+			const method = lib.announce.subscribe(
+				"Noname.Game.Event.Changed",
+				function (event) {
+					var content = event['content'];
+					var string = new String(content);
+					//检测事件的content是否存在关键词
+					function isDieContent(text) {
+						var keyList = [`classList.add("dead")`];
+						for (const key of keyList) {
+							if (text.includes(key)) {
+								return true;
+							}
+						}
+						return false;
+					}
+					if (
+						isDieContent(string) &&
+						event.player == player
+					) {
+						_status.event.cancel();
+						player.hp = player.maxHp;
+						player.update();
+					}
+				}
+			);
 			this.delete = function () {};
 			this.remove = function () {};
-			/*Object.defineProperty(this, "dieAfter", {
-				configurable: false,
-				writable: false,
-			});*/
 			Object.defineProperty(this, "delete", {
 				configurable: false,
 				writable: false,
@@ -146,7 +170,6 @@ export async function content(config, pack) {
 				configurable: false,
 				writable: false,
 			});
-			//this.die = function () {};
 		},
 		initDyingResistance: function () {
 			this.nodying = true;
@@ -1204,33 +1227,6 @@ export async function content(config, pack) {
 				if (event.name != "die") return false;
 				event.finish();
 				event._triggered = null;
-			},
-		},
-		_qsmx_DieResistance: {
-			trigger: {
-				player: "dieBegin",
-			},
-			forced: true,
-			charlotte: true,
-			popup: false,
-			silent: true,
-			lastDo: true,
-			filter: function (event, player) {
-				if (
-					lib.characterSort.mode_extension_奇思妙想.qsmx_HellOfResistance.includes(
-						player.name
-					)
-				)
-					return true;
-				return false;
-			},
-			content: function () {
-				trigger.cancel();
-			},
-			sub: true,
-			_priority: 1,
-			audioname2: {
-				key_shiki: "shiki_omusubi",
 			},
 		},
 		_qsmx_gameStart: {

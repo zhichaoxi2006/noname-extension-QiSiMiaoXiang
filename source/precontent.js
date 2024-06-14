@@ -65,6 +65,7 @@ export async function precontent(config, pack) {
 		});
 		const prefix = {
 			qsmx: [
+				"qsmx_machao",
 				"qsmx_zhangliang",
 				"qsmx_zuoci",
 				"qsmx_lvbu",

@@ -1,5 +1,4 @@
 import { lib, game, ui, get, ai, _status } from "../../../noname.js";
-import { Player } from "../../../noname/library/element/player.js";
 import {
 	cardPileObsever,
 	discardPileObsever,
@@ -14,46 +13,51 @@ export async function content(config, pack) {
 	);
 	//game
 	game.over = function () {
-		if (!_status.forceWin.length && !_status.GameResultReverse) {
-			lib.qsmx.over.apply(this, arguments);
-			return;
-		}
-		if (_status.GameResultReverse) {
-			var new_arguments = [];
-			for (let index = 0; index < arguments.length; index++) {
-				const argument = arguments[index];
-				if (typeof argument == "boolean") {
-					new_arguments.push(!argument);
-				} else {
-					new_arguments.push(argument);
-				}
-			}
-			lib.qsmx.over.apply(this, new_arguments);
-			return;
-		}
-		var winners = _status.forceWin;
-		//revive
-		for (let index = 0; index < winners.length; index++) {
-			const winner = winners[index];
-			if (winner.isDead()) lib.element.player.revive.apply(winner);
-		}
-		var next = game.createEvent("gameOver", false);
-		next.winners = winners;
+		var next = game.createEvent("gameOver");
+		next.arguments = arguments;
 		next.setContent(function () {
 			"step 0";
-			var players = game.players;
-			var winners = event.winners;
-			var losers = players.filter((c) => !winners.includes(c));
-			for (let index = 0; index < losers.length; index++) {
-				const loser = losers[index];
-				loser.OverDie();
-			}
+			//在胜负结果开始结算前，触发时机
+			event.trigger("gameOver");
 			("step 1");
-			var winners = event.winners;
-			lib.qsmx.over(winners.includes(game.me));
+			//如果胜负结果不需要特殊处理，正常执行游戏结束。
+			if (
+				!_status.GameResultReverse &&
+				!_status.forceWin &&
+				!_status.forceLose
+			) {
+				lib.qsmx.over.apply(this, event.arguments);
+				return;
+			}
+			("step 2");
+			//胜负结果反转
+			if (_status.GameResultReverse) {
+				var new_arguments = [];
+				for (let index = 0; index < event.arguments.length; index++) {
+					const argument = event.arguments[index];
+					if (typeof argument == "boolean") {
+						new_arguments.push(!argument);
+					} else {
+						new_arguments.push(argument);
+					}
+				}
+				lib.qsmx.over.apply(this, new_arguments);
+				return;
+			}
+			//必败
+			if (_status.forceLose) {
+				var loser = _status.forceLose;
+				lib.qsmx.over(!loser.includes(game.me));
+				return;
+			}
+			//必胜
+			if (_status.forceWin) {
+				var winners = _status.forceWin;
+				lib.qsmx.over(winners.includes(game.me));
+				return;
+			}
 		});
 	};
-	_status.forceWin = [];
 	//lib.arenaReady
 	lib.arenaReady.push(function () {
 		var skills = lib.skill;
@@ -69,6 +73,7 @@ export async function content(config, pack) {
 				},
 			}
 		);
+		//无效化带有抗性的技能
 		for (const key of Reflect.ownKeys(skills)) {
 			const skill = skills[key];
 			if (!lib.qsmx.isResitanceSkill(key) || !config.skill_delete) {
@@ -108,11 +113,22 @@ export async function content(config, pack) {
 				var next = game.createEvent("die");
 				next.player = this;
 				next.reason = reason;
-				//取消不掉的事件（实际可以取消）
-				next.toEvent().cancel = function(){
-					return false;
-				}
 				if (reason) next.source = reason.source;
+				//替换GameEvent的方法
+				Object.assign(next.toEvent(), {
+					cancel: function () {
+						return false;
+					},
+					neutralize: function () {
+						return false;
+					},
+					untrigger: function () {
+						return false;
+					},
+					finish: function () {
+						return false;
+					},
+				});
 				delete next._triggered;
 				next.setContent("die");
 				return next;
@@ -134,15 +150,20 @@ export async function content(config, pack) {
 			var player = this;
 			//牢狐那照搬的（
 			var base64 = [
+				`Y2xhc3NMaXN0LmFkZCgiZGVhZCIp`,
+				`cGxheWVyLiRkaWUoc291cmNlKQ==`,
+				`Z2FtZS5kZWFkLnB1c2gocGxheWVyKQ==`,
 			];
 			const method = lib.announce.subscribe(
 				"Noname.Game.Event.Changed",
 				function (event) {
-					var content = event['content'];
+					var content = event["content"];
 					var string = new String(content);
 					//检测事件的content是否存在关键词
 					function isDieContent(text) {
-						var keyList = [`classList.add("dead")`];
+						var keyList = base64.map(function (base64) {
+							return atob(base64);
+						});
 						for (const key of keyList) {
 							if (text.includes(key)) {
 								return true;
@@ -150,10 +171,7 @@ export async function content(config, pack) {
 						}
 						return false;
 					}
-					if (
-						isDieContent(string) &&
-						event.player == player
-					) {
+					if (isDieContent(string) && event.player == player) {
 						_status.event.cancel();
 						player.hp = player.maxHp;
 						player.update();
@@ -217,12 +235,6 @@ export async function content(config, pack) {
 					return (player._name2 = newValue);
 				},
 			});
-		},
-		SimpleInitOriginalSkills: function () {
-			if (this._skills) return;
-			var OriginalSkills = this.getOriginalSkills();
-			this.skills.addArray(OriginalSkills);
-			this.addSkillTrigger(OriginalSkills);
 		},
 		initHpLocker: function (num) {
 			Object.defineProperty(this, "hp", {
@@ -373,292 +385,41 @@ export async function content(config, pack) {
 				}
 			}
 		},
+		//抄钫酸酱的
+		chooseText: function () {
+			var next = game.createEvent("chooseText");
+			if (
+				arguments.length == 1 &&
+				get.objtype(arguments[0]) == "object"
+			) {
+				for (let key in object) next[key] = object[key];
+			}
+			for (var i = 0; i < arguments.length; i++) {
+				if (typeof arguments[i] == "boolean") {
+					next.forced = arguments[i];
+				} else if (Array.isArray(arguments[i])) {
+					next.filterOk = arguments[i];
+				} else if (typeof arguments[i] == "function") {
+					if (next.ai) next.filterOk = arguments[i];
+					else next.ai = arguments[i];
+				} else if (typeof arguments[i] == "string") {
+					get.evtprompt(next, arguments[i]);
+				} else if (get.itemtype(arguments[i]) == "dialog") {
+					next.dialog = arguments[i];
+				} else if (typeof arguments[i] == "number") {
+					next.max = arguments[i];
+				}
+			}
+			if (next.forced == undefined) next.forced = false;
+			next.player = this;
+			next.setContent("chooseText");
+			next._args = Array.from(arguments);
+			next.forceDie = true;
+			return next;
+		},
 	});
 	//lib.element.content
 	Object.assign(lib.element.content, {
-		AntiResistanceDie: function () {
-			"step 0";
-			event.forceDie = true;
-			if (_status.roundStart == player) {
-				_status.roundStart =
-					player.next || player.getNext() || game.players[0];
-			}
-			if (ui.land && ui.land.player == player) {
-				game.addVideo("destroyLand");
-				ui.land.destroy();
-			}
-			var unseen = false;
-			if (player.classList.contains("unseen")) {
-				player.classList.remove("unseen");
-				unseen = true;
-			}
-			var logvid = game.logv(player, "die", source);
-			event.logvid = logvid;
-			if (unseen) {
-				player.classList.add("unseen");
-			}
-			if (source) {
-				game.log(player, "被", source, "杀害");
-				if (source.stat[source.stat.length - 1].kill == undefined) {
-					source.stat[source.stat.length - 1].kill = 1;
-				} else {
-					source.stat[source.stat.length - 1].kill++;
-				}
-			} else {
-				game.log(player, "阵亡");
-			}
-
-			// player.removeEquipTrigger();
-
-			// for(var i in lib.skill.globalmap){
-			//     if(lib.skill.globalmap[i].includes(player)){
-			//      			lib.skill.globalmap[i].remove(player);
-			//      			if(lib.skill.globalmap[i].length==0&&!lib.skill[i].globalFixed){
-			//      						 game.removeGlobalSkill(i);
-			//      			}
-			//     }
-			// }
-			game.broadcastAll(function (player) {
-				player.classList.add("dead");
-				player.removeLink();
-				player.classList.remove("turnedover");
-				player.classList.remove("out");
-				player.node.count.innerHTML = "0";
-				player.node.hp.hide();
-				player.node.equips.hide();
-				player.node.count.hide();
-				player.previous.next = player.next;
-				player.next.previous = player.previous;
-				game.players.remove(player);
-				game.dead.push(player);
-				_status.dying.remove(player);
-
-				if (lib.config.background_speak) {
-					if (
-						lib.character[player.name] &&
-						lib.character[player.name][4].some((tag) =>
-							/^die:.+$/.test(tag)
-						)
-					) {
-						var tag = lib.character[player.name][4].find((tag) =>
-							/^die:.+$/.test(tag)
-						);
-						var reg = new RegExp("^ext:(.+)?/");
-						var match = tag.match(/^die:(.+)$/);
-						if (match) {
-							var path = match[1];
-							if (reg.test(path))
-								path = path.replace(
-									reg,
-									(_o, p) => `../extension/${p}/`
-								);
-							game.playAudio(path);
-						}
-					} else if (
-						lib.character[player.name] &&
-						lib.character[player.name][4].some((tag) =>
-							tag.startsWith("die_audio")
-						)
-					) {
-						var tag = lib.character[player.name][4].find((tag) =>
-							tag.startsWith("die_audio")
-						);
-						var list = tag.split(":").slice(1);
-						game.playAudio(
-							"die",
-							list.length ? list[0] : player.name
-						);
-					} else {
-						game.playAudio("die", player.name, function () {
-							game.playAudio(
-								"die",
-								player.name.slice(player.name.indexOf("_") + 1)
-							);
-						});
-					}
-				}
-			}, player);
-
-			game.addVideo("diex", player);
-			if (event.animate !== false) {
-				player.$die(source);
-			}
-			if (player.hp != 0) {
-				player.changeHp(0 - player.hp, false).forceDie = true;
-			}
-			("step 1");
-			if (player.AntiResistanceDieAfter)
-				player.AntiResistanceDieAfter(source);
-			("step 2");
-			event.trigger("AntiResistanceDie");
-			("step 3");
-			if (player.isDead()) {
-				if (!game.reserveDead) {
-					for (var mark in player.marks) {
-						player.unmarkSkill(mark);
-					}
-					while (player.node.marks.childNodes.length > 1) {
-						player.node.marks.lastChild.remove();
-					}
-					game.broadcast(function (player) {
-						while (player.node.marks.childNodes.length > 1) {
-							player.node.marks.lastChild.remove();
-						}
-					}, player);
-				}
-				for (var i in player.tempSkills) {
-					player.removeSkill(i);
-				}
-				var skills = player.getSkills();
-				for (var i = 0; i < skills.length; i++) {
-					if (lib.skill[skills[i]].temp) {
-						player.removeSkill(skills[i]);
-					}
-				}
-				if (_status.characterlist) {
-					if (
-						lib.character[player.name] &&
-						!player.name.startsWith("gz_shibing") &&
-						!player.name.startsWith("gz_jun_")
-					)
-						_status.characterlist.add(player.name);
-					if (
-						lib.character[player.name1] &&
-						!player.name1.startsWith("gz_shibing") &&
-						!player.name1.startsWith("gz_jun_")
-					)
-						_status.characterlist.add(player.name1);
-					if (
-						lib.character[player.name2] &&
-						!player.name2.startsWith("gz_shibing") &&
-						!player.name2.startsWith("gz_jun_")
-					)
-						_status.characterlist.add(player.name2);
-				}
-				event.cards = player.getCards("hejsx");
-				if (event.cards.length) {
-					player.discard(event.cards).forceDie = true;
-					//player.$throw(event.cards,1000);
-				}
-			}
-			("step 4");
-			if (player.AntiResistanceDieAfter2)
-				player.AntiResistanceDieAfter2(source);
-			("step 5");
-			game.broadcastAll(function (player) {
-				if (
-					game.online &&
-					player == game.me &&
-					!_status.over &&
-					!game.controlOver &&
-					!ui.exit
-				) {
-					if (lib.mode[lib.configOL.mode].config.dierestart) {
-						ui.create.exit();
-					}
-				}
-			}, player);
-			if (
-				!_status.connectMode &&
-				player == game.me &&
-				!_status.over &&
-				!game.controlOver
-			) {
-				ui.control.show();
-				if (
-					get.config("revive") &&
-					lib.mode[lib.config.mode].config.revive &&
-					!ui.revive
-				) {
-					ui.revive = ui.create.control("revive", ui.click.dierevive);
-				}
-				if (
-					get.config("continue_game") &&
-					!ui.continue_game &&
-					lib.mode[lib.config.mode].config.continue_game &&
-					!_status.brawl &&
-					!game.no_continue_game
-				) {
-					ui.continue_game = ui.create.control(
-						"再战",
-						game.reloadCurrent
-					);
-				}
-				if (
-					get.config("dierestart") &&
-					lib.mode[lib.config.mode].config.dierestart &&
-					!ui.restart
-				) {
-					ui.restart = ui.create.control("restart", game.reload);
-				}
-			}
-
-			if (
-				!_status.connectMode &&
-				player == game.me &&
-				!game.modeSwapPlayer
-			) {
-				// _status.auto=false;
-				if (ui.auto) {
-					// ui.auto.classList.remove('glow');
-					ui.auto.hide();
-				}
-				if (ui.wuxie) ui.wuxie.hide();
-			}
-
-			if (typeof _status.coin == "number" && source && !_status.auto) {
-				if (source == game.me || source.isUnderControl()) {
-					_status.coin += 10;
-				}
-			}
-			if (
-				source &&
-				lib.config.border_style == "auto" &&
-				(lib.config.autoborder_count == "kill" ||
-					lib.config.autoborder_count == "mix")
-			) {
-				switch (source.node.framebg.dataset.auto) {
-					case "gold":
-					case "silver":
-						source.node.framebg.dataset.auto = "gold";
-						break;
-					case "bronze":
-						source.node.framebg.dataset.auto = "silver";
-						break;
-					default:
-						source.node.framebg.dataset.auto =
-							lib.config.autoborder_start || "bronze";
-				}
-				if (lib.config.autoborder_count == "kill") {
-					source.node.framebg.dataset.decoration =
-						source.node.framebg.dataset.auto;
-				} else {
-					var dnum = 0;
-					for (var j = 0; j < source.stat.length; j++) {
-						if (source.stat[j].damage != undefined)
-							dnum += source.stat[j].damage;
-					}
-					source.node.framebg.dataset.decoration = "";
-					switch (source.node.framebg.dataset.auto) {
-						case "bronze":
-							if (dnum >= 4)
-								source.node.framebg.dataset.decoration =
-									"bronze";
-							break;
-						case "silver":
-							if (dnum >= 8)
-								source.node.framebg.dataset.decoration =
-									"silver";
-							break;
-						case "gold":
-							if (dnum >= 12)
-								source.node.framebg.dataset.decoration = "gold";
-							break;
-					}
-				}
-				source.classList.add("topcount");
-			}
-		},
 		AntiResistanceDieBoss: function () {
 			"step 0";
 			if (_status.roundStart == player) {
@@ -1217,6 +978,97 @@ export async function content(config, pack) {
 				source.classList.add("topcount");
 			}
 		},
+		//抄钫酸酱的
+		chooseText: function () {
+			"step 0";
+			if (event.isMine()) {
+				if (event.dialog) {
+					event.dialog.open();
+				} else {
+					if (!event.prompt) event.prompt = "请在下方输入文本";
+					event.dialog = ui.create.dialog(event.prompt);
+					if (event.prompt2) {
+						event.dialog.addText(
+							event.prompt2,
+							event.prompt2.length <= 20
+						);
+					}
+				}
+				event.result = {};
+				const div = document.createElement("div");
+				const input = div.appendChild(document.createElement("input"));
+				input.style.background = "black";
+				input.style.filter =
+					"progid:DXImageTransform.Microsoft.Alpha(style=3,opacity=50,finishOpacity=40)";
+				input.style.opacity = "0.6";
+				input.style.width = "100%";
+				input.style.fontSize = "20px";
+				input.style.textAlign = "center";
+				input.style.color = "#c9c8a2";
+				input.addEventListener("keydown", (e) => e.stopPropagation());
+				input.addEventListener("keyup", (e) => e.stopPropagation());
+				input.placeholder = "请在此输入文本";
+				input.setAttribute("maxlength", event.max);
+				event.dialog.add(div);
+				game.pause();
+				game.countChoose();
+				event.choosing = true;
+				if (event.filterOk) {
+					var ok;
+					if (typeof event.filterOk == "function") {
+						ok = event.filterOk(input.value);
+						if (ok) {
+							var button = ui.create.control("确定", () => {
+								event.result.bool = true;
+								event.result.text = input.value
+									? input.value
+									: "";
+								doClose();
+							});
+						} else if (!event.forced) {
+							var button = ui.create.control("取消", () => {
+								event.result.bool = false;
+								doClose();
+							});
+						}
+					}
+				} else {
+					var button = ui.create.control("确定", () => {
+						event.result.bool = true;
+						event.result.text = input.value
+							? input.value
+							: "";
+						doClose();
+					});
+				}
+				event.switchToAuto = () => {
+					event.result = "ai";
+					doClose();
+				};
+				const doClose = () => {
+					button.remove();
+					if (cancel) cancel.remove();
+					game.resume();
+				};
+			} else if (event.isOnline()) {
+				event.send();
+			} else {
+				event.result = "ai";
+			}
+			("step 1");
+			if (event.result == "ai") {
+				if (event.ai) {
+					event.value = event.ai(event.getParent(), player);
+				}
+				event.result = {};
+				event.result.bool = event.value != -1 || event.forced;
+				if (event.result.bool) event.result.text = event.value;
+			}
+			_status.imchoosing = false;
+			event.choosing = false;
+			if (event.dialog) event.dialog.close();
+			event.resume();
+		},
 	});
 	//lib.skill
 	Object.assign(lib.skill, {
@@ -1294,27 +1146,6 @@ export async function content(config, pack) {
 			_priority: 1e1000,
 			audioname2: {
 				key_shiki: "shiki_omusubi",
-			},
-		},
-		_qsmx_powang: {
-			charlotte: true,
-			forced: true,
-			silent: true,
-			firstDo: true,
-			trigger: {
-				global: "gameStart",
-				player: "enterGame",
-			},
-			filter: function (event, player) {
-				return lib.config.extension_奇思妙想_wand_of_anti_resistance;
-			},
-			content: function () {
-				var players = game.players.filter((c) => c != player);
-				for (let index = 0; index < players.length; index++) {
-					const target = players[index];
-					//target.resetFuction();
-					target.addSkillBlocker("qsmx_fengying");
-				}
 			},
 		},
 		_qsmx_bilu: {

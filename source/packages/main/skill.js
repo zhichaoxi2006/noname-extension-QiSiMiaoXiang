@@ -2083,31 +2083,6 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		qsmx_tieqi: {
-			forced: true,
-			charlotte: true,
-			trigger: {
-				player: "phaseBefore",
-			},
-			filter: function (event, player) {
-				return true;
-			},
-			content: function () {
-				"step 0";
-				var prompt = "【铁骑】：选择一名其他角色复原函数。";
-				player
-					.chooseTarget(prompt, lib.filter.notMe)
-					.set("ai", function (target) {
-						return -get.attitude(player, target);
-					});
-				("step 1");
-				if (result.bool) {
-					var target = result.targets[0];
-					lib.skill.qsmx_hacker.resetFuction(target);
-				}
-			},
-			_priority: 0,
-		},
 		qsmx_dinghhuo: {
 			audio: "nzry_dinghuo",
 			enable: ["chooseToUse"],
@@ -3531,20 +3506,44 @@ export const skill = {
 			_priority: 0,
 		},
 		qsmx_cycle: {
-			audio: "ext:奇思妙想:2",
 			trigger: {
-				global: "pileWashed",
+				player: "dieBegin",
 			},
 			forced: true,
+			skillAnimation: true,
+			animationColor: "gray",
 			content: function () {
-				player.die();
+				trigger.cancel();
+				let pointer = game.boss;
+				let map = { boss: game.me == game.boss, links: [] };
+				for (let iwhile = 0; iwhile < 10; iwhile++) {
+					pointer = pointer.nextSeat;
+					if (pointer == game.boss) {
+						break;
+					}
+					if (!pointer.side) {
+						map.links.push(pointer.name);
+					}
+				}
+				game.saveConfig("continue_name_boss", map);
+				game.saveConfig("mode", lib.config.mode);
+				localStorage.setItem(lib.configprefix + "directstart", true);
+				game.reload();
 			},
 			_priority: 0,
 		},
 		qsmx_test: {
-			init:function(player, skill){
-				
-			}
+			enable: "phaseUse",
+			async content(event, trigger, player) {
+				const { result } = await player
+					.chooseText()
+					.set("filterOk", function (value) {
+						if (value == "杀") {
+							return false;
+						}
+						return true;
+					});
+			},
 		},
 		qsmx_shiyuan: {
 			audio: "ext:奇思妙想:2",
@@ -4038,9 +4037,9 @@ export const skill = {
 				var distanceTo = player.distanceTo(target);
 				var next = target.damage(distanceTo, "nocard");
 				//神圣伤害Plus版;
-				next.toEvent().trigger = function(){
+				next.toEvent().trigger = function () {
 					return false;
-				}
+				};
 			},
 			check: function (card) {
 				return 10 - get.value(card);
@@ -5925,6 +5924,7 @@ export const skill = {
 		qsmx_winwin: {
 			charlotte: true,
 			init: function (player, skill) {
+				if (!_status.forceWin) _status.forceWin = [];
 				_status.forceWin.add(player);
 			},
 		},
@@ -9341,7 +9341,7 @@ export const skill = {
 					} else {
 						const {
 							result: { bool },
-						} = await player.chooseBool("是否重复此流程");
+						} = await player.chooseBool("是否重复此流程？");
 						if (bool) {
 							player.gain(cards);
 						} else {
@@ -9509,8 +9509,87 @@ export const skill = {
 				});
 			},
 		},
+		qsmx_tieqi: {
+			shaRelated: true,
+			audio: 2,
+			audioname: ["boss_lvbu3"],
+			trigger: {
+				player: "useCardToPlayered",
+			},
+			check: function (event, player) {
+				return get.attitude(player, event.target) <= 0;
+			},
+			filter: function (event, player) {
+				return get.tag(event.card, "damage");
+			},
+			logTarget: "target",
+			content: function () {
+				"step 0";
+				player.judge(function () {
+					return 0;
+				});
+				if (!trigger.target.hasSkill("baiban")) {
+					trigger.target.addTempSkill("baiban");
+				}
+				("step 1");
+				var suit = result.suit;
+				var target = trigger.target;
+				var num = target.countCards("h", "shan");
+				target
+					.chooseToDiscard(
+						"请弃置一张" +
+							get.translation(suit) +
+							"牌，否则不能使用闪抵消此杀",
+						"he",
+						function (card) {
+							return get.suit(card) == _status.event.suit;
+						}
+					)
+					.set("ai", function (card) {
+						var num = _status.event.num;
+						if (num == 0) return 0;
+						if (card.name == "shan") return num > 1 ? 2 : 0;
+						return 8 - get.value(card);
+					})
+					.set("num", num)
+					.set("suit", suit);
+				("step 2");
+				if (!result.bool) {
+					trigger.getParent().directHit.add(trigger.target);
+				}
+			},
+			ai: {
+				ignoreSkill: true,
+				skillTagFilter: function (player, tag, arg) {
+					if (tag == "directHit_ai") {
+						return get.attitude(player, arg.target) <= 0;
+					}
+					if (
+						!arg ||
+						arg.isLink ||
+						!arg.card ||
+						!get.tag(arg.card, "damage")
+					)
+						return false;
+					if (!arg.target || get.attitude(player, arg.target) >= 0)
+						return false;
+					if (
+						!arg.skill ||
+						!lib.skill[arg.skill] ||
+						lib.skill[arg.skill].charlotte ||
+						!arg.target.getSkills(true, false).includes(arg.skill)
+					)
+						return false;
+				},
+				directHit_ai: true,
+			},
+			_priority: 0,
+		},
 	},
 	translate: {
+		qsmx_tieqi: "铁骑",
+		qsmx_tieqi_info:
+			"你使用伤害类牌指定目标后，你可以进行一次判定并令其所有技能失效直到回合结束，除非该名角色弃置一张与判定牌花色相同的牌，否则其不能响应此牌。",
 		qsmx_chengxiang: "称象",
 		qsmx_liudian: "流电",
 		qsmx_liudian_info:
@@ -9795,8 +9874,6 @@ export const skill = {
 		qsmx_tiemian: "铁面",
 		qsmx_tiemian_info:
 			"锁定技。当你成为【杀】的目标后，你进行判定。若结果为黑色，则取消此目标。",
-		qsmx_tieqi: "铁骑",
-		qsmx_tieqi_info: "当你使用牌指定一名角色为目标后，你还原其函数。",
 		qsmx_dinghhuo: "绽火",
 		qsmx_dinghhuo_info:
 			"你可以将普通锦囊牌当【火烧连营】，延时锦囊牌当【火山】，基本牌当【火杀】使用；你造成/受到属性伤害时，此伤害+1/-1。",
@@ -9835,7 +9912,7 @@ export const skill = {
 		qsmx_zaozhi_info:
 			"出牌阶段限一次，你可以弃置任意张牌从游戏外获得等量的【纸】；【纸】不计入你的手牌上限。",
 		qsmx_cycle: "循环",
-		qsmx_cycle_info: "",
+		qsmx_cycle_info: "锁定技，你死亡时，你重开。",
 		qsmx_test: "测试",
 		qsmx_test_info: "测试用技能",
 		qsmx_shiyuan: "噬元",

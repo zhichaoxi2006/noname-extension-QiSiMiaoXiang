@@ -1,4 +1,5 @@
 import { lib, game, ui, get, ai, _status } from "../../../../noname.js";
+import { ChildNodesWatcher } from "../../../../noname/library/cache/childNodesWatcher.js";
 
 export async function cardPileObsever() {
 	lib.arenaReady.push(function () {
@@ -15,8 +16,8 @@ export async function cardPileObsever() {
 						removedCards.addArray(removedNodes);
 					}
 				});
-				next.addedCards = addedCards;
-				next.removedCards = removedCards;
+				if(addedCards.length) next.addedCards = addedCards;
+				if(removedCards.length) next.removedCards = removedCards;
 				next.position = "c";
 				next.setContent("emptyEvent");
 			}
@@ -48,8 +49,8 @@ export async function discardPileObsever() {
 						removedCards.addArray(removedNodes);
 					}
 				});
-				next.addedCards = addedCards;
-				next.removedCards = removedCards;
+				if(addedCards.length) next.addedCards = addedCards;
+				if(removedCards.length) next.removedCards = removedCards;
 				next.position = "d";
 				next.setContent("emptyEvent");
 			}
@@ -81,8 +82,8 @@ export async function orderingObsever() {
 						removedCards.addArray(removedNodes);
 					}
 				});
-				next.addedCards = addedCards;
-				next.removedCards = removedCards;
+				if(addedCards.length) next.addedCards = addedCards;
+				if(removedCards.length) next.removedCards = removedCards;
 				next.position = "o";
 				next.setContent("emptyEvent");
 			}
@@ -114,8 +115,8 @@ export async function specialObsever() {
 						removedCards.addArray(removedNodes);
 					}
 				});
-				next.addedCards = addedCards;
-				next.removedCards = removedCards;
+				if(addedCards.length) next.addedCards = addedCards;
+				if(removedCards.length) next.removedCards = removedCards;
 				next.position = "s";
 				next.setContent("emptyEvent");
 			}

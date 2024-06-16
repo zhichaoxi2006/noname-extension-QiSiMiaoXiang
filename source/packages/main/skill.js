@@ -4,9 +4,6 @@ import { content } from "../../content.js";
 export const skill = {
 	//在这里编写技能。
 	skill: {
-		qmsx_zhengli: {
-			_priority: 0,
-		},
 		qsmx_qichong: {
 			forced: true,
 			silent: true,
@@ -7267,7 +7264,7 @@ export const skill = {
 			frequent: true,
 			filter: function (event, player) {
 				if (_status.currentPhase == player) return false;
-				return event.position == "o" && event.addedCards.length > 0;
+				return event.position == "o" && event.addedCards;
 			},
 			content: function () {
 				var cards = trigger.addedCards;

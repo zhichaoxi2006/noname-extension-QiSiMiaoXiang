@@ -160,7 +160,7 @@ export async function precontent(config, pack) {
 					}
 				}
 			},
-			defineProperty_qsmx: function () {
+			defineProperty: function () {
 				var skills = Object.keys(lib.skill);
 				var character = Object.keys(lib.character);
 				var translate = Object.keys(lib.translate);

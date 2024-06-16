@@ -20,19 +20,10 @@ export async function content(config, pack) {
 			//在胜负结果开始结算前，触发时机
 			event.trigger("gameOver");
 			("step 1");
-			//如果胜负结果不需要特殊处理，正常执行游戏结束。
-			if (
-				!_status.GameResultReverse &&
-				!_status.forceWin &&
-				!_status.forceLose
-			) {
-				lib.qsmx.over.apply(this, event.arguments);
-				return;
-			}
-			("step 2");
 			//胜负结果反转
-			if (_status.GameResultReverse) {
+			if (_status.GameResultReverse && !_status._uncheckReverse) {
 				var new_arguments = [];
+				_status._uncheckReverse = true;
 				for (let index = 0; index < event.arguments.length; index++) {
 					const argument = event.arguments[index];
 					if (typeof argument == "boolean") {
@@ -41,7 +32,7 @@ export async function content(config, pack) {
 						new_arguments.push(argument);
 					}
 				}
-				lib.qsmx.over.apply(this, new_arguments);
+				game.over.apply(this, new_arguments);
 				return;
 			}
 			//必败
@@ -56,23 +47,33 @@ export async function content(config, pack) {
 				lib.qsmx.over(winners.includes(game.me));
 				return;
 			}
+			("step 2");
+			var list = Array.from(event.arguments);
+			//如果胜负结果不需要特殊处理，正常执行游戏结束。
+			lib.qsmx.over.apply(this, event.arguments);
+			delete _status._uncheckReverse;
+			return;
 		});
 	};
 	//lib.arenaReady
 	lib.arenaReady.push(function () {
 		var skills = lib.skill;
 		//Proxy化lib.skills
-		var object = new Proxy(
-			{},
-			{
-				set: function (target, key, value, receiver) {
-					if (target[key]?.fixedObject == true) {
-					} else {
-						return Reflect.set(target, key, value, receiver);
-					}
-				},
-			}
-		);
+		if(true){
+			var object = {};
+		} else {
+			var object = new Proxy(
+				{},
+				{
+					set: function (target, key, value, receiver) {
+						if (target[key]?.fixedObject == true) {
+						} else {
+							return Reflect.set(target, key, value, receiver);
+						}
+					},
+				}
+			);
+		}
 		//无效化带有抗性的技能
 		for (const key of Reflect.ownKeys(skills)) {
 			const skill = skills[key];
@@ -1035,9 +1036,7 @@ export async function content(config, pack) {
 				} else {
 					var button = ui.create.control("确定", () => {
 						event.result.bool = true;
-						event.result.text = input.value
-							? input.value
-							: "";
+						event.result.text = input.value ? input.value : "";
 						doClose();
 					});
 				}
@@ -1125,9 +1124,7 @@ export async function content(config, pack) {
 						}
 					}
 				}
-				try {
-					lib.qsmx.defineProperty_qsmx();
-				} catch (error) {}
+				//unMark带有抗性的技能
 				lib.skill = object;
 				var players = game.players;
 				for (let index = 0; index < players.length; index++) {

@@ -369,6 +369,13 @@ export const character = async function () {
 				['mashu', 'qsmx_tieqi'],
 				["ext:奇思妙想/resource/image/character/qsmx_machao.jpg"],
 			],
+			qsmx_kobe_bryant: [
+				"male",
+				"key",
+				"6/6",
+				['qsmx_zhouji', 'qsmx_zhuiji', 'qsmx_fuhuo'],
+				["ext:奇思妙想/resource/image/character/qsmx_kobe_bryant.jpg"],
+			],
 		},
 		characterTitle: {
 			qsmx_longinus: "百夫长",
@@ -395,7 +402,6 @@ export const character = async function () {
 		},
 		characterSort: {
 			mode_extension_奇思妙想: {
-				qsmx_junko_aura: ["qsmx_junko"],
 				qsmx_HellOfResistance: [
 					"qsmx_huangzhong",
 					"qsmx_baozheng",
@@ -412,6 +418,7 @@ export const character = async function () {
 					"qsmx_hw_sunquan",
 				],
 				qmsx_diy: [
+					"qsmx_sp_zhangliao",
 					"qsmx_machao",
 					"qsmx_zhangliang",
 					"qsmx_shen_zhangliao",
@@ -423,7 +430,6 @@ export const character = async function () {
 					"qsmx_sunjian",
 					"qsmx_spzhangliao",
 					"qsmx_zhangfei",
-					"qsmx_zhangxianzhong",
 					"qsmx_puyuan",
 					"qsmx_sunquan",
 					"qsmx_menghuo",
@@ -440,18 +446,20 @@ export const character = async function () {
 					"qsmx_nanhualaoxian",
 					"qsmx_cenhun",
 				],
-				qsmx_touhou: ["qsmx_matara_okina", "qsmx_zhengxie"],
+				qsmx_touhou: ["qsmx_matara_okina", "qsmx_zhengxie", "qsmx_junko"],
+				qsmx_meme: ['qsmx_kobe_bryant', "qsmx_zhangxianzhong",]
 			},
 		},
 		translate: {
-			qsmx_junko_aura: "无技能的炼狱",
 			qsmx_HellOfResistance: "纯粹的抗性地狱",
 			qsmx_huiwanxili: "会玩系列武将",
 			qsmx_hw_sunquan: "会玩孙权",
 			qsmx_hw_zhonghui: "会玩钟会",
 			qsmx_shen_zhangliao: "妙神张辽",
+			qsmx_meme: "仅供娱乐",
 			qmsx_diy: "DIY武将",
 			qsmx_touhou: "东方武将",
+			qsmx_kobe_bryant: "科比",
 			qsmx_zhangfei: "妙张飞",
 			qsmx_zhangjiao: "妙张角",
 			qsmx_sp_zhangliao: "SP妙张辽",

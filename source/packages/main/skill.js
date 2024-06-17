@@ -1,5 +1,5 @@
 import { lib, game, ui, get, ai, _status } from "../../../../../noname.js";
-import { watch } from "../../../../../game/vue.esm-browser.js";
+import { triggerRef, watch } from "../../../../../game/vue.esm-browser.js";
 import { content } from "../../content.js";
 export const skill = {
 	//在这里编写技能。
@@ -3532,14 +3532,6 @@ export const skill = {
 		qsmx_test: {
 			enable: "phaseUse",
 			async content(event, trigger, player) {
-				const { result } = await player
-					.chooseText()
-					.set("filterOk", function (value) {
-						if (value == "杀") {
-							return false;
-						}
-						return true;
-					});
 			},
 		},
 		qsmx_shiyuan: {
@@ -9582,8 +9574,188 @@ export const skill = {
 			},
 			_priority: 0,
 		},
+		qsmx_zhouji: {
+			audio:2,
+			enable:"chooseToUse",
+			viewAsFilter:function (player) {
+				player.hp > 0;
+			},
+			viewAs:{
+				name:"juedou",
+				isCard:true,
+			},
+			filterCard:() => false,
+			selectCard:-1,
+			log:false,
+			precontent:function () {
+				"step 0";
+				player.logSkill("qsmx_zhouji");
+				player.loseHp();
+				event.forceDie = true;
+				"step 1";
+				//特殊处理
+				if (player.isDead()) {
+					player.useResult(event.result, event.getParent()).forceDie = true;
+				}
+			},
+			ai:{
+				order:function () {
+					return get.order({ name: "juedou" }) - 0.5;
+				},
+				wuxie:function (target, card, player, viewer, status) {
+					if (player === game.me && get.attitude(viewer, player._trueMe || player) > 0)
+						return 0;
+					if (
+						status *
+							get.attitude(viewer, target) *
+							get.effect(target, card, player, target) >=
+						0
+					)
+						return 0;
+				},
+				basic:{
+					order:5,
+					useful:1,
+					value:5.5,
+				},
+				result:{
+					player(player, target, card) {
+						if (
+							player.hasSkillTag(
+								"directHit_ai",
+								true,
+								{
+									target: target,
+									card: card,
+								},
+								true
+							)
+						)
+							return 0;
+						if (get.damageEffect(target, player, target) >= 0) return 0;
+						let pd = get.damageEffect(player, target, player),
+							att = get.attitude(player, target);
+						if (att > 0 && get.damageEffect(target, player, player) > pd) return 0;
+						let ts = target.mayHaveSha(player, "respond", null, "count"),
+							ps = player.mayHaveSha(
+								player,
+								"respond",
+								player.getCards("h", (i) => {
+									return (
+										card === i ||
+										(card.cards && card.cards.includes(i)) ||
+										ui.selected.cards.includes(i)
+									);
+								}),
+								"count"
+							);
+						if (ts < 1 && ts << 3 < Math.pow(player.hp, 2)) return 0;
+						if (att > 0) {
+							if (ts < 1) return 0;
+							return -2;
+						}
+						if (ts - ps + Math.exp(0.8 - player.hp) < 1) return -ts;
+						if (pd >= 0) return pd / get.attitude(player, player);
+						return -2 - ts;
+					},
+					target(player, target, card) {
+						if (
+							player.hasSkillTag(
+								"directHit_ai",
+								true,
+								{
+									target: target,
+									card: card,
+								},
+								true
+							)
+						)
+							return -2;
+						let td = get.damageEffect(target, player, target);
+						if (td >= 0) return td / get.attitude(target, target);
+						let pd = get.damageEffect(player, target, player),
+							att = get.attitude(player, target);
+						if (att > 0 && get.damageEffect(target, player, player) > pd) return -2;
+						let ts = target.mayHaveSha(player, "respond", null, "count"),
+							ps = player.mayHaveSha(
+								player,
+								"respond",
+								player.getCards("h", (i) => {
+									return (
+										card === i ||
+										(card.cards && card.cards.includes(i)) ||
+										ui.selected.cards.includes(i)
+									);
+								}),
+								"count"
+							);
+						if (ts < 1) return -1.5;
+						if (att > 0) return -2;
+						if (ts - ps < 1) return -2 - ts;
+						if (pd >= 0) return -1;
+						return -ts;
+					},
+				},
+				tag:{
+					respond:2,
+					respondSha:2,
+					damage:1,
+				},
+			},
+			"_priority":0,
+		},
+		qsmx_zhuiji: {
+			trigger:{
+				player: 'dieBegin'
+			},
+			forced:true,
+			async content(event, trigger, player){
+				var targets = game.filterPlayer(current => current != player);
+				targets.sortBySeat(player);
+				while (targets.length) {
+					var target = targets.shift();
+					await target.damage('nosource', 'fire');
+					game.asyncDelayx();
+				}
+			}
+		},
+		qsmx_fuhuo: {
+			trigger: {
+				player: "dieAfter",
+			},
+			forceDie: true,
+			silent: true,
+			content: function () {
+				ui.backgroundMusic.src =
+					lib.assetURL +
+					`extension/奇思妙想/resource/audio/background/See You Again.mp3`;
+				const listener = ui.backgroundMusic.addEventListener(
+					"ended",
+					function () {
+						if (!_status.over) {
+							player.revive(player.maxHp, false);
+							player.say(`孩子们，我回来了`);
+							game.log(player, "打赢复活赛回来了");
+							player.drawTo(player.maxHp);
+						}
+						ui.backgroundMusic.removeEventListener(
+							"ended",
+							listener
+						);
+					}
+				);
+			},
+		},
 	},
 	translate: {
+		qsmx_zhouji: "肘击",
+		qsmx_zhouji_info:
+			"出牌阶段，你可以失去一点体力视为对一名角色使用一张【决斗】(你死亡后仍然结算)。",
+		qsmx_zhuiji: "坠机",
+		qsmx_zhuiji_info: "锁定技，你死亡时，你令场上其他角色受到一点无来源火焰伤害。",
+		qsmx_fuhuo: "复活",
+		qsmx_fuhuo_info:
+			"锁定技，你死亡后，你将背景音乐切换为“See you again”，当背景音乐播放完毕后，你复活并将手牌补至体力上限。",
 		qsmx_tieqi: "铁骑",
 		qsmx_tieqi_info:
 			"你使用伤害类牌指定目标后，你可以进行一次判定并令其所有技能失效直到回合结束，除非该名角色弃置一张与判定牌花色相同的牌，否则其不能响应此牌。",

@@ -372,7 +372,7 @@ export const character = async function () {
 			qsmx_kobe_bryant: [
 				"male",
 				"key",
-				"6/6",
+				"8/8",
 				['qsmx_zhouji', 'qsmx_zhuiji', 'qsmx_fuhuo'],
 				["ext:奇思妙想/resource/image/character/qsmx_kobe_bryant.jpg"],
 			],

@@ -9686,15 +9686,15 @@ export const skill = {
 		},
 		qsmx_zhuiji: {
 			trigger:{
-				player: 'dieBegin'
+				player: 'damageEnd'
 			},
 			forced:true,
 			async content(event, trigger, player){
-				var targets = game.filterPlayer(current => current != player);
-				targets.sortBySeat(player);
-				while (targets.length) {
-					var target = targets.shift();
-					await target.damage('nosource', 'fire');
+				var cards = get.cards();
+				await player.showCards(cards);
+				if(get.color(cards[0]) == 'red'){
+					await player.damage('nosource', 'fire');
+					await player.gain(cards);
 					game.asyncDelayx();
 				}
 			}
@@ -9732,7 +9732,7 @@ export const skill = {
 		qsmx_zhouji_info:
 			"出牌阶段，你可以失去一点体力视为对一名角色使用一张【决斗】(你死亡后仍然结算)。",
 		qsmx_zhuiji: "坠机",
-		qsmx_zhuiji_info: "锁定技，你死亡时，你令场上其他角色受到一点无来源火焰伤害。",
+		qsmx_zhuiji_info: "锁定技，你受到伤害后，你亮出牌堆顶一张牌，若此牌为红色，你受到一点无来源火焰伤害并获得展示牌。",
 		qsmx_fuhuo: "复活",
 		qsmx_fuhuo_info:
 			"锁定技，你死亡后，你将背景音乐切换为“See you again”，当背景音乐播放完毕后，你复活并将手牌补至体力上限。",

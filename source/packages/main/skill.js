@@ -7773,27 +7773,7 @@ export const skill = {
 					player.initControlResistance();
 					player.initmaxHpLocker(player.maxHp, true);
 					player.initControlResistance();
-					player.dieAfter = function () {
-						var event = _status.event;
-						if (
-							!(game.shuffleNumber >= 7) &&
-							player == event.player &&
-							event.name == "die"
-						) {
-							event.finish();
-							event._triggered = null;
-							lib.element.player.revive.apply(player, [
-								null,
-								false,
-							]);
-							lib.element.player.changeHp.apply(player, [
-								player.maxHp,
-								false,
-							]);
-						} else {
-							lib.element.player.dieAfter.apply(player);
-						}
-					};
+					player.initDieResistance();
 				} else {
 					player.removeSkill(skill);
 				}
@@ -9836,7 +9816,7 @@ export const skill = {
 		qsmx_quanshi_info: "锁定技，牌堆顶一张牌始终对你可见。",
 		qsmx_xianzhong: "献忠",
 		qsmx_xianzhong_info:
-			"汝之名为张献忠；<br>因屠戮而传世之人；<br>汝之上限恒为柒；<br>魅惑无用于汝；<br>本初之技无遗失之可能；<br>早已为癫狂之人，汝再无更癫狂之可能；<br>牌堆洗切柒次前，汝将立于世间，不畏万法所侵。",
+			"汝之名为张献忠；<br>因屠戮而传世之人；<br>未有人能抹汝之名；<br>汝之上限恒为柒；<br>魅心摄魄之术无用于汝；<br>所持之技亦无遗失之可能；<br>汝早因屠戮而癫狂，无更癫狂之可能<br>牌堆洗切柒次前，汝将无敌于世间。",
 		qsmx_qisha: "七杀",
 		qsmx_qisha_info:
 			"锁定技，你使用【杀】时，若你本局游戏使用的【杀】数和为7的倍数，你对此【杀】的所有目标造成一点湮灭伤害。",

@@ -396,9 +396,6 @@ export const character = async function () {
 			qsmx_matara_okina: function (mode) {
 				return false;
 			},
-			qsmx_xusha: function (mode) {
-				return false;
-			},
 		},
 		characterSort: {
 			mode_extension_奇思妙想: {

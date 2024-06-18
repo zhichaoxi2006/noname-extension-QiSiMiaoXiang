@@ -988,315 +988,69 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		qsmx_pingjian: {
-			trigger: {
-				player: ["useSkill", "logSkillBegin"],
-			},
-			forced: true,
-			locked: false,
-			filter: function (event, player) {
-				var skill = event.sourceSkill || event.skill;
-				return (
-					player.invisibleSkills.contains(skill) &&
-					lib.skill.qsmx_yingmen
-						.getSkills(player.getStorage("qsmx_yingmen"), player)
-						.contains(skill)
-				);
-			},
-			content: function () {
-				"step 0";
-				var visitors = player.getStorage("qsmx_yingmen").slice(0);
-				var drawers = visitors.filter(function (name) {
-					return (
-						Array.isArray(lib.character[name]) &&
-						lib.character[name][3].contains(trigger.sourceSkill)
-					);
-				});
-				event.drawers = drawers;
-				if (visitors.length == 1)
-					event._result = { bool: true, links: visitors };
-				else {
-					var dialog = ["评鉴：请选择移去一张“访客”"];
-					if (drawers.length)
-						dialog.push(
-							'<div class="text center">如果移去' +
-								get.translation(drawers) +
-								"，则你摸一张牌</div>"
-						);
-					dialog.push([visitors, "character"]);
-					player.chooseButton(dialog, true);
-				}
-				("step 1");
-				if (result.bool) {
-					lib.skill.qsmx_yingmen.removeVisitors(result.links, player);
-					game.log(
-						player,
-						"移去了",
-						"#y" + get.translation(result.links[0])
-					);
-					if (event.drawers.contains(result.links[0])) {
-						player.addTempSkill("qsmx_pingjian_draw");
-						player.storage.qsmx_pingjian_draw.push(trigger.skill);
-					}
-				}
-			},
-			group: "qsmx_pingjian_trigger",
-			subSkill: {
-				draw: {
-					charlotte: true,
-					init: function (player, skill) {
-						if (!player.storage[skill]) player.storage[skill] = [];
-					},
-					onremove: true,
-					trigger: {
-						player: ["useSkillAfter", "logSkill"],
-					},
-					forced: true,
-					popup: false,
-					filter: function (event, player) {
-						return player
-							.getStorage("qsmx_pingjian_draw")
-							.contains(event.skill);
-					},
-					content: function () {
-						player.storage.qsmx_pingjian_draw.remove(trigger.skill);
-						player.draw();
-						if (!player.storage.qsmx_pingjian_draw.length)
-							player.removeSkill("qsmx_pingjian_draw");
-					},
-					sub: true,
-					_priority: 0,
-				},
-				trigger: {
-					trigger: {
-						player: "triggerInvisible",
-					},
-					forced: true,
-					forceDie: true,
-					popup: false,
-					charlotte: true,
-					priority: 10,
-					filter: function (event, player) {
-						if (event.revealed) return false;
-						var info = get.info(event.skill);
-						if (info.charlotte) return false;
-						var skills = lib.skill.qsmx_yingmen.getSkills(
-							player.getStorage("qsmx_yingmen"),
-							player
-						);
-						game.expandSkills(skills);
-						return skills.contains(event.skill);
-					},
-					content: function () {
-						"step 0";
-						if (get.info(trigger.skill).silent) {
-							event.finish();
-						} else {
-							var info = get.info(trigger.skill);
-							var event = trigger,
-								trigger = event._trigger;
-							var str;
-							var check = info.check;
-							if (info.prompt) str = info.prompt;
-							else {
-								if (typeof info.logTarget == "string") {
-									str = get.prompt(
-										event.skill,
-										trigger[info.logTarget],
-										player
-									);
-								} else if (
-									typeof info.logTarget == "function"
-								) {
-									var logTarget = info.logTarget(
-										trigger,
-										player
-									);
-									if (
-										get
-											.itemtype(logTarget)
-											.indexOf("player") == 0
-									)
-										str = get.prompt(
-											event.skill,
-											logTarget,
-											player
-										);
-								} else {
-									str = get.prompt(event.skill, null, player);
-								}
-							}
-							if (typeof str == "function") {
-								str = str(trigger, player);
-							}
-							var next = player.chooseBool("评鉴：" + str);
-							next.set(
-								"yes",
-								!info.check || info.check(trigger, player)
-							);
-							next.set("hsskill", event.skill);
-							next.set("forceDie", true);
-							next.set("ai", function () {
-								return _status.event.yes;
-							});
-							if (typeof info.prompt2 == "function") {
-								next.set(
-									"prompt2",
-									info.prompt2(trigger, player)
-								);
-							} else if (typeof info.prompt2 == "string") {
-								next.set("prompt2", info.prompt2);
-							} else if (info.prompt2 != false) {
-								if (lib.dynamicTranslate[event.skill])
-									next.set(
-										"prompt2",
-										lib.dynamicTranslate[event.skill](
-											player,
-											event.skill
-										)
-									);
-								else if (lib.translate[event.skill + "_info"])
-									next.set(
-										"prompt2",
-										lib.translate[event.skill + "_info"]
-									);
-							}
-							if (trigger.skillwarn) {
-								if (next.prompt2) {
-									next.set(
-										"prompt2",
-										'<span class="thundertext">' +
-											trigger.skillwarn +
-											"。</span>" +
-											next.prompt2
-									);
-								} else {
-									next.set("prompt2", trigger.skillwarn);
-								}
-							}
-						}
-						("step 1");
-						if (result.bool) {
-							trigger.revealed = true;
-						} else {
-							trigger.untrigger();
-							trigger.cancelled = true;
-						}
-					},
-					sub: true,
-					_priority: 1000,
-				},
-			},
-			_priority: 0,
-		},
 		qsmx_yingmen: {
-			trigger: {
-				global: "phaseBefore",
-				player: "enterGame",
+			trigger:{
+				global:"phaseBefore",
+				player:"enterGame",
 			},
-			forced: true,
-			filter: function (event, player) {
+			forced:true,
+			filter:function (event, player) {
 				return event.name != "phase" || game.phaseNumber == 0;
 			},
-			content: function () {
-				"step 0";
-				var list = _status.characterlist;
-				_status.yingmen_list = list;
-				("step 1");
-				var list = _status.yingmen_list.removeArray(
-					player.getStorage("qsmx_yingmen")
-				);
-				list = list.randomSort();
-				if (player.getStorage("qsmx_yingmen") == undefined) {
-					var can_select_num = 4;
-				} else {
-					var can_select_num =
-						4 - player.getStorage("qsmx_yingmen").length;
-				}
-				var dialog = ui.create.dialog("选择一张武将牌", "hidden");
-				dialog.add([list, "character"]);
-				player
-					.chooseButton(dialog, can_select_num, true)
-					.set("ai", function (button) {
-						var name = button.link;
-						var info = lib.character[name];
-						var skills = info[3].filter(function (skill) {
-							var info = get.skillInfoTranslation(skill);
-							var list = get.skillCategoriesOf(skill);
-							return list.length == 0;
-						});
-						var eff = 0.2;
-						for (var i of skills) {
-							eff += get.skillRank(i);
-						}
-						return eff;
+			content:async function (event, trigger, player) {
+				if (!_status.characterlist) lib.skill.pingjian.initList();
+				var characters = new Array();
+				while(4 - characters.length){
+					var dialog = ui.create.characterDialog(function(character){
+						return !_status.characterlist.includes(character);
 					});
-				("step 2");
-				lib.skill.pingjian.initList();
-				var characters = result.links;
+					const result = await player.chooseButton([1, 4 - characters.length], dialog).forResult();
+					var links = result.links;
+					characters.addArray(links);
+					_status.characterlist.remove(links);
+				}
 				lib.skill.qsmx_yingmen.addVisitors(characters, player);
-				_status.characterlist.removeArray(characters);
-				game.delayx();
+				game.asyncDelayx();
 			},
-			group: "qsmx_yingmen_reload",
-			subSkill: {
-				reload: {
-					trigger: {
-						player: "phaseBegin",
+			ai:{
+				combo:"qsmx_pingjian",
+			},
+			group:"qsmx_yingmen_reload",
+			subSkill:{
+				reload:{
+					trigger:{
+						player:"phaseBegin",
 					},
-					forced: true,
-					locked: false,
-					filter: function (event, player) {
+					forced:true,
+					locked:false,
+					filter:function (event, player) {
 						return player.getStorage("qsmx_yingmen").length < 4;
 					},
-					content: function () {
-						"step 0";
-						var list = _status.yingmen_list.removeArray(
-							player.getStorage("qsmx_yingmen")
-						);
-						list = list.randomSort();
-						if (player.getStorage("qsmx_yingmen") == undefined) {
-							var can_select_num = 4;
-						} else {
-							var can_select_num =
-								4 - player.getStorage("qsmx_yingmen").length;
-						}
-						var dialog = ui.create.dialog(
-							"选择一张武将牌",
-							"hidden"
-						);
-						dialog.add([list, "character"]);
-						player
-							.chooseButton(dialog, can_select_num, true)
-							.set("ai", function (button) {
-								var name = button.link;
-								var info = lib.character[name];
-								var skills = info[3].filter(function (skill) {
-									var info = get.skillInfoTranslation(skill);
-									var list = get.skillCategoriesOf(skill);
-									return list.length == 0;
-								});
-								var eff = 0.2;
-								for (var i of skills) {
-									eff += get.skillRank(i);
-								}
-								return eff;
+					content:async function (event, trigger, player) {
+						if (!_status.characterlist) lib.skill.pingjian.initList();
+						var characters = new Array();
+						while(4 - characters.length - player.getStorage("qsmx_yingmen").length) {
+							var dialog = ui.create.characterDialog(function(character){
+								return !_status.characterlist.includes(character);
 							});
-						("step 1");
-						lib.skill.pingjian.initList();
-						var characters = result.links;
+							const result = await player.chooseButton([1, 4 - characters.length], dialog).forResult();
+							var links = result.links;
+							characters.addArray(links);
+							_status.characterlist.remove(links);
+						}
 						lib.skill.qsmx_yingmen.addVisitors(characters, player);
-						game.delayx();
+						game.asyncDelayx();
 					},
-					sub: true,
-					_priority: 0,
+					sub:true,
+					sourceSkill:"qsmx_yingmen",
+					"_priority":0,
 				},
 			},
-			getSkills: function (characters, player) {
+			getSkills:function (characters, player) {
 				var skills = [];
 				for (var name of characters) {
-					if (Array.isArray(lib.character[name])) {
-						for (var skill of lib.character[name][3]) {
+					if (Array.isArray(lib.character[name].skills)) {
+						for (var skill of lib.character[name].skills) {
 							var list = get.skillCategoriesOf(skill, player);
 							list.remove("锁定技");
 							if (list.length > 0) continue;
@@ -1310,15 +1064,9 @@ export const skill = {
 				}
 				return skills;
 			},
-			addVisitors: function (characters, player) {
+			addVisitors:function (characters, player) {
 				player.addSkillBlocker("qsmx_yingmen");
-				game.log(
-					player,
-					"将",
-					"#y" + get.translation(characters),
-					"加入了",
-					"#g“访客”"
-				);
+				game.log(player, "将", "#y" + get.translation(characters), "加入了", "#g“访客”");
 				game.broadcastAll(
 					function (player, characters) {
 						player.tempname.addArray(characters);
@@ -1343,60 +1091,178 @@ export const skill = {
 				var skills = lib.skill.qsmx_yingmen.getSkills(storage, player);
 				player.addInvisibleSkill(skills);
 			},
-			removeVisitors: function (characters, player) {
-				var skills = lib.skill.qsmx_yingmen.getSkills(
-					characters,
-					player
-				);
+			removeVisitors:function (characters, player) {
+				var skills = lib.skill.qsmx_yingmen.getSkills(characters, player);
 				var characters2 = player.getStorage("qsmx_yingmen").slice(0);
 				characters2.removeArray(characters);
-				skills.removeArray(
-					lib.skill.qsmx_yingmen.getSkills(characters2, player)
-				);
-				game.broadcastAll(
-					(player, characters) =>
-						player.tempname.removeArray(characters),
-					player,
-					characters
-				);
+				skills.removeArray(lib.skill.qsmx_yingmen.getSkills(characters2, player));
+				game.broadcastAll((player, characters) => player.tempname.removeArray(characters), player, characters);
 				player.unmarkAuto("qsmx_yingmen", characters);
 				_status.characterlist.addArray(characters);
 				player.removeInvisibleSkill(skills);
 			},
-			onremove: function (player, skill) {
-				lib.skill.qsmx_yingmen.removeVisitors(
-					player.getSkills("qsmx_yingmen"),
-					player
-				);
+			onremove:function (player, skill) {
+				lib.skill.qsmx_yingmen.removeVisitors(player.getStorage("qsmx_yingmen"), player);
 				player.removeSkillBlocker("qsmx_yingmen");
 			},
-			skillBlocker: function (skill, player) {
-				if (
-					!player.invisibleSkills.contains(skill) ||
-					skill == "qsmx_pingjian" ||
-					skill == "qsmx_pingjian"
-				)
-					return false;
+			skillBlocker:function (skill, player) {
+				if (!player.invisibleSkills.includes(skill) || skill == "qsmx_pingjian" || skill == "qsmx_pingjian") return false;
 				return !player.hasSkill("qsmx_pingjian");
 			},
-			marktext: "客",
-			intro: {
-				name: "访客",
-				mark: function (dialog, storage, player) {
+			marktext:"客",
+			intro:{
+				name:"访客",
+				mark:function (dialog, storage, player) {
 					if (!storage || !storage.length) return "当前没有“访客”";
 					dialog.addSmall([storage, "character"]);
-					var skills = lib.skill.qsmx_yingmen.getSkills(
-						storage,
-						player
-					);
-					if (skills.length)
-						dialog.addText(
-							"<li>当前可用技能：" + get.translation(skills),
-							false
-						);
+					var skills = lib.skill.qsmx_yingmen.getSkills(storage, player);
+					if (skills.length) dialog.addText("<li>当前可用技能：" + get.translation(skills), false);
 				},
 			},
-			_priority: 0,
+			"_priority":0,
+		},
+		qsmx_pingjian: {
+			trigger:{
+				player:["useSkill","logSkillBegin"],
+			},
+			forced:true,
+			locked:false,
+			filter:function (event, player) {
+				var skill = event.sourceSkill || event.skill;
+				return player.invisibleSkills.includes(skill) && lib.skill.qsmx_yingmen.getSkills(player.getStorage("qsmx_yingmen"), player).includes(skill);
+			},
+			content:function () {
+				"step 0";
+				var visitors = player.getStorage("qsmx_yingmen").slice(0);
+				var drawers = visitors.filter(function (name) {
+					return lib.character[name].skills && lib.character[name].skills.includes(trigger.sourceSkill);
+				});
+				event.drawers = drawers;
+				if (visitors.length == 1) event._result = { bool: true, links: visitors };
+				else {
+					var dialog = ["评鉴：请选择移去一张“访客”"];
+					if (drawers.length) dialog.push('<div class="text center">如果移去' + get.translation(drawers) + "，则你摸一张牌</div>");
+					dialog.push([visitors, "character"]);
+					player.chooseButton(dialog, true);
+				}
+				("step 1");
+				if (result.bool) {
+					lib.skill.qsmx_yingmen.removeVisitors(result.links, player);
+					game.log(player, "移去了", "#y" + get.translation(result.links[0]));
+					if (event.drawers.includes(result.links[0])) {
+						player.addTempSkill("qsmx_pingjian_draw");
+						player.storage.qsmx_pingjian_draw.push(trigger.skill);
+					}
+				}
+			},
+			group:"qsmx_pingjian_trigger",
+			subSkill:{
+				draw:{
+					charlotte:true,
+					init:function (player, skill) {
+						if (!player.storage[skill]) player.storage[skill] = [];
+					},
+					onremove:true,
+					trigger:{
+						player:["useSkillAfter","logSkill"],
+					},
+					forced:true,
+					popup:false,
+					filter:function (event, player) {
+						return player.getStorage("qsmx_pingjian_draw").includes(event.skill);
+					},
+					content:function () {
+						player.storage.qsmx_pingjian_draw.remove(trigger.skill);
+						player.draw();
+						if (!player.storage.qsmx_pingjian_draw.length) player.removeSkill("qsmx_pingjian_draw");
+					},
+					sub:true,
+					sourceSkill:"qsmx_pingjian",
+					"_priority":0,
+				},
+				trigger:{
+					trigger:{
+						player:"triggerInvisible",
+					},
+					forced:true,
+					forceDie:true,
+					popup:false,
+					charlotte:true,
+					priority:10,
+					filter:function (event, player) {
+						if (event.revealed) return false;
+						var info = get.info(event.skill);
+						if (info.charlotte) return false;
+						var skills = lib.skill.qsmx_yingmen.getSkills(player.getStorage("qsmx_yingmen"), player);
+						game.expandSkills(skills);
+						return skills.includes(event.skill);
+					},
+					content:function () {
+						"step 0";
+						if (get.info(trigger.skill).silent) {
+							event.finish();
+						} else {
+							var info = get.info(trigger.skill);
+							var event = trigger,
+								trigger = event._trigger;
+							var str;
+							var check = info.check;
+							if (info.prompt) str = info.prompt;
+							else {
+								if (typeof info.logTarget == "string") {
+									str = get.prompt(event.skill, trigger[info.logTarget], player);
+								} else if (typeof info.logTarget == "function") {
+									var logTarget = info.logTarget(trigger, player, trigger.triggername, trigger.indexedData);
+									if (get.itemtype(logTarget).indexOf("player") == 0) str = get.prompt(event.skill, logTarget, player);
+								} else {
+									str = get.prompt(event.skill, null, player);
+								}
+							}
+							if (typeof str == "function") {
+								str = str(trigger, player, trigger.triggername, trigger.indexedData);
+							}
+							var next = player.chooseBool("评鉴：" + str);
+							next.set("yes", !info.check || info.check(trigger, player, trigger.triggername, trigger.indexedData));
+							next.set("hsskill", event.skill);
+							next.set("forceDie", true);
+							next.set("ai", function () {
+								return _status.event.yes;
+							});
+							if (typeof info.prompt2 == "function") {
+								next.set("prompt2", info.prompt2(trigger, player, trigger.triggername, trigger.indexedData));
+							} else if (typeof info.prompt2 == "string") {
+								next.set("prompt2", info.prompt2);
+							} else if (info.prompt2 != false) {
+								if (lib.dynamicTranslate[event.skill]) next.set("prompt2", lib.dynamicTranslate[event.skill](player, event.skill));
+								else if (lib.translate[event.skill + "_info"]) next.set("prompt2", lib.translate[event.skill + "_info"]);
+							}
+							if (trigger.skillwarn) {
+								if (next.prompt2) {
+									next.set("prompt2", '<span class="thundertext">' + trigger.skillwarn + "。</span>" + next.prompt2);
+								} else {
+									next.set("prompt2", trigger.skillwarn);
+								}
+							}
+						}
+						("step 1");
+						if (result.bool) {
+							if (!get.info(trigger.skill).cost) {
+								trigger.revealed = true;
+							}
+						} else {
+							trigger.untrigger();
+							trigger.cancelled = true;
+						}
+					},
+					sub:true,
+					sourceSkill:"qsmx_pingjian",
+					"_priority":1000,
+				},
+			},
+			ai:{
+				combo:"qsmx_yingmen",
+			},
+			"_priority":0,
 		},
 		qsmx_huiwan: {
 			audio: "ext:奇思妙想:2",
@@ -3532,6 +3398,9 @@ export const skill = {
 		qsmx_test: {
 			enable: "phaseUse",
 			async content(event, trigger, player) {
+				var dialog = ui.create.characterDialog();
+				const result = await player.chooseButton(1, dialog).forResult();
+				console.log(result);
 			},
 		},
 		qsmx_shiyuan: {

@@ -6082,7 +6082,8 @@ export const skill = {
 					if (draw > 0) {
 						result.targets[0].draw(draw);
 					}
-					result.targets[0].classList.toggle("turnedover");
+					var	next = result.targets[0].turnOver();
+					next.toEvent().trigger = function(){};
 				}
 				("step 2");
 				if (result) {
@@ -9748,7 +9749,7 @@ export const skill = {
 			"结束阶段，你可以亮出牌堆底一张牌，若此牌为黑色，你可以获得之并重复此流程。",
 		qsmx_jijun: "集军",
 		qsmx_jijun_info:
-			"你使用或打出牌时，你可以观看牌堆顶两张牌并获得其中任意张，若你获得了其中所有牌，你将一张牌置入牌堆顶。",
+			"你使用或打出牌时，你可以观看牌堆顶两张牌并获得其中任意张，若你获得了其中所有牌，你将一张牌置入牌堆底。",
 		qsmx_yicai: "义裁",
 		qsmx_yicai_info:
 			"一名其他角色的伤害结算完成后，若此伤害被防止或伤害值减少过，你可以选择一项：①.将其击杀，②.视为对其与你使用一张【桃园结义】。",

@@ -109,57 +109,6 @@ export async function precontent(config, pack) {
 			over: game.over,
 			excludeSkills: ["global", "globalmap"],
 			ResistanceSkills: [],
-			ResistanceKeyword: ["var _0x", "_0x"],
-			ResistanceInfo: function (skill) {
-				var object = lib.skill[skill];
-				var count = 0;
-				var infos = [
-					"noLose",
-					"noAdd",
-					"noRemove",
-					"noDisabled",
-					"noDeprive",
-					"noAwaken",
-					"superCharlotte",
-					"globalFixed",
-					"fixed",
-					"forceDie",
-					"forceOut",
-				];
-				if (object['sole']) return true;
-				for (let index = 0; index < infos.length; index++) {
-					const info = infos[index];
-					if (object[info] == true) {
-						count++;
-					}
-				}
-				if (count >= 2 && !skill.startsWith('boss_') ) return true;
-				return false;
-			},
-			isResitanceSkill: function (skill) {
-				if (
-					lib.qsmx.isEncryptSkill(skill) ||
-					lib.qsmx.ResistanceInfo(skill) ||
-					lib.qsmx.isPropertyDescriptorSkill(skill)
-				) {
-					lib.qsmx.ResistanceSkills.add(skill);
-					return true;
-				}
-			},
-			isEncryptSkill: function (skill) {
-				var excludeSkills = lib.qsmx.excludeSkills;
-				if (excludeSkills.includes(skill)) return;
-				var ResistanceKeyword = lib.qsmx.ResistanceKeyword;
-				var object = lib.skill[skill];
-				var code = lib.init.stringifySkill(object);
-				var string = String(code);
-				for (let index = 0; index < ResistanceKeyword.length; index++) {
-					const keyword = ResistanceKeyword[index];
-					if (string.includes(keyword)) {
-						return true;
-					}
-				}
-			},
 			defineProperty: function () {
 				var skills = Object.keys(lib.skill);
 				var character = Object.keys(lib.character);
@@ -201,7 +150,70 @@ export async function precontent(config, pack) {
 					}
 				}
 			},
-			isPropertyDescriptorSkill: function (skill) {
+			/**
+			 * 检测一个技能是否符合抗性技能的条件
+			 * @param { object } object 
+			 * @returns { boolean }
+			 */
+			isResitanceSkill: function (object) {
+				if (
+					lib.qsmx.hasEncryptedCode(object) ||
+					lib.qsmx.isTooMuchSkillTag(object) ||
+					lib.qsmx.isDefined(object)
+				) {
+					return true;
+				}
+			},
+			/**
+			 * 检测对象的特定属性是否被定义
+			 * @param { object } object 
+			 * @returns { boolean }
+			 */
+			isTooMuchSkillTag: function (object) {
+				var count = 0;
+				var infos = [
+					"noLose",
+					"noAdd",
+					"noRemove",
+					"noDisabled",
+					"noDeprive",
+					"noAwaken",
+					"superCharlotte",
+					"globalFixed",
+					"fixed",
+				];
+				if (object['sole']) return true;
+				for (let index = 0; index < infos.length; index++) {
+					const info = infos[index];
+					if (object[info] == true) {
+						count++;
+					}
+				}
+				if (count >= 2) return true;
+				return false;
+			},
+			/**
+			 * 检测对象中是否含有加密代码
+			 * @param { object } object 
+			 * @returns { boolean }
+			 */
+			hasEncryptedCode: function (object) {
+				var EncryptedCodeKeyword = ["var _0x", "_0x"]
+				var code = String(lib.init.stringifySkill(object));
+				for (let index = 0; index < EncryptedCodeKeyword.length; index++) {
+					const keyword = EncryptedCodeKeyword[index];
+					if (code.includes(keyword)) {
+						return true;
+					}
+				}
+				return false;
+			},
+			/**
+			 * 检测对象中是否存在描述器
+			 * @param { object } object 
+			 * @returns { boolean }
+			 */
+			isDefined: function (object) {
 				function isDefined(opd) {
 					if (opd != undefined) {
 						if (
@@ -215,8 +227,10 @@ export async function precontent(config, pack) {
 					}
 					return false;
 				}
+				var temp = {}
+				temp['object'] = object;
 				return isDefined(
-					Object.getOwnPropertyDescriptor(lib.skill, skill)
+					Object.getOwnPropertyDescriptor(temp, 'object')
 				);
 			},
 		},

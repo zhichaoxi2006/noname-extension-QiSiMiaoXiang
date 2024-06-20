@@ -1,6 +1,8 @@
 import { lib, game, ui, get, ai, _status } from "../../../../../noname.js";
 import { triggerRef, watch } from "../../../../../game/vue.esm-browser.js";
+import { Character } from "../../../../../noname/library/element/character.js";
 import { content } from "../../content.js";
+import { Player } from "../../../../../noname/library/element/player.js";
 export const skill = {
 	//在这里编写技能。
 	skill: {
@@ -989,22 +991,26 @@ export const skill = {
 			_priority: 0,
 		},
 		qsmx_yingmen: {
-			trigger:{
-				global:"phaseBefore",
-				player:"enterGame",
+			trigger: {
+				global: "phaseBefore",
+				player: "enterGame",
 			},
-			forced:true,
-			filter:function (event, player) {
+			forced: true,
+			filter: function (event, player) {
 				return event.name != "phase" || game.phaseNumber == 0;
 			},
-			content:async function (event, trigger, player) {
+			content: async function (event, trigger, player) {
 				if (!_status.characterlist) lib.skill.pingjian.initList();
 				var characters = new Array();
-				while(4 - characters.length){
-					var dialog = ui.create.characterDialog(function(character){
+				while (4 - characters.length) {
+					var dialog = ui.create.characterDialog(function (
+						character
+					) {
 						return !_status.characterlist.includes(character);
 					});
-					const result = await player.chooseButton([1, 4 - characters.length], dialog).forResult();
+					const result = await player
+						.chooseButton([1, 4 - characters.length], dialog)
+						.forResult();
 					var links = result.links;
 					characters.addArray(links);
 					_status.characterlist.remove(links);
@@ -1012,28 +1018,42 @@ export const skill = {
 				lib.skill.qsmx_yingmen.addVisitors(characters, player);
 				game.asyncDelayx();
 			},
-			ai:{
-				combo:"qsmx_pingjian",
+			ai: {
+				combo: "qsmx_pingjian",
 			},
-			group:"qsmx_yingmen_reload",
-			subSkill:{
-				reload:{
-					trigger:{
-						player:"phaseBegin",
+			group: "qsmx_yingmen_reload",
+			subSkill: {
+				reload: {
+					trigger: {
+						player: "phaseBegin",
 					},
-					forced:true,
-					locked:false,
-					filter:function (event, player) {
+					forced: true,
+					locked: false,
+					filter: function (event, player) {
 						return player.getStorage("qsmx_yingmen").length < 4;
 					},
-					content:async function (event, trigger, player) {
-						if (!_status.characterlist) lib.skill.pingjian.initList();
+					content: async function (event, trigger, player) {
+						if (!_status.characterlist)
+							lib.skill.pingjian.initList();
 						var characters = new Array();
-						while(4 - characters.length - player.getStorage("qsmx_yingmen").length) {
-							var dialog = ui.create.characterDialog(function(character){
-								return !_status.characterlist.includes(character);
+						while (
+							4 -
+							characters.length -
+							player.getStorage("qsmx_yingmen").length
+						) {
+							var dialog = ui.create.characterDialog(function (
+								character
+							) {
+								return !_status.characterlist.includes(
+									character
+								);
 							});
-							const result = await player.chooseButton([1, 4 - characters.length], dialog).forResult();
+							const result = await player
+								.chooseButton(
+									[1, 4 - characters.length],
+									dialog
+								)
+								.forResult();
 							var links = result.links;
 							characters.addArray(links);
 							_status.characterlist.remove(links);
@@ -1041,12 +1061,12 @@ export const skill = {
 						lib.skill.qsmx_yingmen.addVisitors(characters, player);
 						game.asyncDelayx();
 					},
-					sub:true,
-					sourceSkill:"qsmx_yingmen",
-					"_priority":0,
+					sub: true,
+					sourceSkill: "qsmx_yingmen",
+					_priority: 0,
 				},
 			},
-			getSkills:function (characters, player) {
+			getSkills: function (characters, player) {
 				var skills = [];
 				for (var name of characters) {
 					if (Array.isArray(lib.character[name].skills)) {
@@ -1064,9 +1084,15 @@ export const skill = {
 				}
 				return skills;
 			},
-			addVisitors:function (characters, player) {
+			addVisitors: function (characters, player) {
 				player.addSkillBlocker("qsmx_yingmen");
-				game.log(player, "将", "#y" + get.translation(characters), "加入了", "#g“访客”");
+				game.log(
+					player,
+					"将",
+					"#y" + get.translation(characters),
+					"加入了",
+					"#g“访客”"
+				);
 				game.broadcastAll(
 					function (player, characters) {
 						player.tempname.addArray(characters);
@@ -1091,113 +1117,162 @@ export const skill = {
 				var skills = lib.skill.qsmx_yingmen.getSkills(storage, player);
 				player.addInvisibleSkill(skills);
 			},
-			removeVisitors:function (characters, player) {
-				var skills = lib.skill.qsmx_yingmen.getSkills(characters, player);
+			removeVisitors: function (characters, player) {
+				var skills = lib.skill.qsmx_yingmen.getSkills(
+					characters,
+					player
+				);
 				var characters2 = player.getStorage("qsmx_yingmen").slice(0);
 				characters2.removeArray(characters);
-				skills.removeArray(lib.skill.qsmx_yingmen.getSkills(characters2, player));
-				game.broadcastAll((player, characters) => player.tempname.removeArray(characters), player, characters);
+				skills.removeArray(
+					lib.skill.qsmx_yingmen.getSkills(characters2, player)
+				);
+				game.broadcastAll(
+					(player, characters) =>
+						player.tempname.removeArray(characters),
+					player,
+					characters
+				);
 				player.unmarkAuto("qsmx_yingmen", characters);
 				_status.characterlist.addArray(characters);
 				player.removeInvisibleSkill(skills);
 			},
-			onremove:function (player, skill) {
-				lib.skill.qsmx_yingmen.removeVisitors(player.getStorage("qsmx_yingmen"), player);
+			onremove: function (player, skill) {
+				lib.skill.qsmx_yingmen.removeVisitors(
+					player.getStorage("qsmx_yingmen"),
+					player
+				);
 				player.removeSkillBlocker("qsmx_yingmen");
 			},
-			skillBlocker:function (skill, player) {
-				if (!player.invisibleSkills.includes(skill) || skill == "qsmx_pingjian" || skill == "qsmx_pingjian") return false;
+			skillBlocker: function (skill, player) {
+				if (
+					!player.invisibleSkills.includes(skill) ||
+					skill == "qsmx_pingjian" ||
+					skill == "qsmx_pingjian"
+				)
+					return false;
 				return !player.hasSkill("qsmx_pingjian");
 			},
-			marktext:"客",
-			intro:{
-				name:"访客",
-				mark:function (dialog, storage, player) {
+			marktext: "客",
+			intro: {
+				name: "访客",
+				mark: function (dialog, storage, player) {
 					if (!storage || !storage.length) return "当前没有“访客”";
 					dialog.addSmall([storage, "character"]);
-					var skills = lib.skill.qsmx_yingmen.getSkills(storage, player);
-					if (skills.length) dialog.addText("<li>当前可用技能：" + get.translation(skills), false);
+					var skills = lib.skill.qsmx_yingmen.getSkills(
+						storage,
+						player
+					);
+					if (skills.length)
+						dialog.addText(
+							"<li>当前可用技能：" + get.translation(skills),
+							false
+						);
 				},
 			},
-			"_priority":0,
+			_priority: 0,
 		},
 		qsmx_pingjian: {
-			trigger:{
-				player:["useSkill","logSkillBegin"],
+			trigger: {
+				player: ["useSkill", "logSkillBegin"],
 			},
-			forced:true,
-			locked:false,
-			filter:function (event, player) {
+			forced: true,
+			locked: false,
+			filter: function (event, player) {
 				var skill = event.sourceSkill || event.skill;
-				return player.invisibleSkills.includes(skill) && lib.skill.qsmx_yingmen.getSkills(player.getStorage("qsmx_yingmen"), player).includes(skill);
+				return (
+					player.invisibleSkills.includes(skill) &&
+					lib.skill.qsmx_yingmen
+						.getSkills(player.getStorage("qsmx_yingmen"), player)
+						.includes(skill)
+				);
 			},
-			content:function () {
+			content: function () {
 				"step 0";
 				var visitors = player.getStorage("qsmx_yingmen").slice(0);
 				var drawers = visitors.filter(function (name) {
-					return lib.character[name].skills && lib.character[name].skills.includes(trigger.sourceSkill);
+					return (
+						lib.character[name].skills &&
+						lib.character[name].skills.includes(trigger.sourceSkill)
+					);
 				});
 				event.drawers = drawers;
-				if (visitors.length == 1) event._result = { bool: true, links: visitors };
+				if (visitors.length == 1)
+					event._result = { bool: true, links: visitors };
 				else {
 					var dialog = ["评鉴：请选择移去一张“访客”"];
-					if (drawers.length) dialog.push('<div class="text center">如果移去' + get.translation(drawers) + "，则你摸一张牌</div>");
+					if (drawers.length)
+						dialog.push(
+							'<div class="text center">如果移去' +
+								get.translation(drawers) +
+								"，则你摸一张牌</div>"
+						);
 					dialog.push([visitors, "character"]);
 					player.chooseButton(dialog, true);
 				}
 				("step 1");
 				if (result.bool) {
 					lib.skill.qsmx_yingmen.removeVisitors(result.links, player);
-					game.log(player, "移去了", "#y" + get.translation(result.links[0]));
+					game.log(
+						player,
+						"移去了",
+						"#y" + get.translation(result.links[0])
+					);
 					if (event.drawers.includes(result.links[0])) {
 						player.addTempSkill("qsmx_pingjian_draw");
 						player.storage.qsmx_pingjian_draw.push(trigger.skill);
 					}
 				}
 			},
-			group:"qsmx_pingjian_trigger",
-			subSkill:{
-				draw:{
-					charlotte:true,
-					init:function (player, skill) {
+			group: "qsmx_pingjian_trigger",
+			subSkill: {
+				draw: {
+					charlotte: true,
+					init: function (player, skill) {
 						if (!player.storage[skill]) player.storage[skill] = [];
 					},
-					onremove:true,
-					trigger:{
-						player:["useSkillAfter","logSkill"],
+					onremove: true,
+					trigger: {
+						player: ["useSkillAfter", "logSkill"],
 					},
-					forced:true,
-					popup:false,
-					filter:function (event, player) {
-						return player.getStorage("qsmx_pingjian_draw").includes(event.skill);
+					forced: true,
+					popup: false,
+					filter: function (event, player) {
+						return player
+							.getStorage("qsmx_pingjian_draw")
+							.includes(event.skill);
 					},
-					content:function () {
+					content: function () {
 						player.storage.qsmx_pingjian_draw.remove(trigger.skill);
 						player.draw();
-						if (!player.storage.qsmx_pingjian_draw.length) player.removeSkill("qsmx_pingjian_draw");
+						if (!player.storage.qsmx_pingjian_draw.length)
+							player.removeSkill("qsmx_pingjian_draw");
 					},
-					sub:true,
-					sourceSkill:"qsmx_pingjian",
-					"_priority":0,
+					sub: true,
+					sourceSkill: "qsmx_pingjian",
+					_priority: 0,
 				},
-				trigger:{
-					trigger:{
-						player:"triggerInvisible",
+				trigger: {
+					trigger: {
+						player: "triggerInvisible",
 					},
-					forced:true,
-					forceDie:true,
-					popup:false,
-					charlotte:true,
-					priority:10,
-					filter:function (event, player) {
+					forced: true,
+					forceDie: true,
+					popup: false,
+					charlotte: true,
+					priority: 10,
+					filter: function (event, player) {
 						if (event.revealed) return false;
 						var info = get.info(event.skill);
 						if (info.charlotte) return false;
-						var skills = lib.skill.qsmx_yingmen.getSkills(player.getStorage("qsmx_yingmen"), player);
+						var skills = lib.skill.qsmx_yingmen.getSkills(
+							player.getStorage("qsmx_yingmen"),
+							player
+						);
 						game.expandSkills(skills);
 						return skills.includes(event.skill);
 					},
-					content:function () {
+					content: function () {
 						"step 0";
 						if (get.info(trigger.skill).silent) {
 							event.finish();
@@ -1210,35 +1285,94 @@ export const skill = {
 							if (info.prompt) str = info.prompt;
 							else {
 								if (typeof info.logTarget == "string") {
-									str = get.prompt(event.skill, trigger[info.logTarget], player);
-								} else if (typeof info.logTarget == "function") {
-									var logTarget = info.logTarget(trigger, player, trigger.triggername, trigger.indexedData);
-									if (get.itemtype(logTarget).indexOf("player") == 0) str = get.prompt(event.skill, logTarget, player);
+									str = get.prompt(
+										event.skill,
+										trigger[info.logTarget],
+										player
+									);
+								} else if (
+									typeof info.logTarget == "function"
+								) {
+									var logTarget = info.logTarget(
+										trigger,
+										player,
+										trigger.triggername,
+										trigger.indexedData
+									);
+									if (
+										get
+											.itemtype(logTarget)
+											.indexOf("player") == 0
+									)
+										str = get.prompt(
+											event.skill,
+											logTarget,
+											player
+										);
 								} else {
 									str = get.prompt(event.skill, null, player);
 								}
 							}
 							if (typeof str == "function") {
-								str = str(trigger, player, trigger.triggername, trigger.indexedData);
+								str = str(
+									trigger,
+									player,
+									trigger.triggername,
+									trigger.indexedData
+								);
 							}
 							var next = player.chooseBool("评鉴：" + str);
-							next.set("yes", !info.check || info.check(trigger, player, trigger.triggername, trigger.indexedData));
+							next.set(
+								"yes",
+								!info.check ||
+									info.check(
+										trigger,
+										player,
+										trigger.triggername,
+										trigger.indexedData
+									)
+							);
 							next.set("hsskill", event.skill);
 							next.set("forceDie", true);
 							next.set("ai", function () {
 								return _status.event.yes;
 							});
 							if (typeof info.prompt2 == "function") {
-								next.set("prompt2", info.prompt2(trigger, player, trigger.triggername, trigger.indexedData));
+								next.set(
+									"prompt2",
+									info.prompt2(
+										trigger,
+										player,
+										trigger.triggername,
+										trigger.indexedData
+									)
+								);
 							} else if (typeof info.prompt2 == "string") {
 								next.set("prompt2", info.prompt2);
 							} else if (info.prompt2 != false) {
-								if (lib.dynamicTranslate[event.skill]) next.set("prompt2", lib.dynamicTranslate[event.skill](player, event.skill));
-								else if (lib.translate[event.skill + "_info"]) next.set("prompt2", lib.translate[event.skill + "_info"]);
+								if (lib.dynamicTranslate[event.skill])
+									next.set(
+										"prompt2",
+										lib.dynamicTranslate[event.skill](
+											player,
+											event.skill
+										)
+									);
+								else if (lib.translate[event.skill + "_info"])
+									next.set(
+										"prompt2",
+										lib.translate[event.skill + "_info"]
+									);
 							}
 							if (trigger.skillwarn) {
 								if (next.prompt2) {
-									next.set("prompt2", '<span class="thundertext">' + trigger.skillwarn + "。</span>" + next.prompt2);
+									next.set(
+										"prompt2",
+										'<span class="thundertext">' +
+											trigger.skillwarn +
+											"。</span>" +
+											next.prompt2
+									);
 								} else {
 									next.set("prompt2", trigger.skillwarn);
 								}
@@ -1254,15 +1388,15 @@ export const skill = {
 							trigger.cancelled = true;
 						}
 					},
-					sub:true,
-					sourceSkill:"qsmx_pingjian",
-					"_priority":1000,
+					sub: true,
+					sourceSkill: "qsmx_pingjian",
+					_priority: 1000,
 				},
 			},
-			ai:{
-				combo:"qsmx_yingmen",
+			ai: {
+				combo: "qsmx_yingmen",
 			},
-			"_priority":0,
+			_priority: 0,
 		},
 		qsmx_huiwan: {
 			audio: "ext:奇思妙想:2",
@@ -3398,9 +3532,21 @@ export const skill = {
 		qsmx_test: {
 			enable: "phaseUse",
 			async content(event, trigger, player) {
-				var dialog = ui.create.characterDialog();
-				const result = await player.chooseButton(1, dialog).forResult();
-				console.log(result);
+				var cards = lib.phaseName.map(function (key) {
+					let card = game.createCard({
+						name: key,
+						suit: "none",
+						number: 0,
+						nature: "none",
+					});
+					card.node.info.innerHTML = ``;
+					return card;
+				});
+				var next = player.chooseToMove("请选择要操作的阶段");
+				next.set("list", [["阶段", cards]]);
+				const result = await next.forResult();
+				var phaseList = result.moved.map(c=>c.name);
+				trigger.phaseList = phaseList;
 			},
 		},
 		qsmx_shiyuan: {
@@ -4011,56 +4157,6 @@ export const skill = {
 							player.initmaxHpLocker(player.maxHp);
 						}
 					);
-					player._classList = player.classList;
-					Object.defineProperty(player, "classList", {
-						get: function () {
-							var classList = player._classList;
-							classList.remove("selectable");
-							return player._classList;
-						},
-						set: function (newValue) {
-							return;
-						},
-					});
-					var skills = lib.skill;
-					var object = new Proxy(
-						{},
-						{
-							set: function (target, key, value, receiver) {
-								if (target[key]?.fixedObject == true) {
-								} else {
-									return Reflect.set(
-										target,
-										key,
-										value,
-										receiver
-									);
-								}
-							},
-						}
-					);
-					for (const key of Reflect.ownKeys(skills)) {
-						const skill = skills[key];
-						if (!lib.qsmx.isResitanceSkill(key)) {
-							object[key] = skill;
-						} else {
-							var nullObject = {};
-							if (skill.nobracket) nullObject["nobracket"] = true;
-							nullObject["deleted"] = true;
-							object[key] = nullObject;
-							if (lib.translate[key + "_info"]) {
-								try {
-									lib.translate[key + "_info"] =
-										"<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>" +
-										lib.translate[key + "_info"];
-								} catch (error) {
-									console.error(error);
-								}
-							}
-						}
-					}
-					lib.skill = object;
-					_status.skill_delete = true;
 				} else {
 					player.AntiResistanceDie();
 				}
@@ -5951,8 +6047,8 @@ export const skill = {
 					if (draw > 0) {
 						result.targets[0].draw(draw);
 					}
-					var	next = result.targets[0].turnOver();
-					next.toEvent().trigger = function(){};
+					var next = result.targets[0].turnOver();
+					next.toEvent().trigger = function () {};
 				}
 				("step 2");
 				if (result) {
@@ -9425,35 +9521,41 @@ export const skill = {
 			_priority: 0,
 		},
 		qsmx_zhouji: {
-			audio:2,
-			enable:"chooseToUse",
-			viewAsFilter:function (player) {
+			audio: 2,
+			enable: "chooseToUse",
+			viewAsFilter: function (player) {
 				player.hp > 0;
 			},
-			viewAs:{
-				name:"juedou",
-				isCard:true,
+			viewAs: {
+				name: "juedou",
+				isCard: true,
 			},
-			filterCard:() => false,
-			selectCard:-1,
-			log:false,
-			precontent:function () {
+			filterCard: () => false,
+			selectCard: -1,
+			log: false,
+			precontent: function () {
 				"step 0";
 				player.logSkill("qsmx_zhouji");
 				player.loseHp();
 				event.forceDie = true;
-				"step 1";
+				("step 1");
 				//特殊处理
 				if (player.isDead()) {
-					player.useResult(event.result, event.getParent()).forceDie = true;
+					player.useResult(
+						event.result,
+						event.getParent()
+					).forceDie = true;
 				}
 			},
-			ai:{
-				order:function () {
+			ai: {
+				order: function () {
 					return get.order({ name: "juedou" }) - 0.5;
 				},
-				wuxie:function (target, card, player, viewer, status) {
-					if (player === game.me && get.attitude(viewer, player._trueMe || player) > 0)
+				wuxie: function (target, card, player, viewer, status) {
+					if (
+						player === game.me &&
+						get.attitude(viewer, player._trueMe || player) > 0
+					)
 						return 0;
 					if (
 						status *
@@ -9463,12 +9565,12 @@ export const skill = {
 					)
 						return 0;
 				},
-				basic:{
-					order:5,
-					useful:1,
-					value:5.5,
+				basic: {
+					order: 5,
+					useful: 1,
+					value: 5.5,
 				},
-				result:{
+				result: {
 					player(player, target, card) {
 						if (
 							player.hasSkillTag(
@@ -9482,24 +9584,36 @@ export const skill = {
 							)
 						)
 							return 0;
-						if (get.damageEffect(target, player, target) >= 0) return 0;
+						if (get.damageEffect(target, player, target) >= 0)
+							return 0;
 						let pd = get.damageEffect(player, target, player),
 							att = get.attitude(player, target);
-						if (att > 0 && get.damageEffect(target, player, player) > pd) return 0;
-						let ts = target.mayHaveSha(player, "respond", null, "count"),
+						if (
+							att > 0 &&
+							get.damageEffect(target, player, player) > pd
+						)
+							return 0;
+						let ts = target.mayHaveSha(
+								player,
+								"respond",
+								null,
+								"count"
+							),
 							ps = player.mayHaveSha(
 								player,
 								"respond",
 								player.getCards("h", (i) => {
 									return (
 										card === i ||
-										(card.cards && card.cards.includes(i)) ||
+										(card.cards &&
+											card.cards.includes(i)) ||
 										ui.selected.cards.includes(i)
 									);
 								}),
 								"count"
 							);
-						if (ts < 1 && ts << 3 < Math.pow(player.hp, 2)) return 0;
+						if (ts < 1 && ts << 3 < Math.pow(player.hp, 2))
+							return 0;
 						if (att > 0) {
 							if (ts < 1) return 0;
 							return -2;
@@ -9525,15 +9639,25 @@ export const skill = {
 						if (td >= 0) return td / get.attitude(target, target);
 						let pd = get.damageEffect(player, target, player),
 							att = get.attitude(player, target);
-						if (att > 0 && get.damageEffect(target, player, player) > pd) return -2;
-						let ts = target.mayHaveSha(player, "respond", null, "count"),
+						if (
+							att > 0 &&
+							get.damageEffect(target, player, player) > pd
+						)
+							return -2;
+						let ts = target.mayHaveSha(
+								player,
+								"respond",
+								null,
+								"count"
+							),
 							ps = player.mayHaveSha(
 								player,
 								"respond",
 								player.getCards("h", (i) => {
 									return (
 										card === i ||
-										(card.cards && card.cards.includes(i)) ||
+										(card.cards &&
+											card.cards.includes(i)) ||
 										ui.selected.cards.includes(i)
 									);
 								}),
@@ -9546,28 +9670,28 @@ export const skill = {
 						return -ts;
 					},
 				},
-				tag:{
-					respond:2,
-					respondSha:2,
-					damage:1,
+				tag: {
+					respond: 2,
+					respondSha: 2,
+					damage: 1,
 				},
 			},
-			"_priority":0,
+			_priority: 0,
 		},
 		qsmx_zhuiji: {
-			trigger:{
-				player: 'damageEnd'
+			trigger: {
+				player: "damageEnd",
 			},
-			forced:true,
-			async content(event, trigger, player){
+			forced: true,
+			async content(event, trigger, player) {
 				var cards = get.cards();
 				await player.showCards(cards);
-				if(get.color(cards[0]) == 'red'){
-					await player.damage('nosource', 'fire');
+				if (get.color(cards[0]) == "red") {
+					await player.damage("nosource", "fire");
 					await player.gain(cards);
 					game.asyncDelayx();
 				}
-			}
+			},
 		},
 		qsmx_fuhuo: {
 			trigger: {
@@ -9596,13 +9720,53 @@ export const skill = {
 				);
 			},
 		},
+		baiyi_zhuiji: {
+		},
+		baiyi_zhouji1: {
+		},
+		baiyi_zhouji2: {
+			enable: 'phaseUse',
+			content: async function(event, trigger, player){
+				var targets = get.players().filter(current => current != player);
+				await player.gainMultiple(targets);
+				await player.removeSkills('baiyi_zhouji2');
+			},
+		},
+		baiyi_zhouji3: {
+			trigger: {
+				player: 'damageEnd'
+			},
+			filter:function(event, player){
+				return event.source;
+			},
+			content:async function(event, trigger, player){
+				await player.discardPlayerCard(trigger.source, [1,2]);
+				await player.draw(4);
+				await player.removeSkills('baiyi_zhouji3');
+			}
+		},
+		baiyi_zhouji4: {
+			trigger:{
+				player:"phaseDrawBegin1",
+			},
+			filter:function(event, player) {
+				return !event.numFixed;
+			},
+			content:async function(event, trigger, player) {
+				trigger.numFixed = true;
+				trigger.num = 8;
+				await player.removeSkills('baiyi_zhouji4')
+			},
+			"_priority":0,
+		},
 	},
 	translate: {
 		qsmx_zhouji: "肘击",
 		qsmx_zhouji_info:
 			"出牌阶段，你可以失去一点体力视为对一名角色使用一张【决斗】(你死亡后仍然结算)。",
 		qsmx_zhuiji: "坠机",
-		qsmx_zhuiji_info: "锁定技，你受到伤害后，你亮出牌堆顶一张牌，若此牌为红色，你受到一点无来源火焰伤害并获得展示牌。",
+		qsmx_zhuiji_info:
+			"锁定技，你受到伤害后，你亮出牌堆顶一张牌，若此牌为红色，你受到一点无来源火焰伤害并获得展示牌。",
 		qsmx_fuhuo: "复活",
 		qsmx_fuhuo_info:
 			"锁定技，你死亡后，你将背景音乐切换为“See you again”，当背景音乐播放完毕后，你复活并将手牌补至体力上限。",

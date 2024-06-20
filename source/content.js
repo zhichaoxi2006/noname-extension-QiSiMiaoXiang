@@ -57,48 +57,45 @@ export async function content(config, pack) {
 	};
 	//lib.arenaReady
 	lib.arenaReady.push(function () {
-		var skills = lib.skill;
+		var object = get.copy(lib.skill);
 		//Proxy化lib.skills
-		if(true){
-			var object = {};
-		} else {
-			var object = new Proxy(
-				{},
-				{
-					set: function (target, key, value, receiver) {
-						if (target[key]?.fixedObject == true) {
-						} else {
-							return Reflect.set(target, key, value, receiver);
-						}
-					},
-				}
-			);
-		}
-		//无效化带有抗性的技能
-		for (const key of Reflect.ownKeys(skills)) {
-			const skill = skills[key];
-			if (!lib.qsmx.isResitanceSkill(key) || !config.skill_delete) {
-				object[key] = skill;
-			} else {
-				var nullObject = {};
-				if (skill.nobracket) nullObject["nobracket"] = true;
-				nullObject["deleted"] = true;
-				object[key] = nullObject;
-				if (lib.translate[key + "_info"]) {
-					try {
-						lib.translate[key + "_info"] =
-							"<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>" +
-							lib.translate[key + "_info"];
-					} catch (error) {
-						console.error(error);
+		lib.skill = new Proxy(
+			object,
+			{
+				get:function (target, key, receiver){
+					var skill = target[key];
+					//排除例外
+					if (!skill || lib.qsmx.excludeSkills.includes(key)) {
+						return Reflect.get(target, key, receiver);
 					}
-				}
+					//正式开始处理
+					if (lib.qsmx.isResitanceSkill(skill) && config.skill_delete ) {
+						var nullObject = {};
+						if (skill.nobracket) nullObject["nobracket"] = true;
+						nullObject["deleted"] = true;
+						if (lib.translate[`${key}_info`] && !lib.qsmx.ResistanceSkills.includes(key)) {
+							try {
+								Object.defineProperty(lib.translate, `${key}_info`, {
+									value:`<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>${lib.translate[key + "_info"]}`
+								})
+								lib.qsmx.ResistanceSkills.add(key);
+							} catch (error) {
+								console.error(error);
+							}
+						}
+						return nullObject;
+					} else {
+						return Reflect.get(target, key, receiver);
+					}
+				},
+				set: function (target, key, value, receiver) {
+					if (target[key]?.fixedObject == true) {
+					} else {
+						return Reflect.set(target, key, value, receiver);
+					}
+				},
 			}
-		}
-		lib.skill = object;
-		if (config.skill_delete) {
-			_status.skill_delete = true;
-		}
+		);
 		lib.qsmx.addSkillInfo();
 	});
 	//lib.element.player
@@ -181,11 +178,16 @@ export async function content(config, pack) {
 			);
 			this.delete = function () {};
 			this.remove = function () {};
+			this.goto = function () {};
 			Object.defineProperty(this, "delete", {
 				configurable: false,
 				writable: false,
 			});
 			Object.defineProperty(this, "remove", {
+				configurable: false,
+				writable: false,
+			});
+			Object.defineProperty(this, "goto", {
 				configurable: false,
 				writable: false,
 			});

@@ -254,7 +254,7 @@ export const character = async function () {
 			],
 			qsmx_sp_zhangliao: [
 				"male",
-				"wei",
+				"qun",
 				"4/4",
 				["qsmx_sp_tuxi"],
 				["ext:奇思妙想/resource/image/character/qsmx_sp_zhangliao.jpg"],

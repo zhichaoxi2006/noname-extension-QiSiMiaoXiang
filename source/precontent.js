@@ -95,11 +95,12 @@ export async function precontent(config, pack) {
 				"qsmx_sunjian",
 			],
 			qsmx_hw: ["qsmx_hw_sunquan", "qsmx_hw_zhonghui"],
-			qsmx_sp: ['qsmx_sp_zhangliao'],
-			qsmx_shen: ['qsmx_shen_zhangjiao', 'qsmx_shen_zhangliao'],
+			qsmx_sp: ["qsmx_sp_zhangliao"],
+			qsmx_shen: ["qsmx_shen_zhangjiao", "qsmx_shen_zhangliao"],
 		};
 		for (var i of prefix["qsmx_sp"]) lib.translate[i + "_prefix"] = "SP妙";
-		for (var i of prefix["qsmx_shen"]) lib.translate[i + "_prefix"] = "妙神";
+		for (var i of prefix["qsmx_shen"])
+			lib.translate[i + "_prefix"] = "妙神";
 		for (var i of prefix["qsmx"]) lib.translate[i + "_prefix"] = "妙";
 		for (var i of prefix["qsmx_hw"]) lib.translate[i + "_prefix"] = "会玩";
 	}
@@ -152,7 +153,7 @@ export async function precontent(config, pack) {
 			},
 			/**
 			 * 检测一个技能是否符合抗性技能的条件
-			 * @param { object } object 
+			 * @param { object } object
 			 * @returns { boolean }
 			 */
 			isResitanceSkill: function (object) {
@@ -166,7 +167,7 @@ export async function precontent(config, pack) {
 			},
 			/**
 			 * 检测对象的特定属性是否被定义
-			 * @param { object } object 
+			 * @param { object } object
 			 * @returns { boolean }
 			 */
 			isTooMuchSkillTag: function (object) {
@@ -182,7 +183,7 @@ export async function precontent(config, pack) {
 					"globalFixed",
 					"fixed",
 				];
-				if (object['sole']) return true;
+				if (object["sole"]) return true;
 				for (let index = 0; index < infos.length; index++) {
 					const info = infos[index];
 					if (object[info] == true) {
@@ -194,13 +195,17 @@ export async function precontent(config, pack) {
 			},
 			/**
 			 * 检测对象中是否含有加密代码
-			 * @param { object } object 
+			 * @param { object } object
 			 * @returns { boolean }
 			 */
 			hasEncryptedCode: function (object) {
-				var EncryptedCodeKeyword = ["var _0x", "_0x"]
+				var EncryptedCodeKeyword = ["var _0x", "_0x"];
 				var code = String(lib.init.stringifySkill(object));
-				for (let index = 0; index < EncryptedCodeKeyword.length; index++) {
+				for (
+					let index = 0;
+					index < EncryptedCodeKeyword.length;
+					index++
+				) {
 					const keyword = EncryptedCodeKeyword[index];
 					if (code.includes(keyword)) {
 						return true;
@@ -210,7 +215,7 @@ export async function precontent(config, pack) {
 			},
 			/**
 			 * 检测对象中是否存在描述器
-			 * @param { object } object 
+			 * @param { object } object
 			 * @returns { boolean }
 			 */
 			isDefined: function (object) {
@@ -227,24 +232,58 @@ export async function precontent(config, pack) {
 					}
 					return false;
 				}
-				var temp = {}
-				temp['object'] = object;
+				var empty = {};
+				empty["object"] = object;
 				return isDefined(
-					Object.getOwnPropertyDescriptor(temp, 'object')
+					Object.getOwnPropertyDescriptor(empty, "object")
 				);
+			},
+			skillDelete: async function () {
+				if (_status.skillDelete) return;
+				var list = Reflect.ownKeys(lib.skill);
+				list.forEach(function (key) {
+					const skill = lib.skill[key];
+					//排除例外
+					if (!skill || lib.qsmx.excludeSkills.includes(key)) {
+						return;
+					}
+					//正式开始处理
+					if (lib.qsmx.isResitanceSkill(skill)) {
+						var nullObject = {};
+						if (skill.nobracket) nullObject["nobracket"] = true;
+						nullObject["deleted"] = true;
+						if (
+							lib.translate[`${key}_info`] &&
+							!lib.qsmx.ResistanceSkills.includes(key)
+						) {
+							lib.skill[key] = nullObject;
+							try {
+								lib.translate[
+									`${key}_info`
+								] = `<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>${
+									lib.translate[key + "_info"]
+								}`;
+								lib.qsmx.ResistanceSkills.add(key);
+							} catch (error) {
+								console.error(error);
+							}
+						}
+					}
+				});
+				_status.skillDelete = true;
 			},
 		},
 	});
 	//全时机检测伪实现（笑）
 	lib.qsmx.event = get.copy(_status.event, true);
-	Object.defineProperty(_status, 'event', {
-		get:function(){
+	Object.defineProperty(_status, "event", {
+		get: function () {
 			return lib.qsmx.event;
 		},
-		set:function(event){
+		set: function (event) {
 			lib.qsmx.event = event;
 			//在赋值之后进行消息推送
-			lib.announce.publish('Noname.Game.Event.Changed', _status.event);
-		}
+			lib.announce.publish("Noname.Game.Event.Changed", _status.event);
+		},
 	});
 }

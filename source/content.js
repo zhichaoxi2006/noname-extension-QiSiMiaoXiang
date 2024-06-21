@@ -59,44 +59,18 @@ export async function content(config, pack) {
 	lib.arenaReady.push(function () {
 		var object = get.copy(lib.skill);
 		//Proxy化lib.skills
-		lib.skill = new Proxy(
-			object,
-			{
-				get:function (target, key, receiver){
-					var skill = target[key];
-					//排除例外
-					if (!skill || lib.qsmx.excludeSkills.includes(key)) {
-						return Reflect.get(target, key, receiver);
-					}
-					//正式开始处理
-					if (lib.qsmx.isResitanceSkill(skill) && config.skill_delete ) {
-						var nullObject = {};
-						if (skill.nobracket) nullObject["nobracket"] = true;
-						nullObject["deleted"] = true;
-						if (lib.translate[`${key}_info`] && !lib.qsmx.ResistanceSkills.includes(key)) {
-							try {
-								Object.defineProperty(lib.translate, `${key}_info`, {
-									value:`<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>${lib.translate[key + "_info"]}`
-								})
-								lib.qsmx.ResistanceSkills.add(key);
-							} catch (error) {
-								console.error(error);
-							}
-						}
-						return nullObject;
-					} else {
-						return Reflect.get(target, key, receiver);
-					}
-				},
-				set: function (target, key, value, receiver) {
-					if (target[key]?.fixedObject == true) {
-					} else {
-						return Reflect.set(target, key, value, receiver);
-					}
-				},
-			}
-		);
+		lib.skill = new Proxy(object, {
+			set: function (target, key, value, receiver) {
+				if (target[key]?.fixedObject == true) {
+				} else {
+					return Reflect.set(target, key, value, receiver);
+				}
+			},
+		});
 		lib.qsmx.addSkillInfo();
+		if (config.skill_delete) {
+			lib.qsmx.skillDelete();
+		}
 	});
 	//lib.element.player
 	Object.assign(lib.element.player, {
@@ -1082,71 +1056,6 @@ export async function content(config, pack) {
 				event._triggered = null;
 			},
 		},
-		_qsmx_gameStart: {
-			trigger: {
-				global: ["gameStart"],
-			},
-			forced: true,
-			charlotte: true,
-			popup: false,
-			silent: true,
-			firstDo: true,
-			filter: function (event, player) {
-				return (
-					game.hasPlayer(
-						(c) =>
-							c.name == "qsmx_mimidog" ||
-							c.name1 == "qsmx_mimidog" ||
-							c.name2 == "qsmx_mimidog"
-					) && !_status.skill_delete
-				);
-			},
-			content: function () {
-				var skills = lib.skill;
-				var object = {};
-				for (const key in skills) {
-					if (Object.hasOwnProperty.call(skills, key)) {
-						const skill = skills[key];
-						if (!lib.qsmx.isResitanceSkill(key)) {
-							object[key] = skill;
-						} else {
-							var nullObject = {};
-							if (skill.nobracket) nullObject["nobracket"] = true;
-							nullObject["deleted"] = true;
-							object[key] = nullObject;
-							if (lib.translate[key + "_info"]) {
-								try {
-									lib.translate[key + "_info"] =
-										"<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>" +
-										lib.translate[key + "_info"];
-								} catch (error) {
-									console.error(error);
-								}
-							}
-						}
-					}
-				}
-				//unMark带有抗性的技能
-				lib.skill = object;
-				var players = game.players;
-				for (let index = 0; index < players.length; index++) {
-					const player = players[index];
-					for (
-						let index = 0;
-						index < lib.qsmx.ResistanceSkills.length;
-						index++
-					) {
-						const ResistanceSkill =
-							lib.qsmx.ResistanceSkills[index];
-						player.unmarkSkill(ResistanceSkill);
-					}
-				}
-			},
-			_priority: 1e1000,
-			audioname2: {
-				key_shiki: "shiki_omusubi",
-			},
-		},
 		_qsmx_bilu: {
 			silent: true,
 			trigger: {
@@ -1252,4 +1161,33 @@ export async function content(config, pack) {
 		"qsmx_jiaxu",
 		"qsmx_mimidog",
 	]);
+	//订阅游戏开始事件
+	lib.announce.subscribe("Noname.Game.Event.GameStart", function () {
+		if (
+			game.hasPlayer(
+				function(player) {
+					var list = [player.name, player.name1, player.name2];
+					if(list.includes('qsmx_mimidog')){
+						return true;
+					}
+				}
+			) &&
+			!_status.skill_delete
+		) {
+			lib.qsmx.skillDelete();
+			//unmark带有抗性的技能
+			var players = get.players(false, true, true);
+			for (let index = 0; index < players.length; index++) {
+				const player = players[index];
+				for (
+					let index = 0;
+					index < lib.qsmx.ResistanceSkills.length;
+					index++
+				) {
+					const ResistanceSkill = lib.qsmx.ResistanceSkills[index];
+					player.unmarkSkill(ResistanceSkill);
+				}
+			}
+		}
+	});
 }

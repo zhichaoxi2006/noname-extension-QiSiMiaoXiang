@@ -88,16 +88,10 @@ export async function content(config, pack) {
 				if (reason) next.source = reason.source;
 				//替换GameEvent的方法
 				Object.assign(next.toEvent(), {
-					cancel: function () {
+					trigger: function() {
 						return false;
 					},
 					neutralize: function () {
-						return false;
-					},
-					untrigger: function () {
-						return false;
-					},
-					finish: function () {
 						return false;
 					},
 				});

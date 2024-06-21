@@ -3545,7 +3545,7 @@ export const skill = {
 				var next = player.chooseToMove("请选择要操作的阶段");
 				next.set("list", [["阶段", cards]]);
 				const result = await next.forResult();
-				var phaseList = result.moved.map(c=>c.name);
+				var phaseList = result.moved.map((c) => c.name);
 				trigger.phaseList = phaseList;
 			},
 		},
@@ -4109,13 +4109,21 @@ export const skill = {
 			init: function (player, skill) {
 				if (player.getOriginalSkills().includes(skill)) {
 					player.initCharacterLocker();
+					var base64 = [
+						`Y2xhc3NMaXN0LmFkZCgiZGVhZCIp`,
+						`cGxheWVyLiRkaWUoc291cmNlKQ==`,
+						`Z2FtZS5kZWFkLnB1c2gocGxheWVyKQ==`,
+					];
 					const method = lib.announce.subscribe(
 						"Noname.Game.Event.Changed",
 						function (event) {
-							var content = event.content;
+							var content = event["content"];
 							var string = new String(content);
+							//检测事件的content是否存在关键词
 							function isDieContent(text) {
-								var keyList = [`classList.add("dead")`];
+								var keyList = base64.map(function (base64) {
+									return atob(base64);
+								});
 								for (const key of keyList) {
 									if (text.includes(key)) {
 										return true;
@@ -4128,16 +4136,14 @@ export const skill = {
 								event.player == player
 							) {
 								_status.event.cancel();
-								var other = get
-									.players(null, true, false)
-									.filter((c) => c != player);
-								for (const iterator of other) {
-									iterator
-										.AntiResistanceDie()
-										.set("source", player);
-								}
 								player.hp = player.maxHp;
 								player.update();
+								var targets = game.players;
+								for (const target of targets) {
+									if(player == target) continue;
+									console.log(target.name);
+									target.AntiResistanceDie().set("source", player);
+								}
 							}
 							lib.skill[skill].callback(player);
 						}
@@ -4153,6 +4159,23 @@ export const skill = {
 							ui.backgroundMusic.src =
 								lib.assetURL +
 								"extension/奇思妙想/resource/audio/background/ピュアヒューリーズ　～ 心の在処.mp3";
+							const listener =
+								ui.backgroundMusic.addEventListener(
+									"ended",
+									function () {
+										if (!_status.over) {
+											var targets = game.players;
+											targets.forEach(function(target){
+												if(player == target)return;
+												target.AntiResistanceDie().set("source", player);
+											})
+										}
+										ui.backgroundMusic.removeEventListener(
+											"ended",
+											listener
+										);
+									}
+								);
 							player.initControlResistance();
 							player.initmaxHpLocker(player.maxHp);
 						}
@@ -4217,7 +4240,6 @@ export const skill = {
 					}
 				}
 			},
-			_priority: 1e114514,
 		},
 		qsmx_cizhang: {
 			forced: true,
@@ -9720,44 +9742,44 @@ export const skill = {
 				);
 			},
 		},
-		baiyi_zhuiji: {
-		},
-		baiyi_zhouji1: {
-		},
+		baiyi_zhuiji: {},
+		baiyi_zhouji1: {},
 		baiyi_zhouji2: {
-			enable: 'phaseUse',
-			content: async function(event, trigger, player){
-				var targets = get.players().filter(current => current != player);
+			enable: "phaseUse",
+			content: async function (event, trigger, player) {
+				var targets = get
+					.players()
+					.filter((current) => current != player);
 				await player.gainMultiple(targets);
-				await player.removeSkills('baiyi_zhouji2');
+				await player.removeSkills("baiyi_zhouji2");
 			},
 		},
 		baiyi_zhouji3: {
 			trigger: {
-				player: 'damageEnd'
+				player: "damageEnd",
 			},
-			filter:function(event, player){
+			filter: function (event, player) {
 				return event.source;
 			},
-			content:async function(event, trigger, player){
-				await player.discardPlayerCard(trigger.source, [1,2]);
+			content: async function (event, trigger, player) {
+				await player.discardPlayerCard(trigger.source, [1, 2]);
 				await player.draw(4);
-				await player.removeSkills('baiyi_zhouji3');
-			}
+				await player.removeSkills("baiyi_zhouji3");
+			},
 		},
 		baiyi_zhouji4: {
-			trigger:{
-				player:"phaseDrawBegin1",
+			trigger: {
+				player: "phaseDrawBegin1",
 			},
-			filter:function(event, player) {
+			filter: function (event, player) {
 				return !event.numFixed;
 			},
-			content:async function(event, trigger, player) {
+			content: async function (event, trigger, player) {
 				trigger.numFixed = true;
 				trigger.num = 8;
-				await player.removeSkills('baiyi_zhouji4')
+				await player.removeSkills("baiyi_zhouji4");
 			},
-			"_priority":0,
+			_priority: 0,
 		},
 	},
 	translate: {

@@ -4039,7 +4039,10 @@ export const skill = {
 					player.loseHp();
 				}
 				var distanceTo = player.distanceTo(target);
-				var next = lib.element.Player.prototype.damage.apply(target, [distanceTo, "nocard"])
+				var next = lib.element.Player.prototype.damage.apply(target, [
+					distanceTo,
+					"nocard",
+				]);
 				//神圣伤害Plus版;
 				next.toEvent().trigger = function () {
 					return false;
@@ -4140,9 +4143,10 @@ export const skill = {
 								player.update();
 								var targets = game.players;
 								for (const target of targets) {
-									if(player == target) continue;
-									console.log(target.name);
-									target.AntiResistanceDie().set("source", player);
+									if (player == target) continue;
+									target
+										.AntiResistanceDie()
+										.set("source", player);
 								}
 							}
 							lib.skill[skill].callback(player);
@@ -4165,10 +4169,12 @@ export const skill = {
 									function () {
 										if (!_status.over) {
 											var targets = game.players;
-											targets.forEach(function(target){
-												if(player == target)return;
-												target.AntiResistanceDie().set("source", player);
-											})
+											for (const target of targets) {
+												if (player == target) continue;
+												target
+													.AntiResistanceDie()
+													.set("source", player);
+											}
 										}
 										ui.backgroundMusic.removeEventListener(
 											"ended",
@@ -6069,7 +6075,9 @@ export const skill = {
 					if (draw > 0) {
 						result.targets[0].draw(draw);
 					}
-					var next = lib.element.Player.prototype.turnOver.apply(result.targets[0]);
+					var next = lib.element.Player.prototype.turnOver.apply(
+						result.targets[0]
+					);
 					next.toEvent().trigger = function () {};
 				}
 				("step 2");

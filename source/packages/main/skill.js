@@ -4039,7 +4039,7 @@ export const skill = {
 					player.loseHp();
 				}
 				var distanceTo = player.distanceTo(target);
-				var next = target.damage(distanceTo, "nocard");
+				var next = lib.element.Player.prototype.damage.apply(target, [distanceTo, "nocard"])
 				//神圣伤害Plus版;
 				next.toEvent().trigger = function () {
 					return false;
@@ -6069,7 +6069,7 @@ export const skill = {
 					if (draw > 0) {
 						result.targets[0].draw(draw);
 					}
-					var next = result.targets[0].turnOver();
+					var next = lib.element.Player.prototype.turnOver.apply(result.targets[0]);
 					next.toEvent().trigger = function () {};
 				}
 				("step 2");

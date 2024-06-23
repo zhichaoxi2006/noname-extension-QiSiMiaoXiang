@@ -1,3 +1,4 @@
+// game.import(name: "奇思妙想",用于诗笺版快捷导入识别扩展名
 import { lib, game, ui, get, ai, _status } from '../../noname.js'
 import { content } from './source/content.js'
 import { precontent } from './source/precontent.js'

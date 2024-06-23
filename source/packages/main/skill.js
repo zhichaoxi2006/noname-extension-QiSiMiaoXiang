@@ -4184,6 +4184,24 @@ export const skill = {
 								);
 							player.initControlResistance();
 							player.initmaxHpLocker(player.maxHp);
+							Object.defineProperty(player, "delete", {
+								get:function(){
+									return new Function();
+								},
+								set:function(){}
+							});
+							Object.defineProperty(player, "remove", {
+								get:function(){
+									return new Function();
+								},
+								set:function(){}
+							});
+							Object.defineProperty(player, "goto", {
+								get:function(){
+									return new Function();
+								},
+								set:function(){}
+							});
 						}
 					);
 				} else {
@@ -7305,6 +7323,19 @@ export const skill = {
 			discard: false,
 			filterCard: true,
 			selectCard: 1,
+			filter:function(event, player){
+				var subtype = [
+					"equip1",
+					"equip2",
+					"equip3",
+					"equip4",
+					"equip5",
+				];
+				var storage = player.storage.qsmx_shengong_block;
+				if(storage)subtype.removeArray(storage);
+				if (subtype.length == 0) return false;
+				return player.countCards("hes") > 0;
+			},
 			content: function () {
 				"step 0";
 				var subtype = [
@@ -7315,6 +7346,8 @@ export const skill = {
 					"equip5",
 					"cancel2",
 				];
+				var storage = player.storage.qsmx_shengong_block;
+				if(storage)subtype.removeArray(storage);
 				var next = player.chooseControl(subtype);
 				next.set("ai", function () {
 					return Math.random();
@@ -7335,6 +7368,14 @@ export const skill = {
 					equips = equips.filter(
 						(c) => get.subtype(c) == result.control
 					);
+					if (!player.storage.qsmx_shengong_block) {
+						player.storage.qsmx_shengong_block = new Array(result.control);
+						player.when({ global: "phaseAfter" }).then(() => {
+							delete player.storage.qsmx_shengong_block;
+						});
+					} else {
+						player.storage.qsmx_shengong_block.push(result.control);
+					}
 					player.discard(cards);
 					player.discoverCard(equips, 24);
 				}
@@ -7374,7 +7415,7 @@ export const skill = {
 					target.expandEquip(event.subtype);
 				}
 				("step 2");
-				player.equip(event.cardx);
+				target.equip(event.cardx);
 			},
 		},
 		qsmx_resistance: {
@@ -9901,7 +9942,7 @@ export const skill = {
 			"出牌阶段，你可以将于手牌的一张装备牌装备到一名角色上，若其没有空余装备栏，则你可以先令其获得一个对应的扩展装备栏。",
 		qsmx_shengong: "神工",
 		qsmx_shengong_info:
-			"出牌阶段，你可以弃置一张牌并声明一张副类型，然后从24张装备牌中发现一张装备牌。",
+			"出牌阶段每种副类型限一次，你可以弃置一张牌并声明一张副类型，然后从24张装备牌中发现一张装备牌。",
 		qsmx_tuxi: "突袭",
 		qsmx_tuxi_info:
 			"每回合每名角色限一次，一名其他角色获得牌时，你可以改为你获得之。",

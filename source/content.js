@@ -1,4 +1,5 @@
 import { lib, game, ui, get, ai, _status } from "../../../noname.js";
+import { Player } from "../../../noname/library/element/player.js";
 import {
 	cardPileObsever,
 	discardPileObsever,
@@ -61,7 +62,9 @@ export async function content(config, pack) {
 		//Proxy化lib.skills
 		lib.skill = new Proxy(object, {
 			set: function (target, key, value, receiver) {
-				if (target[key]?.fixedObject == true) {
+				//阻止含有fixedObject属性的技能对象被修改
+				if (target[key] && target[key].fixedObject == true) {
+					return false;
 				} else {
 					return Reflect.set(target, key, value, receiver);
 				}
@@ -74,6 +77,11 @@ export async function content(config, pack) {
 	});
 	//lib.element.player
 	Object.assign(lib.element.player, {
+		/**
+		 * 奇思妙想特有的强制死亡函数
+		 * @param { GameEvent | GameEventPromise } reason 
+		 * @returns { GameEventPromise }
+		 */
 		AntiResistanceDie: function (reason) {
 			if (get.mode() == "boss" && this == game.boss) {
 				var next = game.createEvent("AntiResistanceDieBoss");
@@ -91,6 +99,9 @@ export async function content(config, pack) {
 					trigger: function() {
 						return false;
 					},
+					cancel: function() {
+						return this;
+					},
 					neutralize: function () {
 						return false;
 					},
@@ -100,6 +111,11 @@ export async function content(config, pack) {
 				return next;
 			}
 		},
+		/**
+		 * 用于进行不触发游戏结束结算的死亡函数
+		 * @param { GameEvent | GameEventPromise } reason 
+		 * @returns { GameEventPromise }
+		 */
 		OverDie: function (reason) {
 			this.resetFuction();
 			var next = game.createEvent("OverDie");
@@ -109,9 +125,15 @@ export async function content(config, pack) {
 			next.setContent("OverDie");
 			return next;
 		},
+		/**
+		 * @deprecated
+		 */
 		initMadResistance: function () {
 			this.goMad = function () {};
 		},
+		/**
+		 * 初始化死亡抗性
+		 */
 		initDieResistance: function () {
 			var player = this;
 			//牢狐那照搬的（
@@ -144,26 +166,39 @@ export async function content(config, pack) {
 					}
 				}
 			);
-			this.delete = function () {};
-			this.remove = function () {};
-			this.goto = function () {};
-			Object.defineProperty(this, "delete", {
-				configurable: false,
-				writable: false,
-			});
-			Object.defineProperty(this, "remove", {
-				configurable: false,
-				writable: false,
-			});
-			Object.defineProperty(this, "goto", {
-				configurable: false,
-				writable: false,
-			});
+			try {
+				Object.defineProperty(player, "delete", {
+					get:function(){
+						return new Function();
+					},
+					set:function(){}
+				});
+				Object.defineProperty(player, "remove", {
+					get:function(){
+						return new Function();
+					},
+					set:function(){}
+				});
+				Object.defineProperty(player, "goto", {
+					get:function(){
+						return new Function();
+					},
+					set:function(){}
+				});
+			} catch (err) {
+				console.error(err);
+			}
 		},
+		/**
+		 * 初始化濒死抗性
+		 */
 		initDyingResistance: function () {
 			this.nodying = true;
 			//this.dying = function (reason) {};
 		},
+		/**
+		 * 初始化控制抗性
+		 */
 		initControlResistance: function () {
 			this._trueMe = this;
 			let proxy = new Proxy(this._trueMe, {
@@ -175,6 +210,9 @@ export async function content(config, pack) {
 				},
 			});
 		},
+		/**
+		 * 武将牌不可被替换
+		 */
 		initCharacterLocker: function () {
 			var player = this;
 			this._name1 = this.name1;
@@ -207,6 +245,10 @@ export async function content(config, pack) {
 				},
 			});
 		},
+		/**
+		 * 锁定玩家体力
+		 * @param { number } num 
+		 */
 		initHpLocker: function (num) {
 			Object.defineProperty(this, "hp", {
 				get: function () {
@@ -219,6 +261,11 @@ export async function content(config, pack) {
 				},
 			});
 		},
+		/**
+		 * 锁定玩家体力上限
+		 * @param { number } num
+		 * @param { boolean } cheat 
+		 */
 		initmaxHpLocker: function (num, cheat) {
 			this._maxHp = num;
 			if (cheat) {
@@ -243,6 +290,11 @@ export async function content(config, pack) {
 				});
 			}
 		},
+		/**
+		 * 锁定玩家classList
+		 * @param { boolean } turnedover 
+		 * @param { boolean } linked 
+		 */
 		initClassListLocker: function (turnedover, linked) {
 			this._classList = this.classList;
 			Object.defineProperty(this, "classList", {
@@ -265,6 +317,9 @@ export async function content(config, pack) {
 				},
 			});
 		},
+		/**
+		 * @deprecated
+		 */
 		initSkillResistance: function () {
 			this._skills = [].addArray(this.getOriginalSkills());
 			this._blankObject = {};
@@ -304,6 +359,9 @@ export async function content(config, pack) {
 				},
 			});
 		},
+		/**
+		 * @deprecated
+		 */
 		initWinWin: function () {
 			this._skills = [].addArray(this.skills);
 			this._blankObject = {};
@@ -343,6 +401,26 @@ export async function content(config, pack) {
 				},
 			});
 		},
+		/**
+		 * 函数复原Plus版
+		 */
+		FunctionLocker: function(){
+			var prototype = lib.element.Player.prototype;
+			var keys = Object.keys(prototype);
+			for (const key of keys) {
+				Object.defineProperty(this, key, {
+					get: function () {
+						return prototype[key];
+					},
+					set: function () {
+						return false;
+					},
+				});
+			}
+		},
+		/**
+		 * 函数复原
+		 */
 		resetFuction: function () {
 			var object = lib.element.Player.prototype;
 			for (const key in object) {

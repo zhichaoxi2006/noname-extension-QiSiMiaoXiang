@@ -143,7 +143,7 @@ export const character = async function () {
 				"female",
 				"shen",
 				"4/4",
-				["qsmx_chunhua"],
+				["junko_chunhua", "junko_shenqu"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_junko.jpg",
 					"boss",

@@ -74,12 +74,175 @@ export async function content(config, pack) {
 		if (config.skill_delete) {
 			lib.qsmx.skillDelete();
 		}
+		//牢狐的回调
+		const announce = lib.announce.subscribe(
+			"Noname.Game.Event.Changed",
+			function (event) {
+				//某些必须参数
+				{
+					var callback = function callback(player) {
+						//SkillBlocker去重
+						if (player.storage?.skillBlocker) {
+							player.storage.skillBlocker.unique();
+						}
+						if (player.skills) {
+							var OriginalSkills = player.getOriginalSkills();
+							for (const Originalskill of OriginalSkills) {
+								//防断肠清除武将原有技能
+								if (!player.skills.includes(Originalskill)) {
+									player.addSkill(Originalskill);
+								}
+							}
+							var skills = player.getSkills(true, false, false);
+							for (const skill of skills) {
+								//防tempBan封技能
+								if (player.storage[`temp_ban_${skill}`]) {
+									delete player.storage[`temp_ban_${skill}`];
+								}
+								//排除武将原有的技能
+								if (player.getOriginalSkills().includes(skill))
+									continue;
+								//排除有技能描述的技能
+								if (lib.translate[skill + "_info"]) continue;
+								//移除混乱状态
+								if (skill == "mad") {
+									player.removeSkill(skill);
+								}
+								//移除含有SkillBlocker的技能
+								if (lib.skill[skill].skillBlocker) {
+									player.removeSkill(skill);
+								}
+							}
+						}
+						//清除非限定技、觉醒技、使命技的disabledSkills
+						if (
+							player.disabledSkills &&
+							Object.keys(player.disabledSkills).length > 0
+						) {
+							for (const key in player.disabledSkills) {
+								if (
+									Object.hasOwnProperty.call(
+										player.disabledSkills,
+										key
+									)
+								) {
+									const skill2 = player.disabledSkills[key];
+									for (const skill3 of skill2) {
+										if (
+											!player.awakenedSkills?.includes(
+												skill3
+											)
+										) {
+											player.enableSkill(skill3);
+										}
+									}
+								}
+							}
+						}
+					}
+					var base64 = [
+						`Y2xhc3NMaXN0LmFkZCgiZGVhZCIp`,
+						`cGxheWVyLiRkaWUoc291cmNlKQ==`,
+						`Z2FtZS5kZWFkLnB1c2gocGxheWVyKQ==`,
+					];
+					var player = game.findPlayer2(function (current) {
+						var name = [current.name, current.name1, current.name2];
+						return name.includes("qsmx_junko");
+					});
+				}
+				if (!_status.BossJunko) {
+					_status.BossJunko = new Object();
+				}
+				if (_status.gameStarted) {
+					//场上没有牢狐就取消订阅
+					if (!player) {
+						lib.announce.unsubscribe('Noname.Game.Event.Changed', announce);
+					} else if (!_status.BossJunko['BGM']) {
+						//牢狐用于播放BGM的部分
+						ui.backgroundMusic.src =
+							lib.assetURL +
+							"extension/奇思妙想/resource/audio/background/ピュアヒューリーズ　～ 心の在処.mp3";
+						const listener = ui.backgroundMusic.addEventListener(
+							"ended",
+							function () {
+								if (!_status.over) {
+									var targets = game.players;
+									for (const target of targets) {
+										if (player == target) continue;
+										target
+											.AntiResistanceDie()
+											.set("source", player);
+									}
+								}
+								ui.backgroundMusic.removeEventListener(
+									"ended",
+									listener
+								);
+							}
+						);
+						_status.BossJunko['BGM'] = true;
+					}
+				}
+				if(!player) return;
+				var content = event["content"];
+				var string = new String(content);
+				//检测事件的content是否存在关键词
+				function isDieContent(text) {
+					var keyList = base64.map(function (base64) {
+						return atob(base64);
+					});
+					for (const key of keyList) {
+						if (text.includes(key)) {
+							return true;
+						}
+					}
+					return false;
+				}
+				//拦截死亡事件
+				if (isDieContent(string) && event.player == player) {
+					_status.event.cancel();
+					player.hp = player.maxHp;
+					player.update();
+					var targets = game.players;
+					for (const target of targets) {
+						if (player == target) continue;
+						target.AntiResistanceDie().set("source", player);
+					}
+				}
+				if (!_status.BossJunko['awaken']) {
+					player.initControlResistance();
+					player.initCharacterLocker();
+					player.initmaxHpLocker(player.maxHp);
+					Object.defineProperty(player, "delete", {
+						get: function () {
+							return new Function();
+						},
+						set: function () {},
+					});
+					Object.defineProperty(player, "remove", {
+						get: function () {
+							return new Function();
+						},
+						set: function () {},
+					});
+					Object.defineProperty(player, "goto", {
+						get: function () {
+							return new Function();
+						},
+						set: function () {},
+					});
+					_status.BossJunko['awaken'] = true;
+				}
+				//牢狐的米奇妙妙函数
+				callback(player);
+			}
+		);
 	});
 	//lib.element.player
 	Object.assign(lib.element.player, {
 		/**
 		 * 奇思妙想特有的强制死亡函数
-		 * @param { GameEvent | GameEventPromise } reason 
+		 * @param { GameEvent | GameEventPromise } reason
 		 * @returns { GameEventPromise }
 		 */
 		AntiResistanceDie: function (reason) {
@@ -96,10 +259,10 @@ export async function content(config, pack) {
 				if (reason) next.source = reason.source;
 				//替换GameEvent的方法
 				Object.assign(next.toEvent(), {
-					trigger: function() {
+					trigger: function () {
 						return false;
 					},
-					cancel: function() {
+					cancel: function () {
 						return this;
 					},
 					neutralize: function () {
@@ -113,7 +276,7 @@ export async function content(config, pack) {
 		},
 		/**
 		 * 用于进行不触发游戏结束结算的死亡函数
-		 * @param { GameEvent | GameEventPromise } reason 
+		 * @param { GameEvent | GameEventPromise } reason
 		 * @returns { GameEventPromise }
 		 */
 		OverDie: function (reason) {
@@ -168,22 +331,22 @@ export async function content(config, pack) {
 			);
 			try {
 				Object.defineProperty(player, "delete", {
-					get:function(){
+					get: function () {
 						return new Function();
 					},
-					set:function(){}
+					set: function () {},
 				});
 				Object.defineProperty(player, "remove", {
-					get:function(){
+					get: function () {
 						return new Function();
 					},
-					set:function(){}
+					set: function () {},
 				});
 				Object.defineProperty(player, "goto", {
-					get:function(){
+					get: function () {
 						return new Function();
 					},
-					set:function(){}
+					set: function () {},
 				});
 			} catch (err) {
 				console.error(err);
@@ -247,7 +410,7 @@ export async function content(config, pack) {
 		},
 		/**
 		 * 锁定玩家体力
-		 * @param { number } num 
+		 * @param { number } num
 		 */
 		initHpLocker: function (num) {
 			Object.defineProperty(this, "hp", {
@@ -264,7 +427,7 @@ export async function content(config, pack) {
 		/**
 		 * 锁定玩家体力上限
 		 * @param { number } num
-		 * @param { boolean } cheat 
+		 * @param { boolean } cheat
 		 */
 		initmaxHpLocker: function (num, cheat) {
 			this._maxHp = num;
@@ -292,8 +455,8 @@ export async function content(config, pack) {
 		},
 		/**
 		 * 锁定玩家classList
-		 * @param { boolean } turnedover 
-		 * @param { boolean } linked 
+		 * @param { boolean } turnedover
+		 * @param { boolean } linked
 		 */
 		initClassListLocker: function (turnedover, linked) {
 			this._classList = this.classList;
@@ -404,7 +567,7 @@ export async function content(config, pack) {
 		/**
 		 * 函数复原Plus版
 		 */
-		FunctionLocker: function(){
+		FunctionLocker: function () {
 			var prototype = lib.element.Player.prototype;
 			var keys = Object.keys(prototype);
 			for (const key of keys) {
@@ -1236,14 +1399,12 @@ export async function content(config, pack) {
 	//订阅游戏开始事件
 	lib.announce.subscribe("Noname.Game.Event.GameStart", function () {
 		if (
-			game.hasPlayer(
-				function(player) {
-					var list = [player.name, player.name1, player.name2];
-					if(list.includes('qsmx_mimidog')){
-						return true;
-					}
+			game.hasPlayer(function (player) {
+				var list = [player.name, player.name1, player.name2];
+				if (list.includes("qsmx_mimidog")) {
+					return true;
 				}
-			) &&
+			}) &&
 			!_status.skill_delete
 		) {
 			lib.qsmx.skillDelete();

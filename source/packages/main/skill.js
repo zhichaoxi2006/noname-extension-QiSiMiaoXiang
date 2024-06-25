@@ -4108,162 +4108,101 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		qsmx_chunhua: {
-			init: function (player, skill) {
-				if (player.getOriginalSkills().includes(skill)) {
-					player.initCharacterLocker();
-					var base64 = [
-						`Y2xhc3NMaXN0LmFkZCgiZGVhZCIp`,
-						`cGxheWVyLiRkaWUoc291cmNlKQ==`,
-						`Z2FtZS5kZWFkLnB1c2gocGxheWVyKQ==`,
-					];
-					const method = lib.announce.subscribe(
-						"Noname.Game.Event.Changed",
-						function (event) {
-							var content = event["content"];
-							var string = new String(content);
-							//检测事件的content是否存在关键词
-							function isDieContent(text) {
-								var keyList = base64.map(function (base64) {
-									return atob(base64);
-								});
-								for (const key of keyList) {
-									if (text.includes(key)) {
-										return true;
-									}
-								}
-								return false;
+		junko_chunhua: {},
+		junko_shenqu: {
+			audio: 2,
+			trigger: {
+				global: ["roundStart"],
+			},
+			forced: true,
+			filter: function (event, player) {
+				return true;
+			},
+			content: function () {
+				player.addSkill("junko_shenqu_buff");
+				player.addMark("junko_shenqu_handcard", 3, false);
+				game.log(player, "手牌上限", "#y+3");
+				player.addMark("junko_shenqu_range", 3, false);
+				game.log(player, "攻击范围", "#y+3");
+				player.addMark("junko_shenqu_sha", 3, false);
+				game.log(player, "使用杀的次数上限", "#y+3");
+				player.addMark("junko_shenqu_draw", 3, false);
+				game.log(player, "摸牌阶段额定摸牌数", "#y+3");
+			},
+			subSkill: {
+				buff: {
+					audio: "junko_shenqu",
+					trigger: {
+						player: "phaseDrawBegin2",
+					},
+					forced: true,
+					filter: function (event, player) {
+						if (!player.hasMark("junko_shenqu_draw")) return false;
+						return !event.numFixed;
+					},
+					content: function () {
+						trigger.num += player.countMark("junko_shenqu_draw");
+					},
+					charlotte: true,
+					onremove: [
+						"junko_shenqu_handcard",
+						"junko_shenqu_range",
+						"junko_shenqu_sha",
+						"junko_shenqu_draw",
+					],
+					mark: true,
+					marktext: "神",
+					intro: {
+						content: function (storage, player) {
+							var str = "";
+							var hand = player.countMark(
+									"junko_shenqu_handcard"
+								),
+								range = player.countMark("junko_shenqu_range"),
+								sha = player.countMark("junko_shenqu_sha"),
+								draw = player.countMark("junko_shenqu_draw");
+							if (hand > 0) {
+								str += "<li>手牌上限+" + hand + "；";
 							}
-							if (
-								isDieContent(string) &&
-								event.player == player
-							) {
-								_status.event.cancel();
-								player.hp = player.maxHp;
-								player.update();
-								var targets = game.players;
-								for (const target of targets) {
-									if (player == target) continue;
-									target
-										.AntiResistanceDie()
-										.set("source", player);
-								}
+							if (range > 0) {
+								str += "<li>攻击范围+" + range + "；";
 							}
-							lib.skill[skill].callback(player);
-						}
-					);
-					const method2 = lib.announce.subscribe(
-						"Noname.Game.Event.GameStart",
-						function () {
-							if (
-								!game.hasPlayer2((c) => c.name == "qsmx_junko")
-							) {
-								return;
+							if (sha > 0) {
+								str += "<li>使用【杀】的次数上限+" + sha + "；";
 							}
-							ui.backgroundMusic.src =
-								lib.assetURL +
-								"extension/奇思妙想/resource/audio/background/ピュアヒューリーズ　～ 心の在処.mp3";
-							const listener =
-								ui.backgroundMusic.addEventListener(
-									"ended",
-									function () {
-										if (!_status.over) {
-											var targets = game.players;
-											for (const target of targets) {
-												if (player == target) continue;
-												target
-													.AntiResistanceDie()
-													.set("source", player);
-											}
-										}
-										ui.backgroundMusic.removeEventListener(
-											"ended",
-											listener
-										);
-									}
+							if (draw > 0) {
+								str += "<li>摸牌阶段额定摸牌数+" + draw + "。";
+							}
+							str = str.slice(0, -1) + "。";
+							return str;
+						},
+					},
+					mod: {
+						maxHandcard: function (player, num) {
+							return (
+								num + player.countMark("junko_shenqu_handcard")
+							);
+						},
+						attackRange: function (player, num) {
+							return num + player.countMark("junko_shenqu_range");
+						},
+						cardUsable: function (card, player, num) {
+							if (card.name == "sha") {
+								return (
+									num + player.countMark("junko_shenqu_sha")
 								);
-							player.initControlResistance();
-							player.initmaxHpLocker(player.maxHp);
-							Object.defineProperty(player, "delete", {
-								get:function(){
-									return new Function();
-								},
-								set:function(){}
-							});
-							Object.defineProperty(player, "remove", {
-								get:function(){
-									return new Function();
-								},
-								set:function(){}
-							});
-							Object.defineProperty(player, "goto", {
-								get:function(){
-									return new Function();
-								},
-								set:function(){}
-							});
-						}
-					);
-				} else {
-					player.AntiResistanceDie();
-				}
-			},
-			callback: function (player) {
-				//SkillBlocker去重
-				if (player.storage?.skillBlocker) {
-					player.storage.skillBlocker.unique();
-				}
-				if (player.skills) {
-					var OriginalSkills = player.getOriginalSkills();
-					for (const Originalskill of OriginalSkills) {
-						//防断肠清除武将原有技能
-						if (!player.skills.includes(Originalskill)) {
-							player.addSkill(Originalskill);
-						}
-					}
-					var skills = player.getSkills(true, false, false);
-					for (const skill of skills) {
-						//防tempBan封技能
-						if (player.storage[`temp_ban_${skill}`]) {
-							delete player.storage[`temp_ban_${skill}`];
-						}
-						//排除武将原有的技能
-						if (player.getOriginalSkills().includes(skill))
-							continue;
-						//排除有技能描述的技能
-						if (lib.translate[skill + "_info"]) continue;
-						//移除混乱状态
-						if (skill == "mad") {
-							player.removeSkill(skill);
-						}
-						//移除含有SkillBlocker的技能
-						if (lib.skill[skill].skillBlocker) {
-							player.removeSkill(skill);
-						}
-					}
-				}
-				//清除非限定技、觉醒技、使命技的disabledSkills
-				if (
-					player.disabledSkills &&
-					Object.keys(player.disabledSkills).length > 0
-				) {
-					for (const key in player.disabledSkills) {
-						if (
-							Object.hasOwnProperty.call(
-								player.disabledSkills,
-								key
-							)
-						) {
-							const skill2 = player.disabledSkills[key];
-							for (const skill3 of skill2) {
-								if (!player.awakenedSkills?.includes(skill3)) {
-									player.enableSkill(skill3);
-								}
 							}
-						}
-					}
-				}
+						},
+					},
+					ai: {
+						threaten: 2.6,
+					},
+					sub: true,
+					sourceSkill: "junko_shenqu",
+					_priority: 0,
+				},
 			},
+			_priority: 0,
 		},
 		qsmx_cizhang: {
 			forced: true,
@@ -7323,7 +7262,7 @@ export const skill = {
 			discard: false,
 			filterCard: true,
 			selectCard: 1,
-			filter:function(event, player){
+			filter: function (event, player) {
 				var subtype = [
 					"equip1",
 					"equip2",
@@ -7332,7 +7271,7 @@ export const skill = {
 					"equip5",
 				];
 				var storage = player.storage.qsmx_shengong_block;
-				if(storage)subtype.removeArray(storage);
+				if (storage) subtype.removeArray(storage);
 				if (subtype.length == 0) return false;
 				return player.countCards("hes") > 0;
 			},
@@ -7347,7 +7286,7 @@ export const skill = {
 					"cancel2",
 				];
 				var storage = player.storage.qsmx_shengong_block;
-				if(storage)subtype.removeArray(storage);
+				if (storage) subtype.removeArray(storage);
 				var next = player.chooseControl(subtype);
 				next.set("ai", function () {
 					return Math.random();
@@ -7369,7 +7308,9 @@ export const skill = {
 						(c) => get.subtype(c) == result.control
 					);
 					if (!player.storage.qsmx_shengong_block) {
-						player.storage.qsmx_shengong_block = new Array(result.control);
+						player.storage.qsmx_shengong_block = new Array(
+							result.control
+						);
 						player.when({ global: "phaseAfter" }).then(() => {
 							delete player.storage.qsmx_shengong_block;
 						});
@@ -9791,45 +9732,6 @@ export const skill = {
 				);
 			},
 		},
-		baiyi_zhuiji: {},
-		baiyi_zhouji1: {},
-		baiyi_zhouji2: {
-			enable: "phaseUse",
-			content: async function (event, trigger, player) {
-				var targets = get
-					.players()
-					.filter((current) => current != player);
-				await player.gainMultiple(targets);
-				await player.removeSkills("baiyi_zhouji2");
-			},
-		},
-		baiyi_zhouji3: {
-			trigger: {
-				player: "damageEnd",
-			},
-			filter: function (event, player) {
-				return event.source;
-			},
-			content: async function (event, trigger, player) {
-				await player.discardPlayerCard(trigger.source, [1, 2]);
-				await player.draw(4);
-				await player.removeSkills("baiyi_zhouji3");
-			},
-		},
-		baiyi_zhouji4: {
-			trigger: {
-				player: "phaseDrawBegin1",
-			},
-			filter: function (event, player) {
-				return !event.numFixed;
-			},
-			content: async function (event, trigger, player) {
-				trigger.numFixed = true;
-				trigger.num = 8;
-				await player.removeSkills("baiyi_zhouji4");
-			},
-			_priority: 0,
-		},
 	},
 	translate: {
 		qsmx_zhouji: "肘击",
@@ -10055,8 +9957,10 @@ export const skill = {
 			"专属技，每回合限一次，你受到伤害时，你废除一个装备槽，摸X张牌并防止此伤害。你受到伤害后，你可以终止一切结算，结束当前回合。（X为此伤害的伤害值基数）",
 		qsmx_yangbai_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“行邪魔之术者，多骄恣之辈。而吾略施佯败之计，便可制之。”</div>',
-		qsmx_chunhua: "纯化",
-		qsmx_chunhua_info: "祈祷吧，尽管没有任何用处。",
+		junko_chunhua: "纯化",
+		junko_chunhua_info: "祈祷吧，尽管没有任何用处。",
+		junko_shenqu: "神躯",
+		junko_shenqu_info: "锁定技，一轮游戏开始时，你的手牌上限、攻击距离、使用【杀】的上限数、额定摸牌数各+3。",
 		qsmx_shajue: "杀绝",
 		qsmx_shajue_info: "你造成伤害后，你可以视为对目标使用一张普通【杀】。",
 		qsmx_qichong: "七重",

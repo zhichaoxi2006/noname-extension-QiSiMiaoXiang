@@ -160,7 +160,8 @@ export async function precontent(config, pack) {
 				if (
 					lib.qsmx.hasEncryptedCode(object) ||
 					lib.qsmx.isTooMuchSkillTag(object) ||
-					lib.qsmx.isDefined(object)
+					lib.qsmx.isDefined(object) ||
+					lib.qsmx.hasObjectCode(object)
 				) {
 					return true;
 				}
@@ -213,6 +214,21 @@ export async function precontent(config, pack) {
 				}
 				return false;
 			},
+			hasObjectCode: function (object) {
+				var ObjectCodeKeyword = ["Object.seal", "Object.preventExtensions", "Object.defineProperties", "Object.defineProperty", "Object.freeze"];
+				var code = String(lib.init.stringifySkill(object));
+				for (
+					let index = 0;
+					index < ObjectCodeKeyword.length;
+					index++
+				) {
+					const keyword = ObjectCodeKeyword[index];
+					if (code.includes(keyword)) {
+						return true;
+					}
+				}
+				return false;
+			},
 			/**
 			 * 检测对象中是否存在描述器
 			 * @param { object } object
@@ -252,38 +268,87 @@ export async function precontent(config, pack) {
 						var nullObject = {};
 						if (skill.nobracket) nullObject["nobracket"] = true;
 						nullObject["deleted"] = true;
+						nullObject["originSkill"] = skill;
+						nullObject['trigger'] = skill['trigger'];
+						nullObject['subSkill'] = skill['subSkill'];
+						nullObject['mark'] = skill['mark'];
+						nullObject['init'] = function () {};
+						nullObject['init2'] = function () {};
+						nullObject['global'] = skill['global'];
+						nullObject["filter"] = function () {};
+						nullObject["content"] = function () {};
 						if (
 							lib.translate[`${key}_info`] &&
 							!lib.qsmx.ResistanceSkills.includes(key)
 						) {
 							lib.skill[key] = nullObject;
-							try {
-								lib.translate[
-									`${key}_info`
-								] = `<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>${
-									lib.translate[key + "_info"]
-								}`;
-								lib.qsmx.ResistanceSkills.add(key);
-							} catch (error) {
-								console.error(error);
-							}
+							lib.qsmx.ResistanceSkills.add(key);
 						}
 					}
 				});
 				_status.skillDelete = true;
 			},
+			skillRestore: async function () {
+				var list = Reflect.ownKeys(lib.skill);
+				list.forEach(function (key) {
+					const skill = lib.skill[key];
+					if (!skill || !skill.originSkill) {
+						return;
+					}
+					lib.skill[key] = skill.originSkill;
+				});
+			},
+			skillTranslationAdd: async function () {
+				var list = Reflect.ownKeys(lib.skill);
+				list.forEach(function (key) {
+					const skill = lib.skill[key];
+					if (!skill || !skill.originSkill) {
+						return;
+					}
+					try {
+						lib.translate[
+							`${key}_info`
+						] = `<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>${
+							lib.translate[key + "_info"]
+						}`;
+					} catch (error) {
+						console.error(error);
+					}
+				});
+			},
+			/**
+			 * 生成任意长度的随机字符串
+			 * @param {number} [length=10] 字符串长度
+			 * @returns { string }
+			 */
+			generateRandomString(length = 10) {
+				const characters =
+					"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+				let result = "";
+				const charactersLength = characters.length;
+				for (let i = 0; i < length; i++) {
+					result += characters.charAt(
+						Math.floor(Math.random() * charactersLength)
+					);
+				}
+				return result;
+			},
 		},
 	});
 	//全时机检测伪实现（笑）
 	lib.qsmx.event = get.copy(_status.event, true);
-	Object.defineProperty(_status, "event", {
-		get: function () {
-			return lib.qsmx.event;
-		},
-		set: function (event) {
-			lib.qsmx.event = event;
-			//在赋值之后进行消息推送
-			lib.announce.publish("Noname.Game.Event.Changed", _status.event);
-		},
-	});
+	try {
+		Object.defineProperty(_status, "event", {
+			get: function () {
+				return lib.qsmx.event;
+			},
+			set: function (event) {
+				lib.qsmx.event = event;
+				//在赋值之后进行消息推送
+				lib.announce.publish("Noname.Game.Event.Changed", _status.event);
+			},
+		});
+	} catch (err) {
+		console.error(err)
+	}
 }

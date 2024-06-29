@@ -4108,102 +4108,6 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		junko_chunhua: {},
-		junko_shenqu: {
-			audio: 2,
-			trigger: {
-				global: ["roundStart"],
-			},
-			forced: true,
-			filter: function (event, player) {
-				return true;
-			},
-			content: function () {
-				player.addSkill("junko_shenqu_buff");
-				player.addMark("junko_shenqu_handcard", 3, false);
-				game.log(player, "手牌上限", "#y+3");
-				player.addMark("junko_shenqu_range", 3, false);
-				game.log(player, "攻击范围", "#y+3");
-				player.addMark("junko_shenqu_sha", 3, false);
-				game.log(player, "使用杀的次数上限", "#y+3");
-				player.addMark("junko_shenqu_draw", 3, false);
-				game.log(player, "摸牌阶段额定摸牌数", "#y+3");
-			},
-			subSkill: {
-				buff: {
-					audio: "junko_shenqu",
-					trigger: {
-						player: "phaseDrawBegin2",
-					},
-					forced: true,
-					filter: function (event, player) {
-						if (!player.hasMark("junko_shenqu_draw")) return false;
-						return !event.numFixed;
-					},
-					content: function () {
-						trigger.num += player.countMark("junko_shenqu_draw");
-					},
-					charlotte: true,
-					onremove: [
-						"junko_shenqu_handcard",
-						"junko_shenqu_range",
-						"junko_shenqu_sha",
-						"junko_shenqu_draw",
-					],
-					mark: true,
-					marktext: "神",
-					intro: {
-						content: function (storage, player) {
-							var str = "";
-							var hand = player.countMark(
-									"junko_shenqu_handcard"
-								),
-								range = player.countMark("junko_shenqu_range"),
-								sha = player.countMark("junko_shenqu_sha"),
-								draw = player.countMark("junko_shenqu_draw");
-							if (hand > 0) {
-								str += "<li>手牌上限+" + hand + "；";
-							}
-							if (range > 0) {
-								str += "<li>攻击范围+" + range + "；";
-							}
-							if (sha > 0) {
-								str += "<li>使用【杀】的次数上限+" + sha + "；";
-							}
-							if (draw > 0) {
-								str += "<li>摸牌阶段额定摸牌数+" + draw + "。";
-							}
-							str = str.slice(0, -1) + "。";
-							return str;
-						},
-					},
-					mod: {
-						maxHandcard: function (player, num) {
-							return (
-								num + player.countMark("junko_shenqu_handcard")
-							);
-						},
-						attackRange: function (player, num) {
-							return num + player.countMark("junko_shenqu_range");
-						},
-						cardUsable: function (card, player, num) {
-							if (card.name == "sha") {
-								return (
-									num + player.countMark("junko_shenqu_sha")
-								);
-							}
-						},
-					},
-					ai: {
-						threaten: 2.6,
-					},
-					sub: true,
-					sourceSkill: "junko_shenqu",
-					_priority: 0,
-				},
-			},
-			_priority: 0,
-		},
 		qsmx_cizhang: {
 			forced: true,
 			silent: true,
@@ -6325,9 +6229,9 @@ export const skill = {
 				event.count = Math.min(player.countCards("he"), player.maxHp);
 				player.draw(event.count + 1);
 				("step 1");
-				var next = player.chooseToDiscard(event.count, true);
-				next.set("ai", function (card) {
-					return -player.getUseValue(card);
+				var next = player.chooseToDiscard(event.count, true, 'he');
+				next.set('ai', function(card){
+					return 6 - get.value(card);
 				});
 			},
 		},
@@ -9957,10 +9861,6 @@ export const skill = {
 			"专属技，每回合限一次，你受到伤害时，你废除一个装备槽，摸X张牌并防止此伤害。你受到伤害后，你可以终止一切结算，结束当前回合。（X为此伤害的伤害值基数）",
 		qsmx_yangbai_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“行邪魔之术者，多骄恣之辈。而吾略施佯败之计，便可制之。”</div>',
-		junko_chunhua: "纯化",
-		junko_chunhua_info: "祈祷吧，尽管没有任何用处。",
-		junko_shenqu: "神躯",
-		junko_shenqu_info: "锁定技，一轮游戏开始时，你的手牌上限、攻击距离、使用【杀】的上限数、额定摸牌数各+3。",
 		qsmx_shajue: "杀绝",
 		qsmx_shajue_info: "你造成伤害后，你可以视为对目标使用一张普通【杀】。",
 		qsmx_qichong: "七重",

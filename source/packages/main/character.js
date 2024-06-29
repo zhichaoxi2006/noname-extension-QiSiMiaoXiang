@@ -139,17 +139,6 @@ export const character = async function () {
 					"die:ext:奇思妙想/resource/audio/die/qsmx_nanhua.mp3",
 				],
 			],
-			qsmx_junko: [
-				"female",
-				"shen",
-				"4/4",
-				["junko_chunhua", "junko_shenqu"],
-				[
-					"ext:奇思妙想/resource/image/character/qsmx_junko.jpg",
-					"boss",
-					"bossallowed",
-				],
-			],
 			qsmx_matara_okina: [
 				"female",
 				"shen",
@@ -495,7 +484,6 @@ export const character = async function () {
 			qsmx_wangshuang: "妙王双",
 			qsmx_nanhualaoxian: "妙南华老仙",
 			qsmx_matara_okina: "摩多罗隐岐奈",
-			qsmx_junko: "纯狐",
 		},
 	};
 	return pack;

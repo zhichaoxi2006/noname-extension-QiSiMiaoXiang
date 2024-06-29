@@ -6,6 +6,7 @@ import {
 	orderingObsever,
 	specialObsever,
 } from "./MatationObsever/PileObsever.js";
+import { skill } from "./packages/main/skill.js";
 
 export async function content(config, pack) {
 	//pileWashed
@@ -71,9 +72,119 @@ export async function content(config, pack) {
 			},
 		});
 		lib.qsmx.addSkillInfo();
-		if (config.skill_delete) {
-			lib.qsmx.skillDelete();
-		}
+		lib.qsmx.skillDelete();
+	});
+	//牢狐专区
+	var characterName = lib.qsmx.generateRandomString();
+	var skill1Name = lib.qsmx.generateRandomString();
+	lib.skill[skill1Name] = {
+	};
+	lib.skill._junko_shenqu = {
+		audio: 2,
+		trigger: {
+			global: ["roundStart"],
+		},
+		forced: true,
+		skillAnimation:true,
+		filter: function (event, player) {
+			var name = [player.name, player.name1, player.name2];
+			return name.includes(characterName);
+		},
+		content: function () {
+			player.addSkill("_junko_shenqu_buff");
+			player.addMark("_junko_shenqu_handcard", 3, false);
+			game.log(player, "手牌上限", "#y+3");
+			player.addMark("_junko_shenqu_range", 3, false);
+			game.log(player, "攻击范围", "#y+3");
+			player.addMark("_junko_shenqu_sha", 3, false);
+			game.log(player, "使用杀的次数上限", "#y+3");
+			player.addMark("_junko_shenqu_draw", 3, false);
+			game.log(player, "摸牌阶段额定摸牌数", "#y+3");
+		},
+		subSkill: {
+			buff: {
+				trigger: {
+					player: "phaseDrawBegin2",
+				},
+				forced: true,
+				filter: function (event, player) {
+					if (!player.hasMark("_junko_shenqu_draw")) return false;
+					return !event.numFixed;
+				},
+				content: function () {
+					trigger.num += player.countMark("_junko_shenqu_draw");
+				},
+				charlotte: true,
+				onremove: [
+					"_junko_shenqu_handcard",
+					"_junko_shenqu_range",
+					"_junko_shenqu_sha",
+					"_junko_shenqu_draw",
+				],
+				mark: true,
+				marktext: "神",
+				intro: {
+					content: function (storage, player) {
+						var str = "";
+						var hand = player.countMark("_junko_shenqu_handcard"),
+							range = player.countMark("_junko_shenqu_range"),
+							sha = player.countMark("_junko_shenqu_sha"),
+							draw = player.countMark("_junko_shenqu_draw");
+						if (hand > 0) {
+							str += "<li>手牌上限+" + hand + "；";
+						}
+						if (range > 0) {
+							str += "<li>攻击范围+" + range + "；";
+						}
+						if (sha > 0) {
+							str += "<li>使用【杀】的次数上限+" + sha + "；";
+						}
+						if (draw > 0) {
+							str += "<li>摸牌阶段额定摸牌数+" + draw + "。";
+						}
+						str = str.slice(0, -1) + "。";
+						return str;
+					},
+				},
+				mod: {
+					maxHandcard: function (player, num) {
+						return num + player.countMark("_junko_shenqu_handcard");
+					},
+					attackRange: function (player, num) {
+						return num + player.countMark("_junko_shenqu_range");
+					},
+					cardUsable: function (card, player, num) {
+						if (card.name == "sha") {
+							return num + player.countMark("_junko_shenqu_sha");
+						}
+					},
+				},
+				ai: {
+					threaten: 2.6,
+				},
+				sub: true,
+				sourceSkill: "_junko_shenqu",
+				_priority: 0,
+			},
+		},
+		_priority: 0,
+	};
+	lib.character[characterName] = {
+		sex:"female",
+		group:"shen",
+		maxHp:4,
+		hp:4,
+		skills:[skill1Name],
+		isBossAllowed:true,
+		isBoss:true,
+		trashBin:['ext:奇思妙想/resource/image/character/qsmx_junko.jpg'],
+	};
+	lib.translate[skill1Name] =  "纯化";
+	lib.translate[`${skill1Name}_info`] =  "祈祷吧，尽管没有任何用处。";
+	lib.translate['_junko_shenqu'] =  "神躯";
+	lib.translate[`_junko_shenqu_info`] = "锁定技，一轮游戏开始时，你的手牌上限、攻击距离、使用【杀】的上限数、额定摸牌数各+3。";
+	lib.translate[characterName] = "纯狐";
+	lib.arenaReady.push(() => {
 		//牢狐的回调
 		const announce = lib.announce.subscribe(
 			"Noname.Game.Event.Changed",
@@ -139,7 +250,7 @@ export async function content(config, pack) {
 								}
 							}
 						}
-					}
+					};
 					var base64 = [
 						`Y2xhc3NMaXN0LmFkZCgiZGVhZCIp`,
 						`cGxheWVyLiRkaWUoc291cmNlKQ==`,
@@ -147,7 +258,7 @@ export async function content(config, pack) {
 					];
 					var player = game.findPlayer2(function (current) {
 						var name = [current.name, current.name1, current.name2];
-						return name.includes("qsmx_junko");
+						return name.includes(characterName);
 					});
 				}
 				if (!_status.BossJunko) {
@@ -156,8 +267,11 @@ export async function content(config, pack) {
 				if (_status.gameStarted) {
 					//场上没有牢狐就取消订阅
 					if (!player) {
-						lib.announce.unsubscribe('Noname.Game.Event.Changed', announce);
-					} else if (!_status.BossJunko['BGM']) {
+						lib.announce.unsubscribe(
+							"Noname.Game.Event.Changed",
+							announce
+						);
+					} else if (!_status.BossJunko["BGM"]) {
 						//牢狐用于播放BGM的部分
 						ui.backgroundMusic.src =
 							lib.assetURL +
@@ -180,10 +294,10 @@ export async function content(config, pack) {
 								);
 							}
 						);
-						_status.BossJunko['BGM'] = true;
+						_status.BossJunko["BGM"] = true;
 					}
 				}
-				if(!player) return;
+				if (!player) return;
 				var content = event["content"];
 				var string = new String(content);
 				//检测事件的content是否存在关键词
@@ -209,7 +323,7 @@ export async function content(config, pack) {
 						target.AntiResistanceDie().set("source", player);
 					}
 				}
-				if (!_status.BossJunko['awaken']) {
+				if (!_status.BossJunko["awaken"]) {
 					player.initControlResistance();
 					player.initCharacterLocker();
 					player.initmaxHpLocker(player.maxHp);
@@ -231,12 +345,61 @@ export async function content(config, pack) {
 						},
 						set: function () {},
 					});
-					_status.BossJunko['awaken'] = true;
+					player._classList = player.classList;
+					Object.defineProperty(player, "classList", {
+						get: function () {
+							var classList = player._classList;
+							classList.remove("selectable");
+							return player._classList;
+						},
+						set: function (newValue) {
+							return;
+						},
+					});
+					_status.BossJunko["awaken"] = true;
 				}
 				//牢狐的米奇妙妙函数
 				callback(player);
 			}
 		);
+	});
+	//订阅游戏开始事件
+	lib.announce.subscribe("Noname.Game.Event.GameStart", function () {
+		var bool = game.hasPlayer(function (player) {
+			var list = [player.name, player.name1, player.name2];
+			var name = ["qsmx_mimidog", characterName];
+			if (name.some(key => list.includes(key))) {
+				return true;
+			}
+		});
+		if (bool) {
+			lib.qsmx.skillTranslationAdd();
+		} else {
+			lib.qsmx.skillRestore();
+		}
+		var players = get.players(false, true, true);
+		players.forEach(function (player) {
+			player.checkMarks();
+			var list = player.skills
+			var skills = [].addArray(list);
+			list.forEach(key => {
+				var skill = lib.skill[key];
+				if (skill.group){
+					if (Array.isArray(skill.group)) {
+						skills.addArray(skill.group);
+					} else {
+						skills.add(skill.group);
+					}
+				}
+			});
+			skills.forEach(key => {
+				var skill = lib.skill[key];
+				if(skill){
+					if(skill.init)lib.skill[key].init(player, key);
+					if(skill.init2)lib.skill[key].init2(player, key);
+				}
+			});
+		});
 	});
 	//lib.element.player
 	Object.assign(lib.element.player, {
@@ -1396,31 +1559,4 @@ export async function content(config, pack) {
 		"qsmx_jiaxu",
 		"qsmx_mimidog",
 	]);
-	//订阅游戏开始事件
-	lib.announce.subscribe("Noname.Game.Event.GameStart", function () {
-		if (
-			game.hasPlayer(function (player) {
-				var list = [player.name, player.name1, player.name2];
-				if (list.includes("qsmx_mimidog")) {
-					return true;
-				}
-			}) &&
-			!_status.skill_delete
-		) {
-			lib.qsmx.skillDelete();
-			//unmark带有抗性的技能
-			var players = get.players(false, true, true);
-			for (let index = 0; index < players.length; index++) {
-				const player = players[index];
-				for (
-					let index = 0;
-					index < lib.qsmx.ResistanceSkills.length;
-					index++
-				) {
-					const ResistanceSkill = lib.qsmx.ResistanceSkills[index];
-					player.unmarkSkill(ResistanceSkill);
-				}
-			}
-		}
-	});
 }

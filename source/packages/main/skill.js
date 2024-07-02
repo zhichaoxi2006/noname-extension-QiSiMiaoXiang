@@ -6231,7 +6231,8 @@ export const skill = {
 				("step 1");
 				var next = player.chooseToDiscard(event.count, true, 'he');
 				next.set('ai', function(card){
-					return 6 - get.value(card);
+					var player = _status.event.player;
+					return 6 - get.value(card, player);
 				});
 			},
 		},
@@ -7481,7 +7482,7 @@ export const skill = {
 			subSkill: {
 				prompt: {
 					prompt: function (event, player) {
-						if (event.name.includes("damage")) {
+						if (event.source && event.name.includes("damage")) {
 							return (
 								"是否视为对" +
 								get.translation(event.source.name) +
@@ -9846,21 +9847,7 @@ export const skill = {
 		qsmx_yangkuang: "阳狂",
 		qsmx_yangkuang_info:
 			"转换技，<br>阳：你可以将一张红色牌当做【决斗】对自己使用，<br>阴：你可以将一张黑色牌当【过河拆桥】对自己使用。",
-		qsmx_cizhang: "持杖",
-		qsmx_cizhang_info:
-			"专属技，游戏开始时，你将※抗性标签疑似有点太多和※含有加密代码的技能无效化；一轮游戏开始时，你对自己造成X点伤害，然后你可以令任意名武将牌上的技能数不小于Y的其他角色强制死亡。（X为你已废止的装备槽数且至少为一，Y为你为未废止的装备槽数）",
-		qsmx_cizhang_append:
-			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“吾持治妄之杖，消淫邪之术，护众免灾于天外邪魔。”</div>',
-		qsmx_mingli: "命理",
-		qsmx_mingli_info:
-			"专属技，你取消武将牌替换、技能清除/失效、濒死结算，你的体力和体力上限恒定为6；你受到的伤害防止后，若为你当前回合防止的第X次伤害，你死亡，你取消不以此法的死亡。(X为伤害来源武将牌原有的技能数)",
-		qsmx_mingli_append:
-			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“习技多者，难胜吾也；若无习一技者与吾战，吾难胜也。”</div>',
 		qsmx_yangbai: "佯败",
-		qsmx_yangbai_info:
-			"专属技，每回合限一次，你受到伤害时，你废除一个装备槽，摸X张牌并防止此伤害。你受到伤害后，你可以终止一切结算，结束当前回合。（X为此伤害的伤害值基数）",
-		qsmx_yangbai_append:
-			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“行邪魔之术者，多骄恣之辈。而吾略施佯败之计，便可制之。”</div>',
 		qsmx_shajue: "杀绝",
 		qsmx_shajue_info: "你造成伤害后，你可以视为对目标使用一张普通【杀】。",
 		qsmx_qichong: "七重",

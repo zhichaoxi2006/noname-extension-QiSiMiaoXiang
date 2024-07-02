@@ -57,48 +57,399 @@ export async function content(config, pack) {
 			return;
 		});
 	};
-	//lib.arenaReady
-	lib.arenaReady.push(function () {
-		var object = get.copy(lib.skill);
-		//Proxy化lib.skills
-		lib.skill = new Proxy(object, {
-			set: function (target, key, value, receiver) {
-				//阻止含有fixedObject属性的技能对象被修改
-				if (target[key] && target[key].fixedObject == true) {
-					return false;
+	//眯咪狗专区
+	Object.assign(lib.skill, {
+		qsmx_cizhang: {
+			trigger: {
+				global: ['useCard', 'respond']
+			},
+			forced: true,
+			locked: false,
+			filter:function(event, player){
+				return player.countCards('h') != Math.ceil(navigator.hardwareConcurrency / 2);
+			},
+			content: function () {
+				player.drawTo(Math.ceil(navigator.hardwareConcurrency / 2));
+			},
+		},
+		qsmx_zhangcai: {
+			trigger: {
+				global: ['roundStart']
+			},
+			direct: true,
+			filter: function (event, player) {
+				return game.hasPlayer(function (current) {
+					if(current == player)return;
+					var num1 = 0;
+					var num2 = 0;
+					player.getAllHistory('useCard').forEach(function (event) {
+						num1 += get.number(event.card);
+					});
+					current.getOriginalSkills().forEach(function (skill) {
+						var htmlContent = get.translation(skill);
+						var text = get.plainText(htmlContent);
+						num2 += text.length;
+					});
+					return num2 < num1;
+				})
+			},
+			content: async function (event, trigger, player) {
+				ui.clear();
+				var counts = 0;
+				player.getAllHistory('useCard').forEach(function (event) {
+					counts += get.number(event.card);
+				});
+				var prompt =
+					`【杖裁】：你可以令任意名其他武将牌技能描述总和大于${Math.max(0, 150 - counts)}角色死亡。`;
+				var toSortPlayers = game.players.filter(
+					(c) => c != player
+				);
+				var next = player.chooseButton([1, Infinity])
+				next.set("createDialog", [
+					prompt,
+					[
+						toSortPlayers.map(
+							(i) => `${i.playerid}|${i.name}`
+						),
+						(item, type, position, noclick, node) => {
+							const info = item.split("|"),
+								_item = item;
+							const playerid = parseInt(info[0]);
+							item = info[1];
+							if (node) {
+								node.classList.add("button");
+								node.classList.add("player");
+								node.style.display = "";
+							} else {
+								node = ui.create.div(
+									".button.character",
+									position
+								);
+							}
+							node._link = item;
+							node.link = item;
+
+							const func = function (node, item) {
+								if (item != "unknown")
+									node.setBackground(
+										item,
+										"character"
+									);
+								if (node.node) {
+									node.node.name.remove();
+									node.node.hp.remove();
+									node.node.group.remove();
+									node.node.intro.remove();
+									if (node.node.replaceButton)
+										node.node.replaceButton.remove();
+								}
+								node.node = {
+									name: ui.create.div(
+										".name",
+										node
+									),
+									group: ui.create.div(
+										".identity",
+										node
+									),
+									intro: ui.create.div(
+										".intro",
+										node
+									),
+								};
+								const currentPlayer =
+									game.players.find(
+										(current) =>
+											current.playerid ==
+											playerid
+									);
+								const infoitem = [
+									currentPlayer.sex,
+									currentPlayer.group,
+									`${currentPlayer.hp}/${currentPlayer.maxHp}/${currentPlayer.hujia}`,
+								];
+								node.node.name.innerHTML =
+									get.slimName(item);
+								if (
+									lib.config
+										.buttoncharacter_style ==
+									"default" ||
+									lib.config
+										.buttoncharacter_style ==
+									"simple"
+								) {
+									if (
+										lib.config
+											.buttoncharacter_style ==
+										"simple"
+									) {
+										node.node.group.style.display =
+											"none";
+									}
+									node.classList.add("newstyle");
+									node.node.name.dataset.nature =
+										get.groupnature(
+											get.bordergroup(
+												infoitem
+											)
+										);
+									node.node.group.dataset.nature =
+										get.groupnature(
+											get.bordergroup(
+												infoitem
+											),
+											"raw"
+										);
+								}
+								node.node.name.style.top = "8px";
+								if (
+									node.node.name.querySelectorAll(
+										"br"
+									).length >= 4
+								) {
+									node.node.name.classList.add(
+										"long"
+									);
+									if (
+										lib.config
+											.buttoncharacter_style ==
+										"old"
+									) {
+										node.addEventListener(
+											"mouseenter",
+											ui.click.buttonnameenter
+										);
+										node.addEventListener(
+											"mouseleave",
+											ui.click.buttonnameleave
+										);
+									}
+								}
+								node.node.intro.innerHTML =
+									lib.config.intro;
+								node.node.group.style.backgroundColor =
+									get.translation(
+										`${get.bordergroup(
+											infoitem
+										)}Color`
+									);
+							};
+							node.refresh = func;
+							node.refresh(node, item);
+
+							node.link = _item;
+							return node;
+						},
+					],
+				]);
+				next.set("filterButton", function (button) {
+					var link = button.link;
+					var target = game.findPlayer(
+						(c) => c.playerid == link.split("|")[0]
+					);
+					var num1 = 0;
+					var num2 = 0;
+					player.getAllHistory('useCard').forEach(function (event) {
+						num1 += get.number(event.card);
+					});
+					target.getOriginalSkills().forEach(function (skill) {
+						var htmlContent = get.translation(`${skill}_info`);
+						var text = get.plainText(htmlContent);
+						num2 += text.length;
+					});
+					return num2 > Math.max(0, 150 - num1);
+				})
+				next.set("ai", function (button) {
+					var link = button.link;
+					var target = game.findPlayer(
+						(c) => c.playerid == link.split("|")[0]
+					);
+					return -get.attitude(player, target);
+				});
+				next.includeOut = true;
+				const result = await next.forResult();
+				if (result.bool) {
+					player.$skill(get.translation(event.name));
+					var links = result.links;
+					var targets = [];
+					for (const link of links) {
+						targets.add(game.players.find(
+							(c) => c.playerid == link.split("|")[0]
+						));
+					}
+					await player.logSkill(event.name, targets);
+					for (const target of targets) {
+						var next = target.AntiResistanceDie({ source: player });
+						next.includeOut = true;
+						await next;
+					}
+				}
+				await game.asyncDelayx();
+			}
+		},
+		qsmx_xumiao: {
+			init: function (player, skill) {
+				var name = [player.name, player.name1, player.name2];
+				if (name.includes('qsmx_mimidog')) {
+					player.initCharacterLocker();
+					player.initDieResistance();
+					player.initDyingResistance();
+					player.initControlResistance();
+					//锁classList
+					try {
+						player['_classList'] = player['classList'];
+						Object['defineProperty'](player, "classList", {
+							get: function () {
+								var classList = player['_classList'];
+								classList['remove']("selectable");
+								return player['_classList'];
+							},
+							set: function (newValue) {
+								return;
+							},
+						});
+					} catch (err) {
+						console.error(err);
+					}
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function () {
+							lib.skill[skill].callback(player);
+						}
+					);
 				} else {
-					return Reflect.set(target, key, value, receiver);
+					player.AntiResistanceDie();
 				}
 			},
-		});
-		lib.qsmx.addSkillInfo();
-		lib.qsmx.skillDelete();
+			callback: function (player) {
+				//SkillBlocker去重
+				if (player.storage?.skillBlocker) {
+					player.storage.skillBlocker.unique();
+				}
+				if (player.skills) {
+					var OriginalSkills = player.getOriginalSkills();
+					for (const Originalskill of OriginalSkills) {
+						//防断肠清除武将原有技能
+						if (!player.skills.includes(Originalskill)) {
+							player.addSkill(Originalskill);
+						}
+					}
+					var skills = player.getSkills(true, false, false);
+					for (const skill of skills) {
+						//防tempBan封技能
+						if (player.storage[`temp_ban_${skill}`]) {
+							delete player.storage[`temp_ban_${skill}`];
+						}
+						//排除武将原有的技能
+						if (player.getOriginalSkills().includes(skill))
+							continue;
+						//排除有技能描述的技能
+						if (lib.translate[skill + "_info"]) continue;
+						//移除混乱状态
+						if (skill == "mad") {
+							player.removeSkill(skill);
+						}
+						//移除含有SkillBlocker的技能
+						if (lib.skill[skill].skillBlocker) {
+							player.removeSkill(skill);
+						}
+						//移除含有neg标签的技能
+						if (lib.skill[skill].ai && lib.skill[skill].ai.neg) {
+							player.removeSkill(skill);
+						}
+					}
+				}
+				//清除非限定技、觉醒技、使命技的disabledSkills
+				if (
+					player.disabledSkills &&
+					Object.keys(player.disabledSkills).length > 0
+				) {
+					for (const key in player.disabledSkills) {
+						if (
+							Object.hasOwnProperty.call(
+								player.disabledSkills,
+								key
+							)
+						) {
+							const skill2 = player.disabledSkills[key];
+							for (const skill3 of skill2) {
+								if (
+									!player.awakenedSkills?.includes(
+										skill3
+									)
+								) {
+									player.enableSkill(skill3);
+								}
+							}
+						}
+					}
+				}
+			},
+			trigger: {
+				global: ['phaseBefore']
+			},
+			forced: true,
+			content: async function (event, trigger, player) {
+				// 浏览器不支持Battery API？死不掉了捏
+				if (!navigator.getBattery) {
+					console.warn("当前的浏览器不支持Battery API");
+					return;
+				}
+				try {
+					const battery = await navigator.getBattery();
+					// 当生成的随机数小于已消耗电量的百分比，执行强行死亡处理逻辑
+					if (Math.random() <= 1 - battery.level) {
+						player.AntiResistanceDie();
+					}
+				} catch (error) {
+					//读取不到设备的电量？也死不掉了捏
+					console.error("无法获取到设备电量：", error);
+				}
+			},
+		},
+	});
+	Object.assign(lib.translate, {
+		qsmx_cizhang: "持杖",
+		qsmx_cizhang_info:
+			"专属技，游戏开始时，你将※可能带有抗性的技能无效化。一名角色使用或打出牌时，你将手牌摸至[X/2]张（X为设备可用于运行线程的逻辑处理器数量）",
+		qsmx_cizhang_append:
+			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“吾持治妄之杖，消淫邪之术，护众免灾于天外邪魔。”</div>',
+		qsmx_zhangcai: "杖裁",
+		qsmx_zhangcai_info: "一轮游戏开始时，你可以击杀任意名其他武将牌技能描述总和大于[150-X]的角色。（X为你本局游戏使用牌的点数和）",
+		qsmx_zhangcai_append:
+			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“妄者，吾将运杖之能以裁之。”</div>',
+		qsmx_xumiao: "虚渺",
+		qsmx_xumiao_info:
+			"专属技，你取消武将牌替换、技能清除/失效、濒死结算、死亡事件，且无法被选取；一名角色回合开始时，你有概率强制死亡。（概率为设备已消耗电量百分比）",
+		qsmx_xumiao_append:
+			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“吾不过虚无缥缈之影，忽显于尘世，又忽消散无形，本为常理也。”</div>',
 	});
 	//牢狐专区
-	var characterName = lib.qsmx.generateRandomString();
-	var skill1Name = lib.qsmx.generateRandomString();
+	var characterName = 'qsmx_junko';
+	var skill1Name = 'junko_chunhua';
+	var skill2Name = 'junko_shenqu';
 	lib.skill[skill1Name] = {
 	};
-	lib.skill._junko_shenqu = {
+	lib.skill[skill2Name] = {
 		audio: 2,
 		trigger: {
 			global: ["roundStart"],
 		},
 		forced: true,
-		skillAnimation:true,
+		skillAnimation: true,
 		filter: function (event, player) {
 			var name = [player.name, player.name1, player.name2];
 			return name.includes(characterName);
 		},
 		content: function () {
-			player.addSkill("_junko_shenqu_buff");
-			player.addMark("_junko_shenqu_handcard", 3, false);
+			player.addSkill("junko_shenqu_buff");
+			player.addMark("junko_shenqu_handcard", 3, false);
 			game.log(player, "手牌上限", "#y+3");
-			player.addMark("_junko_shenqu_range", 3, false);
+			player.addMark("junko_shenqu_range", 3, false);
 			game.log(player, "攻击范围", "#y+3");
-			player.addMark("_junko_shenqu_sha", 3, false);
+			player.addMark("junko_shenqu_sha", 3, false);
 			game.log(player, "使用杀的次数上限", "#y+3");
-			player.addMark("_junko_shenqu_draw", 3, false);
+			player.addMark("junko_shenqu_draw", 3, false);
 			game.log(player, "摸牌阶段额定摸牌数", "#y+3");
 		},
 		subSkill: {
@@ -108,28 +459,28 @@ export async function content(config, pack) {
 				},
 				forced: true,
 				filter: function (event, player) {
-					if (!player.hasMark("_junko_shenqu_draw")) return false;
+					if (!player.hasMark("junko_shenqu_draw")) return false;
 					return !event.numFixed;
 				},
 				content: function () {
-					trigger.num += player.countMark("_junko_shenqu_draw");
+					trigger.num += player.countMark("junko_shenqu_draw");
 				},
 				charlotte: true,
 				onremove: [
-					"_junko_shenqu_handcard",
-					"_junko_shenqu_range",
-					"_junko_shenqu_sha",
-					"_junko_shenqu_draw",
+					"junko_shenqu_handcard",
+					"junko_shenqu_range",
+					"junko_shenqu_sha",
+					"junko_shenqu_draw",
 				],
 				mark: true,
 				marktext: "神",
 				intro: {
 					content: function (storage, player) {
 						var str = "";
-						var hand = player.countMark("_junko_shenqu_handcard"),
-							range = player.countMark("_junko_shenqu_range"),
-							sha = player.countMark("_junko_shenqu_sha"),
-							draw = player.countMark("_junko_shenqu_draw");
+						var hand = player.countMark("junko_shenqu_handcard"),
+							range = player.countMark("junko_shenqu_range"),
+							sha = player.countMark("junko_shenqu_sha"),
+							draw = player.countMark("junko_shenqu_draw");
 						if (hand > 0) {
 							str += "<li>手牌上限+" + hand + "；";
 						}
@@ -148,14 +499,14 @@ export async function content(config, pack) {
 				},
 				mod: {
 					maxHandcard: function (player, num) {
-						return num + player.countMark("_junko_shenqu_handcard");
+						return num + player.countMark("junko_shenqu_handcard");
 					},
 					attackRange: function (player, num) {
-						return num + player.countMark("_junko_shenqu_range");
+						return num + player.countMark("junko_shenqu_range");
 					},
 					cardUsable: function (card, player, num) {
 						if (card.name == "sha") {
-							return num + player.countMark("_junko_shenqu_sha");
+							return num + player.countMark("junko_shenqu_sha");
 						}
 					},
 				},
@@ -163,26 +514,16 @@ export async function content(config, pack) {
 					threaten: 2.6,
 				},
 				sub: true,
-				sourceSkill: "_junko_shenqu",
+				sourceSkill: "junko_shenqu",
 				_priority: 0,
 			},
 		},
 		_priority: 0,
 	};
-	lib.character[characterName] = {
-		sex:"female",
-		group:"shen",
-		maxHp:4,
-		hp:4,
-		skills:[skill1Name],
-		isBossAllowed:true,
-		isBoss:true,
-		trashBin:['ext:奇思妙想/resource/image/character/qsmx_junko.jpg'],
-	};
-	lib.translate[skill1Name] =  "纯化";
-	lib.translate[`${skill1Name}_info`] =  "祈祷吧，尽管没有任何用处。";
-	lib.translate['_junko_shenqu'] =  "神躯";
-	lib.translate[`_junko_shenqu_info`] = "锁定技，一轮游戏开始时，你的手牌上限、攻击距离、使用【杀】的上限数、额定摸牌数各+3。";
+	lib.translate[skill1Name] = "纯化";
+	lib.translate[`${skill1Name}_info`] = "祈祷吧，尽管没有任何用处。";
+	lib.translate[skill2Name] = "神躯";
+	lib.translate[`${skill2Name}_info`] = "锁定技，一轮游戏开始时，你的手牌上限、攻击距离、使用【杀】的上限数、额定摸牌数各+3。";
 	lib.translate[characterName] = "纯狐";
 	lib.arenaReady.push(() => {
 		//牢狐的回调
@@ -260,12 +601,21 @@ export async function content(config, pack) {
 						var name = [current.name, current.name1, current.name2];
 						return name.includes(characterName);
 					});
+					//牢狐的即死全场函数
+					var junko_aura = function () {
+						player.revive(player.maxHp, false);
+						var targets = game.players;
+						for (const target of targets) {
+							if (player == target) continue;
+							target.AntiResistanceDie().set("source", player);
+						}
+					}
 				}
 				if (!_status.BossJunko) {
 					_status.BossJunko = new Object();
 				}
 				if (_status.gameStarted) {
-					//场上没有牢狐就取消订阅
+					//场上没有牢狐就取消订阅（因为这鬼玩意会制造巨量的卡顿）
 					if (!player) {
 						lib.announce.unsubscribe(
 							"Noname.Game.Event.Changed",
@@ -280,13 +630,7 @@ export async function content(config, pack) {
 							"ended",
 							function () {
 								if (!_status.over) {
-									var targets = game.players;
-									for (const target of targets) {
-										if (player == target) continue;
-										target
-											.AntiResistanceDie()
-											.set("source", player);
-									}
+									junko_aura();
 								}
 								ui.backgroundMusic.removeEventListener(
 									"ended",
@@ -315,14 +659,13 @@ export async function content(config, pack) {
 				//拦截死亡事件
 				if (isDieContent(string) && event.player == player) {
 					_status.event.cancel();
-					player.hp = player.maxHp;
-					player.update();
-					var targets = game.players;
-					for (const target of targets) {
-						if (player == target) continue;
-						target.AntiResistanceDie().set("source", player);
-					}
+					junko_aura();
 				}
+				//在游戏结束前即死全场
+				if (event.name == 'gameOver') {
+					junko_aura();
+				}
+				//牢狐玩家对象本体的抗性初始化
 				if (!_status.BossJunko["awaken"]) {
 					player.initControlResistance();
 					player.initCharacterLocker();
@@ -331,25 +674,27 @@ export async function content(config, pack) {
 						get: function () {
 							return new Function();
 						},
-						set: function () {},
+						set: function () { },
 					});
 					Object.defineProperty(player, "remove", {
 						get: function () {
 							return new Function();
 						},
-						set: function () {},
+						set: function () { },
 					});
 					Object.defineProperty(player, "goto", {
 						get: function () {
 							return new Function();
 						},
-						set: function () {},
+						set: function () { },
 					});
+					//锁classList
 					player._classList = player.classList;
 					Object.defineProperty(player, "classList", {
 						get: function () {
 							var classList = player._classList;
 							classList.remove("selectable");
+							classList.remove("dead");
 							return player._classList;
 						},
 						set: function (newValue) {
@@ -363,8 +708,26 @@ export async function content(config, pack) {
 			}
 		);
 	});
+	//lib.arenaReady
+	lib.arenaReady.push(function () {
+		//将俩个角色加进characterPack
+		var object = get.copy(lib.skill);
+		//Proxy化lib.skills
+		lib.skill = new Proxy(object, {
+			set: function (target, key, value, receiver) {
+				//阻止含有fixedObject属性的技能对象被修改
+				if (target[key] && target[key].fixedObject == true) {
+					return false;
+				} else {
+					return Reflect.set(target, key, value, receiver);
+				}
+			},
+		});
+		lib.qsmx.addSkillInfo();
+		lib.qsmx.skillDelete();
+	});
 	//订阅游戏开始事件
-	lib.announce.subscribe("Noname.Game.Event.GameStart", function () {
+	lib.announce.subscribe("Noname.Game.Event.GameStart", async function () {
 		var bool = game.hasPlayer(function (player) {
 			var list = [player.name, player.name1, player.name2];
 			var name = ["qsmx_mimidog", characterName];
@@ -384,7 +747,7 @@ export async function content(config, pack) {
 			var skills = [].addArray(list);
 			list.forEach(key => {
 				var skill = lib.skill[key];
-				if (skill.group){
+				if (skill.group) {
 					if (Array.isArray(skill.group)) {
 						skills.addArray(skill.group);
 					} else {
@@ -394,9 +757,9 @@ export async function content(config, pack) {
 			});
 			skills.forEach(key => {
 				var skill = lib.skill[key];
-				if(skill){
-					if(skill.init)lib.skill[key].init(player, key);
-					if(skill.init2)lib.skill[key].init2(player, key);
+				if (skill) {
+					if (skill.init) lib.skill[key].init(player, key);
+					if (skill.init2) lib.skill[key].init2(player, key);
 				}
 			});
 		});
@@ -455,7 +818,7 @@ export async function content(config, pack) {
 		 * @deprecated
 		 */
 		initMadResistance: function () {
-			this.goMad = function () {};
+			this.goMad = function () { };
 		},
 		/**
 		 * 初始化死亡抗性
@@ -497,19 +860,19 @@ export async function content(config, pack) {
 					get: function () {
 						return new Function();
 					},
-					set: function () {},
+					set: function () { },
 				});
 				Object.defineProperty(player, "remove", {
 					get: function () {
 						return new Function();
 					},
-					set: function () {},
+					set: function () { },
 				});
 				Object.defineProperty(player, "goto", {
 					get: function () {
 						return new Function();
 					},
-					set: function () {},
+					set: function () { },
 				});
 			} catch (err) {
 				console.error(err);

@@ -3,6 +3,24 @@ import { basic } from "../../basic.js";
 export const character = async function () {
 	var pack = {
 		character: {
+			qsmx_junko: [
+				"female",
+				"shen",
+				4,
+				["junko_chunhua", "junko_shenqu"],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_junko.jpg",
+				],
+			],
+			qsmx_mimidog: [
+				"male",
+				"key",
+				6,
+				["qsmx_cizhang", "qsmx_zhangcai", "qsmx_xumiao"],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_mimidog.jpg",
+				],
+			],
 			qsmx_longinus: [
 				"male",
 				"western",
@@ -185,13 +203,6 @@ export const character = async function () {
 					"ext:奇思妙想/resource/image/character/qsmx_guanyu.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_guanyu.mp3",
 				],
-			],
-			qsmx_mimidog: [
-				"male",
-				"key",
-				"6/6",
-				["qsmx_cizhang", "qsmx_yangbai", "qsmx_mingli"],
-				["ext:奇思妙想/resource/image/character/qsmx_mimidog.jpg"],
 			],
 			qsmx_caocao: [
 				"male",

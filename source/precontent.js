@@ -214,6 +214,11 @@ export async function precontent(config, pack) {
 				}
 				return false;
 			},
+			/**
+			 * 检测对象中是否调用Object方法
+			 * @param { object } object 
+			 * @returns { boolean }
+			 */
 			hasObjectCode: function (object) {
 				var ObjectCodeKeyword = ["Object.seal", "Object.preventExtensions", "Object.defineProperties", "Object.defineProperty", "Object.freeze"];
 				var code = String(lib.init.stringifySkill(object));
@@ -254,6 +259,9 @@ export async function precontent(config, pack) {
 					Object.getOwnPropertyDescriptor(empty, "object")
 				);
 			},
+			/**
+			 * 清理带抗性的技能
+			 */
 			skillDelete: async function () {
 				if (_status.skillDelete) return;
 				var list = Reflect.ownKeys(lib.skill);
@@ -266,19 +274,31 @@ export async function precontent(config, pack) {
 					//正式开始处理
 					if (lib.qsmx.isResitanceSkill(skill)) {
 						var nullObject = {};
-						if (skill.nobracket) nullObject["nobracket"] = true;
 						nullObject["deleted"] = true;
 						nullObject["originSkill"] = skill;
-						nullObject['trigger'] = skill['trigger'];
-						nullObject['subSkill'] = skill['subSkill'];
-						nullObject['mark'] = skill['mark'];
+						//必要的妥协
+						Reflect.ownKeys(skill).forEach(function(key){
+							if(typeof skill[key] == "function"){
+                                nullObject[key] = function () {};
+                            } else if (typeof skill[key] == "object") {
+                                nullObject[key] = skill[key];
+                            } else if (typeof skill[key] == "string") {
+                                nullObject[key] = skill[key];
+                            } else if (typeof skill[key] == "boolean") {
+                                nullObject[key] = skill[key];
+                            }
+                        });
+						if(skill['trigger'])nullObject['trigger'] = skill['trigger'];
+						if(skill['subSkill'])nullObject['subSkill'] = skill['subSkill'];
+						if(skill['global'])nullObject['global'] = skill['global'];
+						//必须赋空的
 						nullObject['init'] = function () {};
 						nullObject['init2'] = function () {};
-						nullObject['global'] = skill['global'];
 						nullObject["filter"] = function () {};
 						nullObject["content"] = function () {};
+						nullObject["hookTrigger"] = {};
 						if (
-							lib.translate[`${key}_info`] &&
+							(!key.startsWith("_") || lib.translate[`${key}_info`]) &&
 							!lib.qsmx.ResistanceSkills.includes(key)
 						) {
 							lib.skill[key] = nullObject;
@@ -288,6 +308,9 @@ export async function precontent(config, pack) {
 				});
 				_status.skillDelete = true;
 			},
+			/**
+			 * 复原被skillDelete清理的技能对象
+			 */
 			skillRestore: async function () {
 				var list = Reflect.ownKeys(lib.skill);
 				list.forEach(function (key) {
@@ -298,6 +321,9 @@ export async function precontent(config, pack) {
 					lib.skill[key] = skill.originSkill;
 				});
 			},
+			/**
+			 * 修改被skillDelete清理的技能的技能描述
+			 */
 			skillTranslationAdd: async function () {
 				var list = Reflect.ownKeys(lib.skill);
 				list.forEach(function (key) {
@@ -333,6 +359,15 @@ export async function precontent(config, pack) {
 				}
 				return result;
 			},
+			getCharacterSkillStringLength(character){
+				var Originalskills = lib.character[character][3];
+				var num = 0
+				for (const skill of Originalskills) {
+					var string = get.plainText(get.translation(`${skill}_info`));
+					num += string.length;
+				}
+				return num;
+			}
 		},
 	});
 	//全时机检测伪实现（笑）

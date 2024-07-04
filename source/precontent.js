@@ -367,6 +367,17 @@ export async function precontent(config, pack) {
 					num += string.length;
 				}
 				return num;
+			},
+			getTestArray(num = 250){
+				var list = [];
+				var character = Reflect.ownKeys(lib.character);
+				for (const key of character) {
+					if(key.startsWith('qsmx'))continue;
+					if (lib.qsmx.getCharacterSkillStringLength(key) >= num) {
+						list.push(get.plainText(get.translation(key)));
+					}
+				}
+				return list;
 			}
 		},
 	});

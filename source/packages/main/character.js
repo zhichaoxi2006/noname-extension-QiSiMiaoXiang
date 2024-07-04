@@ -15,10 +15,11 @@ export const character = async function () {
 			qsmx_mimidog: [
 				"male",
 				"key",
-				6,
-				["qsmx_cizhang", "qsmx_zhangcai", "qsmx_xumiao"],
+				'6/6/0',
+				["qsmx_cizhang", "qsmx_zhangming", "qsmx_zhangcai", "qsmx_xumiao"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_mimidog.jpg",
+					"InitFilter:noZhuHp",
 				],
 			],
 			qsmx_longinus: [

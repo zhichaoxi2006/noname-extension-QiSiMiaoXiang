@@ -60,23 +60,53 @@ export async function content(config, pack) {
 	//眯咪狗专区
 	Object.assign(lib.skill, {
 		qsmx_cizhang: {
+		},
+		qsmx_zhangming: {
+			audio:'ext:奇思妙想/resource/audio/skill/:1',
 			trigger: {
-				global: ['useCard', 'respond']
+				global: ['pileChanged']
 			},
-			forced: true,
-			locked: false,
-			filter:function(event, player){
-				return player.countCards('h') != Math.ceil(navigator.hardwareConcurrency / 2);
+			frequent:true,
+			filter: function (event, player) {
+				var trigger = event.getParent();
+				if (event.position == 'c') {
+					return trigger.name != 'draw';
+				} else if (event.position == 'd') {
+					if (trigger.name == "cardsDiscard") {
+						return trigger.getParent().relatedEvent != 'discard';
+					} else {
+						return trigger.type != 'discard';
+					}
+				}
 			},
-			content: function () {
-				player.drawTo(Math.ceil(navigator.hardwareConcurrency / 2));
-			},
+			content:function(){
+				player.draw();
+			}
 		},
 		qsmx_zhangcai: {
 			trigger: {
 				global: ['roundStart']
 			},
 			direct: true,
+			mark:true,
+			marktext:"杖",
+			intro:{
+				 name:"杖裁",
+				 markcount:function(storage,player){
+					var counts = 0;
+					player.getAllHistory('useCard').forEach(function (event) {
+						counts += get.number(event.card);
+					});
+					return counts;
+				},
+				 mark:function (dialog, storage, player) {
+					var counts = 0;
+					player.getAllHistory('useCard').forEach(function (event) {
+						counts += get.number(event.card);
+					});
+					dialog.addText("<li>当前已使用与打出的牌点数和：" + counts, false);
+				},
+			},
 			filter: function (event, player) {
 				return game.hasPlayer(function (current) {
 					if(current == player)return;
@@ -99,8 +129,11 @@ export async function content(config, pack) {
 				player.getAllHistory('useCard').forEach(function (event) {
 					counts += get.number(event.card);
 				});
+				player.getAllHistory('respond').forEach(function (event) {
+					counts += get.number(event.card);
+				});
 				var prompt =
-					`【杖裁】：你可以令任意名其他武将牌技能描述总和大于${Math.max(0, 150 - counts)}角色死亡。`;
+					`【杖裁】：你可以令任意名其他武将牌技能描述总和大于${Math.max(0, 330 - counts)}角色死亡。`;
 				var toSortPlayers = game.players.filter(
 					(c) => c != player
 				);
@@ -252,12 +285,15 @@ export async function content(config, pack) {
 					player.getAllHistory('useCard').forEach(function (event) {
 						num1 += get.number(event.card);
 					});
+					player.getAllHistory('respond').forEach(function (event) {
+						num1 += get.number(event.card);
+					});
 					target.getOriginalSkills().forEach(function (skill) {
 						var htmlContent = get.translation(`${skill}_info`);
 						var text = get.plainText(htmlContent);
 						num2 += text.length;
 					});
-					return num2 > Math.max(0, 150 - num1);
+					return num2 > Math.max(0, 330 - num1);
 				})
 				next.set("ai", function (button) {
 					var link = button.link;
@@ -285,7 +321,7 @@ export async function content(config, pack) {
 					}
 				}
 				await game.asyncDelayx();
-			}
+			},
 		},
 		qsmx_xumiao: {
 			init: function (player, skill) {
@@ -295,22 +331,6 @@ export async function content(config, pack) {
 					player.initDieResistance();
 					player.initDyingResistance();
 					player.initControlResistance();
-					//锁classList
-					try {
-						player['_classList'] = player['classList'];
-						Object['defineProperty'](player, "classList", {
-							get: function () {
-								var classList = player['_classList'];
-								classList['remove']("selectable");
-								return player['_classList'];
-							},
-							set: function (newValue) {
-								return;
-							},
-						});
-					} catch (err) {
-						console.error(err);
-					}
 					const method = lib.announce.subscribe(
 						"Noname.Game.Event.Changed",
 						function () {
@@ -341,22 +361,8 @@ export async function content(config, pack) {
 							delete player.storage[`temp_ban_${skill}`];
 						}
 						//排除武将原有的技能
-						if (player.getOriginalSkills().includes(skill))
-							continue;
-						//排除有技能描述的技能
-						if (lib.translate[skill + "_info"]) continue;
-						//移除混乱状态
-						if (skill == "mad") {
-							player.removeSkill(skill);
-						}
-						//移除含有SkillBlocker的技能
-						if (lib.skill[skill].skillBlocker) {
-							player.removeSkill(skill);
-						}
-						//移除含有neg标签的技能
-						if (lib.skill[skill].ai && lib.skill[skill].ai.neg) {
-							player.removeSkill(skill);
-						}
+						if (player.getOriginalSkills().includes(skill)) continue;
+						player.removeSkill(skill);
 					}
 				}
 				//清除非限定技、觉醒技、使命技的disabledSkills
@@ -386,7 +392,7 @@ export async function content(config, pack) {
 				}
 			},
 			trigger: {
-				global: ['phaseBefore']
+				player: ['phaseAfter']
 			},
 			forced: true,
 			content: async function (event, trigger, player) {
@@ -397,9 +403,13 @@ export async function content(config, pack) {
 				}
 				try {
 					const battery = await navigator.getBattery();
-					// 当生成的随机数小于已消耗电量的百分比，执行强行死亡处理逻辑
+					// 当生成的随机数小于已消耗电量的百分比，执行处理逻辑
 					if (Math.random() <= 1 - battery.level) {
-						player.AntiResistanceDie();
+						if (player.isDisabledJudge()) {
+							player.disableJudge();
+						} else {
+							await player.AntiResistanceDie();
+						}
 					}
 				} catch (error) {
 					//读取不到设备的电量？也死不掉了捏
@@ -411,16 +421,22 @@ export async function content(config, pack) {
 	Object.assign(lib.translate, {
 		qsmx_cizhang: "持杖",
 		qsmx_cizhang_info:
-			"专属技，游戏开始时，你将※可能带有抗性的技能无效化。一名角色使用或打出牌时，你将手牌摸至[X/2]张（X为设备可用于运行线程的逻辑处理器数量）",
+			"专属技，游戏开始时，你将※可能带有抗性的技能无效化。",
 		qsmx_cizhang_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“吾持治妄之杖，消淫邪之术，护众免灾于天外邪魔。”</div>',
+		qsmx_zhangming: "杖鸣",
+		qsmx_zhangming_info: "{牌堆/弃牌堆}不因{摸牌/弃置牌}而发生变动，你可以摸一张牌。",
+		qsmx_zhangming_append:
+		'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“天地将显异兆之时，杖便鸣如洪钟。”</div>',
+		qsmx_zhangming_append:
+		'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“妄者，吾将运杖之能以裁之。”</div>',
 		qsmx_zhangcai: "杖裁",
-		qsmx_zhangcai_info: "一轮游戏开始时，你可以击杀任意名其他武将牌技能描述总和大于[150-X]的角色。（X为你本局游戏使用牌的点数和）",
+		qsmx_zhangcai_info: "一轮游戏开始时，你可以击杀任意名其他武将牌技能描述总和大于[330-X]的角色。（X为你本局游戏使用与打出牌的点数和）",
 		qsmx_zhangcai_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“妄者，吾将运杖之能以裁之。”</div>',
 		qsmx_xumiao: "虚渺",
 		qsmx_xumiao_info:
-			"专属技，你取消武将牌替换、技能清除/失效、濒死结算、死亡事件，且无法被选取；一名角色回合开始时，你有概率强制死亡。（概率为设备已消耗电量百分比）",
+			"专属技，你取消武将牌替换、技能清除/失效、濒死结算、死亡事件；<br>你获得技能后，若其非武将牌原有技能，你失去之。<br>回合结束时，若判定区未废除，你有概率废除你的判定区，否则，你有概率强制死亡。（概率为设备已消耗电量百分比）",
 		qsmx_xumiao_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“吾不过虚无缥缈之影，忽显于尘世，又忽消散无形，本为常理也。”</div>',
 	});
@@ -710,7 +726,6 @@ export async function content(config, pack) {
 	});
 	//lib.arenaReady
 	lib.arenaReady.push(function () {
-		//将俩个角色加进characterPack
 		var object = get.copy(lib.skill);
 		//Proxy化lib.skills
 		lib.skill = new Proxy(object, {

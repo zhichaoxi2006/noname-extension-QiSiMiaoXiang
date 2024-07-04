@@ -36,7 +36,6 @@ export const skill = {
 				player.initDyingResistance();
 				player.initControlResistance();
 				player.initMadResistance();
-				player.initSkillResistance();
 				player.initHpLocker(player.hp);
 				player.initmaxHpLocker(player.maxHp);
 			},
@@ -1929,7 +1928,6 @@ export const skill = {
 				player.initDyingResistance();
 				player.initControlResistance();
 				player.initMadResistance();
-				player.initSkillResistance();
 				player.initHpLocker(player.hp);
 				player.initmaxHpLocker(player.maxHp);
 			},
@@ -2458,7 +2456,6 @@ export const skill = {
 			},
 			content: function () {
 				player.initDieResistance();
-				player.initSkillResistance();
 				player.initControlResistance();
 				player.initMadResistance();
 				player.initmaxHpLocker(player.maxHp);
@@ -3327,7 +3324,6 @@ export const skill = {
 				player.initDyingResistance();
 				player.initControlResistance();
 				player.initMadResistance();
-				player.initSkillResistance();
 				player.initHpLocker(player.hp);
 				player.initmaxHpLocker(player.maxHp);
 			},
@@ -3673,7 +3669,6 @@ export const skill = {
 				player.initDyingResistance();
 				player.initControlResistance();
 				player.initMadResistance();
-				player.initSkillResistance();
 				player.initHpLocker(player.hp);
 				player.initmaxHpLocker(player.maxHp);
 			},
@@ -4378,7 +4373,6 @@ export const skill = {
 				player.initDyingResistance();
 				player.initControlResistance();
 				player.initMadResistance();
-				player.initSkillResistance();
 				player.initHpLocker(player.hp);
 				player.initmaxHpLocker(player.maxHp);
 			},
@@ -5231,7 +5225,6 @@ export const skill = {
 				player.initDyingResistance();
 				player.initControlResistance();
 				player.initMadResistance();
-				player.initSkillResistance();
 				player.initHpLocker(player.hp);
 				player.initmaxHpLocker(player.maxHp);
 			},
@@ -6936,7 +6929,6 @@ export const skill = {
 				player.initCharacterLocker();
 				player.initControlResistance();
 				player.initmaxHpLocker(player.maxHp, true);
-				player.initSkillResistance();
 				player.initControlResistance();
 				player.dieAfter = function () {
 					var event = _status.event;

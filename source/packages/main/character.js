@@ -116,6 +116,17 @@ export const character = async function () {
 					"die:ext:奇思妙想/resource/audio/die/qsmx_sunce.mp3",
 				],
 			],
+			qsmx_liubei: [
+				"male",
+				"qun",
+				"4/4",
+				[],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_liubei.jpg",
+					"die:ext:奇思妙想/resource/audio/die/qsmx_liubei.mp3",
+					"unseen"
+				],
+			],
 			qsmx_cailun: [
 				"male",
 				"qun",
@@ -280,6 +291,16 @@ export const character = async function () {
 					"hiddenSkill",
 				],
 			],
+			qsmx_simayi: [
+				"male",
+				"wei",
+				"3/3",
+				["qsmx_renshi", "qsmx_quanbian"],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_simayi.jpg",
+					"zhu",
+				],
+			],
 			qsmx_zhangxianzhong: [
 				"male",
 				"key",
@@ -418,6 +439,8 @@ export const character = async function () {
 					"qsmx_hw_sunquan",
 				],
 				qmsx_diy: [
+					"qsmx_liubei",
+					"qsmx_simayi",
 					"qsmx_sp_zhangliao",
 					"qsmx_machao",
 					"qsmx_zhangliang",
@@ -464,6 +487,8 @@ export const character = async function () {
 			qsmx_zhangjiao: "妙张角",
 			qsmx_sp_zhangliao: "SP妙张辽",
 			qsmx_caorui: "妙曹叡",
+			qsmx_liubei: "妙刘备",
+			qsmx_simayi: "妙司马懿",
 			qsmx_puyuan: "妙蒲元",
 			qsmx_sunjian: "妙孙坚",
 			qsmx_zhangliao: "妙张辽",

@@ -141,13 +141,6 @@ export async function card() {
 							get.equipResult(player, target, card.name),
 					},
 				},
-				onEquip: function () {
-					if (player.countEmptySlot("equip5") <= 0)
-						player.expandEquip("equip5");
-				},
-				onLose: function (card) {
-					player.equip(card);
-				},
 				enable: true,
 				selectTarget: -1,
 				filterTarget: (card, player, target) =>

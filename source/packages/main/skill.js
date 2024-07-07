@@ -9652,8 +9652,56 @@ export const skill = {
 				);
 			},
 		},
+		qsmx_renshi: {
+			trigger: {
+				global: ['roundStart']
+			},
+			forced:true,
+			derivation:["qsmx_jianxiong","qsmx_fangzhu", "qsmx_huituo"],
+			content:async function(event, trigger, player){
+				await player.draw(Math.min(game.roundNumber, 7));
+				var list = lib.skill['qsmx_renshi'].derivation.slice();
+				list = list.removeArray(player.getSkills());
+				if (list.length) {
+					var next = player.chooseControl(list);
+					next.set("ai", function () {
+						var controls = _status.event.controls;
+						if (controls.includes("qsmx_huituo")) return "qsmx_huituo";
+						return controls[0];
+					});
+					var result = await next.forResult();
+					player.addSkills(result.control);
+				}
+			}
+		},
+		qsmx_quanbian: {
+			audio:2,
+			audioname:["re_sunyi"],
+			inherit:"hunzi",
+			content:function () {
+				player.awakenSkill(event.name);
+				player.gainMaxHp();
+				player.addSkills(["huanyuyanmiezhu"]);
+			},
+			skillAnimation:true,
+			animationColor:"thunder",
+			juexingji:true,
+			derivation:["huanyuyanmiezhu"],
+			unique:true,
+			trigger:{
+				player:"phaseZhunbeiBegin",
+			},
+			filter:function(event, player) {
+				return player.hasSkill('qsmx_jianxiong') && player.hasSkill('qsmx_fangzhu') && player.hasSkill('qsmx_huituo') && !player.storage.qsmx_quanbian;
+			},
+			forced:true,
+		}
 	},
 	translate: {
+		qsmx_quanbian: "权变",
+		qsmx_quanbian_info: "觉醒技，准备阶段，若你拥有“妙奸雄”、“妙放逐”、“妙恢拓”，你增加一点体力上限并获得【寰宇湮灭珠】的装备技能。",
+		qsmx_renshi: "忍时",
+		qsmx_renshi_info: "锁定技，一轮游戏开始时，你摸X张牌并获得“妙奸雄”、“妙放逐”、“妙恢拓”其中的一个技能。（X为游戏轮数，至多为7）",
 		qsmx_zhouji: "肘击",
 		qsmx_zhouji_info:
 			"出牌阶段，你可以失去一点体力视为对一名角色使用一张【决斗】(你死亡后仍然结算)。",
@@ -9771,7 +9819,7 @@ export const skill = {
 		_annihailate_damage: "湮灭",
 		huanyuyanmiezhu: "寰宇湮灭珠",
 		huanyuyanmiezhu_info:
-			"锁定技，你即将造成的伤害视为湮灭伤害。<br>·此牌进入你的装备区时，若你的空余装备栏不大于0，你获得一个扩展宝物栏。<br>·此牌离开你的装备区时，你装备之。",
+			"锁定技，你即将造成的伤害视为湮灭伤害。",
 		qsmx_taoyin: "韬隐",
 		qsmx_taoyin_info:
 			"隐匿技，当你登场后，若当前回合角色存在且不为你，你可以视为对当前回合角色使用一张【杀】。",

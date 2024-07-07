@@ -10,6 +10,8 @@ export const character = async function () {
 				["junko_chunhua", "junko_shenqu"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_junko.jpg",
+					"bossallow",
+					"boss",
 				],
 			],
 			qsmx_mimidog: [

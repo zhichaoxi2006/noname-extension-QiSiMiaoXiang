@@ -60,6 +60,35 @@ export async function content(config, pack) {
 	//眯咪狗专区
 	Object.assign(lib.skill, {
 		qsmx_cizhang: {
+			audio:2,
+			group:["qsmx_cizhang_mark"],
+			mod:{
+				cardnumber:function(card) {
+					if (card.hasGaintag("qsmx_cizhang_mark")) return Math.min(13, navigator.hardwareConcurrency);
+				},
+			},
+			subSkill:{
+				mark:{
+					trigger:{
+						player:"gainBegin",
+					},
+					forced:true,
+					popup:false,
+					silent:true,
+					lastDo:true,
+					filter:function (event, player) {
+						var evt = event.getParent("phaseDraw");
+						if (evt && evt.name == "phaseDraw") return false;
+						return true;
+					},
+					content:function () {
+						trigger.gaintag.add("qsmx_cizhang_mark");
+					},
+					sub:true,
+					"_priority":1,
+				},
+			},
+			"_priority":0,
 		},
 		qsmx_zhangming: {
 			audio:'ext:奇思妙想/resource/audio/skill/:1',
@@ -74,18 +103,20 @@ export async function content(config, pack) {
 				} else if (event.position == 'd') {
 					if (trigger.name == "cardsDiscard") {
 						return trigger.getParent().relatedEvent != 'discard';
-					} else {
+					} else if (['lose', 'loseAsync'].includes(trigger.name)){
 						return trigger.type != 'discard';
 					}
 				}
 			},
-			content:function(){
-				player.draw();
+			content:async function(event, trigger, player){
+				await player.draw();
+				game.vibrate();
 			}
 		},
 		qsmx_zhangcai: {
 			trigger: {
-				global: ['roundStart']
+				global: ['roundStart'],
+				player: ['damageEnd']
 			},
 			direct: true,
 			mark:true,
@@ -109,18 +140,21 @@ export async function content(config, pack) {
 			},
 			filter: function (event, player) {
 				return game.hasPlayer(function (current) {
-					if(current == player)return;
+					if(current == player) return false;
 					var num1 = 0;
 					var num2 = 0;
 					player.getAllHistory('useCard').forEach(function (event) {
 						num1 += get.number(event.card);
 					});
+					player.getAllHistory('respond').forEach(function (event) {
+						num1 += get.number(event.card);
+					});
 					current.getOriginalSkills().forEach(function (skill) {
-						var htmlContent = get.translation(skill);
+						var htmlContent = get.translation(`${skill}_info`);
 						var text = get.plainText(htmlContent);
 						num2 += text.length;
 					});
-					return num2 < num1;
+					return num2 > Math.max(0, 330 - num1);
 				})
 			},
 			content: async function (event, trigger, player) {
@@ -319,8 +353,18 @@ export async function content(config, pack) {
 						next.includeOut = true;
 						await next;
 					}
+					player.turnOver(true);
 				}
 				await game.asyncDelayx();
+			},
+			ai:{
+				"maixie_defend":true,
+				effect:{
+					target:function(card, player, target) {
+						if (player.hasSkillTag("jueqing", false, target)) return [1, -1];
+						return [-1, 1];
+					},
+				},
 			},
 		},
 		qsmx_xumiao: {
@@ -362,6 +406,8 @@ export async function content(config, pack) {
 						}
 						//排除武将原有的技能
 						if (player.getOriginalSkills().includes(skill)) continue;
+						var excludedSkills = ['jiu'];
+						if(excludedSkills.includes(skill)) continue;
 						player.removeSkill(skill);
 					}
 				}
@@ -403,8 +449,12 @@ export async function content(config, pack) {
 				}
 				try {
 					const battery = await navigator.getBattery();
-					// 当生成的随机数小于已消耗电量的百分比，执行处理逻辑
-					if (Math.random() <= 1 - battery.level) {
+					var bool = Math.random() <= 1 - battery.level;
+					// 幸运星模式开了？也死不掉了捏
+					if (get.isLuckyStar(player)) {
+						bool = false;
+					}
+					if (bool) {
 						if (player.isDisabledJudge()) {
 							player.disableJudge();
 						} else {
@@ -412,7 +462,7 @@ export async function content(config, pack) {
 						}
 					}
 				} catch (error) {
-					//读取不到设备的电量？也死不掉了捏
+					//读取不到设备的电量？又死不掉了捏
 					console.error("无法获取到设备电量：", error);
 				}
 			},
@@ -421,17 +471,17 @@ export async function content(config, pack) {
 	Object.assign(lib.translate, {
 		qsmx_cizhang: "持杖",
 		qsmx_cizhang_info:
-			"专属技，游戏开始时，你将※可能带有抗性的技能无效化。",
+			"专属技，游戏开始时，你将※可能带有抗性的技能无效化。你在你的摸牌阶段外获得的牌点数视为X（X为当前设备可用于运行线程的逻辑处理器数量，且至多为13）",
 		qsmx_cizhang_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“吾持治妄之杖，消淫邪之术，护众免灾于天外邪魔。”</div>',
 		qsmx_zhangming: "杖鸣",
-		qsmx_zhangming_info: "{牌堆/弃牌堆}不因{摸牌/弃置牌}而发生变动，你可以摸一张牌。",
+		qsmx_zhangming_info: "{牌堆/弃牌堆}不因{摸牌/弃置牌}而发生变动，你可以摸一张牌并振动0.5秒。",
 		qsmx_zhangming_append:
 		'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“天地将显异兆之时，杖便鸣如洪钟。”</div>',
 		qsmx_zhangming_append:
 		'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“妄者，吾将运杖之能以裁之。”</div>',
 		qsmx_zhangcai: "杖裁",
-		qsmx_zhangcai_info: "一轮游戏开始时，你可以击杀任意名其他武将牌技能描述总和大于[330-X]的角色。（X为你本局游戏使用与打出牌的点数和）",
+		qsmx_zhangcai_info: "一轮游戏开始时，或你受到伤害后，你可以击杀任意名其他武将牌技能描述总和大于[330-X]的角色，若如此做，你将武将牌翻至背面。（X为你本局游戏使用与打出牌的点数和）",
 		qsmx_zhangcai_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“妄者，吾将运杖之能以裁之。”</div>',
 		qsmx_xumiao: "虚渺",

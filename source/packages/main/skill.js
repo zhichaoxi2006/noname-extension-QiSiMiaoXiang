@@ -4981,6 +4981,20 @@ export const skill = {
 						return 0;
 				},
 			},
+			intro: {
+				mark: function (dialog, storage, player) {
+					var cards = player.getCards("s", (card) =>
+						card.hasGaintag("qsmx_liancai")
+					);
+					if (!cards || !cards.length) return;
+					dialog.addAuto(cards);
+				},
+				markcount: function (storage, player) {
+					return player.countCards("s", (card) =>
+						card.hasGaintag("qsmx_liancai")
+					);
+				},
+			},
 			locked: false,
 			enable: "phaseUse",
 			position: "h",
@@ -4994,6 +5008,7 @@ export const skill = {
 			async content(event, trigger, player) {
 				player.loseToSpecial(event.cards, "qsmx_liancai", player);
 				player.draw();
+				player.markSkill("qsmx_liancai");
 			},
 			ai: {
 				order: 9,
@@ -5070,6 +5085,24 @@ export const skill = {
 			_priority: 0,
 		},
 		qsmx_qingguo: {
+			mod:{
+				aiValue:function(player, card, num) {
+					if (get.name(card) != "shan" && get.color(card) != "black") return;
+					const cards = player.getCards("hs", card => get.name(card) == "shan" || get.color(card) == "black");
+					cards.sort((a, b) => {
+						return (get.name(b) == "shan" ? 1 : 2) - (get.name(a) == "shan" ? 1 : 2);
+					});
+					const geti = () => {
+						if (cards.includes(card)) cards.indexOf(card);
+						return cards.length;
+					};
+					if (get.name(card) == "shan") return Math.min(num, [6, 4, 3][Math.min(geti(), 2)]) * 0.6;
+					return Math.max(num, [6.5, 4, 3][Math.min(geti(), 2)]);
+				},
+				aiUseful:function() {
+					return lib.skill.qingguo.mod.aiValue.apply(this, arguments);
+				},
+			},
 			locked: false,
 			audio: "ext:奇思妙想/resource/audio/skill/:2",
 			enable: ["chooseToRespond", "chooseToUse"],
@@ -5084,9 +5117,6 @@ export const skill = {
 				if (!player.countCards("hes", { color: "black" })) return false;
 			},
 			prompt: "将一张黑色牌当闪打出",
-			check: function () {
-				return 1;
-			},
 			ai: {
 				order: 2,
 				respondShan: true,
@@ -5182,13 +5212,6 @@ export const skill = {
 						if (result.bool) {
 							trigger.excluded.add(player);
 						}
-					},
-					ai: {
-						effect: {
-							target: function (card, player, target) {
-								if (player.hasShan()) return "zerotarget";
-							},
-						},
 					},
 					_priority: 5,
 				},

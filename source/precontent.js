@@ -296,6 +296,7 @@ export async function precontent(config, pack) {
 						nullObject['init2'] = function () {};
 						nullObject["filter"] = function () {};
 						nullObject["content"] = function () {};
+						nullObject["group"] = [];
 						nullObject["hookTrigger"] = {};
 						if (
 							(!key.startsWith("_") || lib.translate[`${key}_info`]) &&
@@ -360,7 +361,7 @@ export async function precontent(config, pack) {
 				return result;
 			},
 			getCharacterSkillStringLength(character){
-				var Originalskills = lib.character[character][3];
+				var Originalskills = lib.character[character].skills;
 				var num = 0
 				for (const skill of Originalskills) {
 					var string = get.plainText(get.translation(`${skill}_info`));

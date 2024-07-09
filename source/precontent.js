@@ -159,14 +159,14 @@ export async function precontent(config, pack) {
 			 * @returns { boolean }
 			 */
 			isResitanceSkill: function (object) {
-				if (
-					lib.qsmx.hasEncryptedCode(object) ||
+				var list = lib.qsmx.hasSomeCode(object);
+				if(list[2])return false;
+				return (
 					lib.qsmx.isTooMuchSkillTag(object) ||
 					lib.qsmx.isDefined(object) ||
-					lib.qsmx.hasObjectCode(object)
-				) {
-					return true;
-				}
+					list[0] ||
+					list[1]
+				)
 			},
 			/**
 			 * 检测对象的特定属性是否被定义
@@ -197,19 +197,14 @@ export async function precontent(config, pack) {
 				return false;
 			},
 			/**
-			 * 检测对象中是否含有加密代码
-			 * @param { object } object
+			 * 检测字符串中是否含有加密代码
+			 * @param { string } str
 			 * @returns { boolean }
 			 */
-			hasEncryptedCode: function (object) {
+			hasEncryptedCode: function (str) {
 				var EncryptedCodeKeyword = ["var _0x", "_0x"];
-				var code = String(lib.init.stringifySkill(object));
-				for (
-					let index = 0;
-					index < EncryptedCodeKeyword.length;
-					index++
-				) {
-					const keyword = EncryptedCodeKeyword[index];
+				var code = str;
+				for (const keyword of EncryptedCodeKeyword) {
 					if (code.includes(keyword)) {
 						return true;
 					}
@@ -217,24 +212,33 @@ export async function precontent(config, pack) {
 				return false;
 			},
 			/**
-			 * 检测对象中是否调用Object方法
-			 * @param { object } object 
+			 * 检测字符串中是否调用Object方法
+			 * @param { string } str 
 			 * @returns { boolean }
 			 */
-			hasObjectCode: function (object) {
+			hasObjectCode: function (str) {
 				var ObjectCodeKeyword = ["Object.seal", "Object.preventExtensions", "Object.defineProperties", "Object.defineProperty", "Object.freeze"];
-				var code = String(lib.init.stringifySkill(object));
-				for (
-					let index = 0;
-					index < ObjectCodeKeyword.length;
-					index++
-				) {
-					const keyword = ObjectCodeKeyword[index];
+				var code = str;
+				for (const keyword of ObjectCodeKeyword) {
 					if (code.includes(keyword)) {
 						return true;
 					}
 				}
 				return false;
+			},
+			hasChangeBossCode: function(str) {
+				var ChangeBossCodeKeyword = ["game.changeBoss"];
+				var code = str;
+				for (const keyword of ChangeBossCodeKeyword) {
+					if (code.includes(keyword)) {
+						return true;
+					}
+				}
+				return false;
+			},
+			hasSomeCode: function (object) {
+				var code = String(lib.init.stringifySkill(object));
+				return [lib.qsmx.hasEncryptedCode(code), lib.qsmx.hasObjectCode(code), lib.qsmx.hasChangeBossCode(code)];
 			},
 			/**
 			 * 检测对象中是否存在描述器
@@ -270,7 +274,9 @@ export async function precontent(config, pack) {
 				list.forEach(function (key) {
 					const skill = lib.skill[key];
 					//排除例外
-					if (!skill || lib.qsmx.excludeSkills.includes(key)) {
+					if (!skill || 
+						lib.qsmx.excludeSkills.includes(key)
+					) {
 						return;
 					}
 					//正式开始处理
@@ -321,7 +327,10 @@ export async function precontent(config, pack) {
 					if (!skill || !skill.originSkill) {
 						return;
 					}
-					lib.skill[key] = skill.originSkill;
+					var obj = {};
+					Object.assign(obj, skill.originSkill)
+					obj['resistanceSkill'] = true;
+					lib.skill[key] = obj;
 				});
 			},
 			/**
@@ -335,6 +344,9 @@ export async function precontent(config, pack) {
 						return;
 					}
 					try {
+						if (!lib.translate[
+							`${key}_info`
+						])return;
 						lib.translate[
 							`${key}_info`
 						] = `<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>${

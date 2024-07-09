@@ -222,7 +222,7 @@ export const character = async function () {
 				"male",
 				"wei",
 				"4/4",
-				["qsmx_jianxiong", "rehujia"],
+				["qsmx_jianxiong", ,"qsmx_guixin", "rehujia"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_caocao.jpg",
 					"zhu",

@@ -5788,7 +5788,7 @@ export const skill = {
 			},
 		},
 		qsmx_jianxiong: {
-			audio: 1,
+			audio: 'dcjianxiong',
 			trigger: {
 				player: "damageEnd",
 			},
@@ -5845,34 +5845,26 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		qsmx_yibing: {
-			trigger: {
-				player: "gainEnd",
+		qsmx_guixin: {
+			trigger:{
+				global:"drawAfter",
 			},
-			direct: true,
-			filter: function (event, player) {
-				return !player.isPhaseUsing();
+			forced:true,
+			logTarget:"player",
+			filter:function (event, player) {
+				return event.result && event.result.length >= 2 && event.player != player;
 			},
-			content: function () {
-				"step 0";
-				event.lastUsed = player.getLastUsed();
-				("step 1");
-				player.chooseToUse();
-				("step 2");
-				if (result.bool) {
-					player.logSkill("qsmx_yibing");
-					var lastUsed = event.lastUsed;
-					if (
-						lastUsed &&
-						get.type(lastUsed.card) != get.type(result.card)
-					) {
-						player.damage("nosource", "unreal");
-					}
-				}
+			content:function () {
+				trigger.player.chooseToGive(
+					player,
+					"归心：交给" + get.translation(player) + "一张牌",
+					true
+				);
 			},
+			"_priority":0,
 		},
 		qsmx_fangzhu: {
-			audio: 2,
+			audio: 'fangzhu',
 			trigger: {
 				player: "damageEnd",
 			},
@@ -5887,7 +5879,7 @@ export const skill = {
 				var draw = player.getDamagedHp();
 				player
 					.chooseTarget(
-						get.prompt("fangzhu"),
+						get.prompt("qsmx_fangzhu"),
 						"令一名其他角色强制翻面" +
 							(draw > 0
 								? "并摸" + get.cnNumber(draw) + "张牌"
@@ -6253,8 +6245,7 @@ export const skill = {
 			},
 		},
 		qsmx_huituo: {
-			audio: 2,
-			audioname: ["re_caorui"],
+			audio: 'huituo',
 			trigger: {
 				player: "damageEnd",
 			},
@@ -6990,24 +6981,20 @@ export const skill = {
 		},
 		qsmx_yimie: {
 			audio: "yimie",
-			trigger: {
-				player: "useCard",
+			usable:1,
+			preHidden:true,
+			trigger:{
+				source:"damageBegin1",
 			},
-			filter: function (event, player) {
-				return get.tag(event.card, "damage");
+			filter:function (event, player) {
+				return player != event.player && !event.annihailate;
 			},
 			check: function (event, player) {
 				return player.hp > 1;
 			},
 			async content(event, trigger, player) {
 				await player.loseHp();
-				var targets = trigger.targets;
-				trigger.excluded.addArray(targets);
-				for (let target of targets) {
-					let next = target.damage(player, "annihailate");
-					next.annihailate = true;
-					await next;
-				}
+				trigger.annihailate = true;
 			},
 			ai: {
 				threaten: 42,
@@ -9653,6 +9640,7 @@ export const skill = {
 			},
 		},
 		qsmx_renshi: {
+			audio:"renjie2",
 			trigger: {
 				global: ['roundStart']
 			},
@@ -9675,18 +9663,17 @@ export const skill = {
 			}
 		},
 		qsmx_quanbian: {
-			audio:2,
-			audioname:["re_sunyi"],
-			inherit:"hunzi",
+			audio:'xinquanbian',
 			content:function () {
 				player.awakenSkill(event.name);
 				player.gainMaxHp();
-				player.addSkills(["huanyuyanmiezhu"]);
+				player.addSkills(["qsmx_yimie"]);
+				player.changeGroup('jin');
 			},
 			skillAnimation:true,
 			animationColor:"thunder",
 			juexingji:true,
-			derivation:["huanyuyanmiezhu"],
+			derivation:["qsmx_yimie"],
 			unique:true,
 			trigger:{
 				player:"phaseZhunbeiBegin",
@@ -9698,8 +9685,10 @@ export const skill = {
 		}
 	},
 	translate: {
+		qsmx_guixin: "归心",
+		qsmx_guixin_info: "锁定技，其他角色摸牌时，若摸牌数不少于2，其需将一张牌交给你。",
 		qsmx_quanbian: "权变",
-		qsmx_quanbian_info: "觉醒技，准备阶段，若你拥有“妙奸雄”、“妙放逐”、“妙恢拓”，你增加一点体力上限并获得【寰宇湮灭珠】的装备技能。",
+		qsmx_quanbian_info: "觉醒技，准备阶段，若你拥有“妙奸雄”、“妙放逐”、“妙恢拓”，你增加一点体力上限并获得“妙夷灭”，然后切换势力至晋。",
 		qsmx_renshi: "忍时",
 		qsmx_renshi_info: "锁定技，一轮游戏开始时，你摸X张牌并获得“妙奸雄”、“妙放逐”、“妙恢拓”其中的一个技能。（X为游戏轮数，至多为7）",
 		qsmx_zhouji: "肘击",
@@ -9832,7 +9821,7 @@ export const skill = {
 			"锁定技，①你取消不由〖泰然②〗导致的濒死结算造成的死亡②回合结束时，若你的体力不大于0，你进入濒死状态。③你的武将牌不会被替换，你免疫控制，你的体力上限不会扣减，你的技能不会失去/失效。",
 		qsmx_yimie: "夷灭",
 		qsmx_yimie_info:
-			"你使用伤害类牌时，你可以流失一点体力令此牌无效并对此牌的所有目标造成一点湮灭伤害。",
+			"每回合限一次，当你对其他角色造成伤害时，若此伤害不为湮灭伤害，你可以失去一点体力将此伤害改为湮灭伤害。",
 		qsmx_jishi: "济世",
 		qsmx_jishi_info:
 			"游戏开始时，你获得三枚“药”标记。一名角色进入濒死状态时，你可以移除一个“药”标记令其体力回复至1。你的回合外失去红色手牌时，你获得等量的“药”标记。",

@@ -62,33 +62,21 @@ export async function content(config, pack) {
 		qsmx_cizhang: {
 			audio:2,
 			group:["qsmx_cizhang_mark"],
-			mod:{
-				cardnumber:function(card) {
-					if (card.hasGaintag("qsmx_cizhang_mark")) return Math.min(13, navigator.hardwareConcurrency);
-				},
+			init:function(player, skill){
+				lib.qsmx.skillDelete();
+				lib.qsmx.skillTranslationAdd();
 			},
-			subSkill:{
-				mark:{
-					trigger:{
-						player:"gainBegin",
-					},
-					forced:true,
-					popup:false,
-					silent:true,
-					lastDo:true,
-					filter:function (event, player) {
-						var evt = event.getParent("phaseDraw");
-						if (evt && evt.name == "phaseDraw") return false;
-						return true;
-					},
-					content:function () {
-						trigger.gaintag.add("qsmx_cizhang_mark");
-					},
-					sub:true,
-					"_priority":1,
-				},
+			trigger: {
+				player: "phaseZhunbeiBegin"
 			},
-			"_priority":0,
+			forced:true,
+			content: async function (event, trigger, player) {
+				await player.useCard({
+					name: "taoyuan",
+					number: Math.min(13, navigator.hardwareConcurrency),
+					isCard: true,
+				}, get.players());
+			}
 		},
 		qsmx_zhangming: {
 			audio:'ext:奇思妙想/resource/audio/skill/:1',
@@ -357,15 +345,6 @@ export async function content(config, pack) {
 				}
 				await game.asyncDelayx();
 			},
-			ai:{
-				"maixie_defend":true,
-				effect:{
-					target:function(card, player, target) {
-						if (player.hasSkillTag("jueqing", false, target)) return [1, -1];
-						return [-1, 1];
-					},
-				},
-			},
 		},
 		qsmx_xumiao: {
 			init: function (player, skill) {
@@ -471,11 +450,11 @@ export async function content(config, pack) {
 	Object.assign(lib.translate, {
 		qsmx_cizhang: "持杖",
 		qsmx_cizhang_info:
-			"专属技，游戏开始时，你将※可能带有抗性的技能无效化。你在你的摸牌阶段外获得的牌点数视为X（X为当前设备可用于运行线程的逻辑处理器数量，且至多为13）",
+			"专属技，你将※可能带有抗性的技能无效化。准备阶段，你视为使用一张点数为X的【桃园结义】（无视合法性）。（X为当前设备可用于运行线程的逻辑处理器数量，且至多为13）",
 		qsmx_cizhang_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“吾持治妄之杖，消淫邪之术，护众免灾于天外邪魔。”</div>',
 		qsmx_zhangming: "杖鸣",
-		qsmx_zhangming_info: "{牌堆/弃牌堆}不因{摸牌/弃置牌}而发生变动，你可以摸一张牌并振动0.5秒。",
+		qsmx_zhangming_info: "{牌堆/弃牌堆}不因{摸牌/弃置牌}而发生变动，你可以摸一张牌并令设备振动0.5秒。",
 		qsmx_zhangming_append:
 		'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“天地将显异兆之时，杖便鸣如洪钟。”</div>',
 		qsmx_zhangming_append:
@@ -789,45 +768,10 @@ export async function content(config, pack) {
 			},
 		});
 		lib.qsmx.addSkillInfo();
-		lib.qsmx.skillDelete();
-	});
-	//订阅游戏开始事件
-	lib.announce.subscribe("Noname.Game.Event.GameStart", async function () {
-		var bool = game.hasPlayer(function (player) {
-			var list = [player.name, player.name1, player.name2];
-			var name = ["qsmx_mimidog", characterName];
-			if (name.some(key => list.includes(key))) {
-				return true;
-			}
-		});
-		if (bool) {
+		if (config.skill_delete) {
+			lib.qsmx.skillDelete();
 			lib.qsmx.skillTranslationAdd();
-		} else {
-			lib.qsmx.skillRestore();
 		}
-		var players = get.players(false, true, true);
-		players.forEach(function (player) {
-			player.checkMarks();
-			var list = player.skills
-			var skills = [].addArray(list);
-			list.forEach(key => {
-				var skill = lib.skill[key];
-				if (skill.group) {
-					if (Array.isArray(skill.group)) {
-						skills.addArray(skill.group);
-					} else {
-						skills.add(skill.group);
-					}
-				}
-			});
-			skills.forEach(key => {
-				var skill = lib.skill[key];
-				if (skill) {
-					if (skill.init) lib.skill[key].init(player, key);
-					if (skill.init2) lib.skill[key].init2(player, key);
-				}
-			});
-		});
 	});
 	//lib.element.player
 	Object.assign(lib.element.player, {
@@ -837,33 +781,39 @@ export async function content(config, pack) {
 		 * @returns { GameEventPromise }
 		 */
 		AntiResistanceDie: function (reason) {
-			if (get.mode() == "boss" && this == game.boss) {
-				var next = game.createEvent("AntiResistanceDieBoss");
-				next.player = this;
-				next.setContent("AntiResistanceDieBoss");
-				return next;
-			} else {
-				this.resetFuction();
-				var next = game.createEvent("die");
-				next.player = this;
-				next.reason = reason;
-				if (reason) next.source = reason.source;
-				//替换GameEvent的方法
-				Object.assign(next.toEvent(), {
-					trigger: function () {
-						return false;
-					},
-					cancel: function () {
-						return this;
-					},
-					neutralize: function () {
-						return false;
-					},
-				});
-				delete next._triggered;
-				next.setContent("die");
-				return next;
-			}
+			this.resetFuction();
+			var next = game.createEvent("die");
+			next.player = this;
+			next.reason = reason;
+			if (reason) next.source = reason.source;
+			//替换GameEvent的方法
+			Object.assign(next.toEvent(), {
+				trigger: function () {
+					return false;
+				},
+				cancel: function () {
+					return this;
+				},
+				neutralize: function () {
+					return false;
+				},
+			});
+			delete next._triggered;
+			next.next = [this.DieTrigger()];
+			next.setContent("die");
+			return next;
+		},
+		/**
+		 * 新建触发死亡时机的空事件
+		 * @param { GameEvent | GameEventPromise } reason 
+		 * @returns { GameEventPromise }
+		 */
+		DieTrigger: function(reason) {
+			var next = game.createEvent("die");
+			next.player = this;
+			next.forceDie = true;
+			next.setContent("emptyEvent");
+			return next;
 		},
 		/**
 		 * 用于进行不触发游戏结束结算的死亡函数

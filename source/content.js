@@ -116,11 +116,17 @@ export async function content(config, pack) {
 					player.getAllHistory('useCard').forEach(function (event) {
 						counts += get.number(event.card);
 					});
+					player.getAllHistory('respond').forEach(function (event) {
+						counts += get.number(event.card);
+					});
 					return counts;
 				},
 				 mark:function (dialog, storage, player) {
 					var counts = 0;
 					player.getAllHistory('useCard').forEach(function (event) {
+						counts += get.number(event.card);
+					});
+					player.getAllHistory('respond').forEach(function (event) {
 						counts += get.number(event.card);
 					});
 					dialog.addText("<li>当前已使用与打出的牌点数和：" + counts, false);
@@ -342,8 +348,27 @@ export async function content(config, pack) {
 						await next;
 					}
 					player.turnOver(true);
+					player.discard(player.getCards('h'));
 				}
 				await game.asyncDelayx();
+			},
+			ai:{
+				maixie:true,
+				"maixie_hp":true,
+				effect:{
+					target:function(card, player, target) {
+						if (get.tag(card, "damage")) {
+							if (player.hasSkillTag("jueqing", false, target)) return [1, -2];
+							if (!target.hasFriend()) return;
+							let num = 1;
+							if (get.attitude(player, target) > 0) {
+								if (player.needsToDiscard()) num = 0.7;
+								else num = 0.5;
+							}
+							return [1, num * 2];
+						}
+					},
+				},
 			},
 		},
 		qsmx_xumiao: {
@@ -460,7 +485,7 @@ export async function content(config, pack) {
 		qsmx_zhangming_append:
 		'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“妄者，吾将运杖之能以裁之。”</div>',
 		qsmx_zhangcai: "杖裁",
-		qsmx_zhangcai_info: "一轮游戏开始时，或你受到伤害后，你可以击杀任意名其他武将牌技能描述总和大于[330-X]的角色，若如此做，你将武将牌翻至背面。（X为你本局游戏使用与打出牌的点数和）",
+		qsmx_zhangcai_info: "一轮游戏开始时，或你受到伤害后，你可以击杀任意名其他武将牌技能描述总和大于[330-X]的角色，若如此做，你将武将牌翻至背面并弃置所有手牌。（X为你本局游戏使用与打出牌的点数和）",
 		qsmx_zhangcai_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“妄者，吾将运杖之能以裁之。”</div>',
 		qsmx_xumiao: "虚渺",

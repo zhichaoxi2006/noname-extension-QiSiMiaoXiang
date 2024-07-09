@@ -295,7 +295,7 @@ export const character = async function () {
 				"male",
 				"wei",
 				"3/3",
-				["qsmx_renshi", "qsmx_quanbian"],
+				["qsmx_renshi", "qsmx_quanbian", "qsmx_lianpo"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_simayi.jpg",
 					"zhu",

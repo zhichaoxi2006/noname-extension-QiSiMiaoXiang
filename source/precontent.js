@@ -374,9 +374,23 @@ export async function precontent(config, pack) {
 				}
 				return result;
 			},
-			getCharacterSkillStringLength(character){
+			getCharacterSkillStringLength(character, derivate){
 				var Originalskills = lib.character[character].skills;
-				var num = 0
+				var num = 0;
+				if (derivate) {
+					for (const skill of Originalskills) {
+						var info = lib.skill[skill];
+						if(!info) continue;
+						var derivation = info.derivation;
+						if (derivation) {
+							if (Array.isArray(derivation)) {
+								Originalskills.addArray(lib.skill[skill].derivation);
+							} else {
+								Originalskills.add(lib.skill[skill].derivation);
+							}
+						}
+					}
+				}
 				for (const skill of Originalskills) {
 					var string = get.plainText(get.translation(`${skill}_info`));
 					num += string.length;

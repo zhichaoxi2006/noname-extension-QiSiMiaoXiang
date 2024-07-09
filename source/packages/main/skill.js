@@ -7169,6 +7169,9 @@ export const skill = {
 			discard: false,
 			filterCard: true,
 			selectCard: 1,
+			check:function(card) {
+				return 6 - get.value(card);
+			},
 			filter: function (event, player) {
 				var subtype = [
 					"equip1",
@@ -7194,9 +7197,11 @@ export const skill = {
 				];
 				var storage = player.storage.qsmx_shengong_block;
 				if (storage) subtype.removeArray(storage);
+				if (!player.isUnderControl())subtype.remove("cancel2");
 				var next = player.chooseControl(subtype);
-				next.set("ai", function () {
-					return Math.random();
+				next.set("ai", function (control) {
+					var controls = _status.event.controls;
+					return controls[0];
 				});
 				("step 1");
 				if (result.control != "cancel2") {
@@ -7228,6 +7233,12 @@ export const skill = {
 					player.discoverCard(equips, 24);
 				}
 			},
+			ai: {
+				order:8.5,
+				result: {
+					player: 1,
+				}
+			}
 		},
 		qsmx_tianjiang: {
 			enable: ["phaseUse"],
@@ -9682,9 +9693,26 @@ export const skill = {
 				return player.hasSkill('qsmx_jianxiong') && player.hasSkill('qsmx_fangzhu') && player.hasSkill('qsmx_huituo') && !player.storage.qsmx_quanbian;
 			},
 			forced:true,
-		}
+		},
+		qsmx_lianpo: {
+			audio:"lianpo",
+			trigger:{
+				global:"phaseAfter",
+			},
+			frequent:true,
+			filter:function(event, player) {
+				return player.getStat("kill") > 0;
+			},
+			content:function() {
+				player.draw(game.dead.length);
+				player.insertPhase();
+			},
+			"_priority":0,
+		},
 	},
 	translate: {
+		qsmx_lianpo: "连破",
+		qsmx_lianpo_info: "一名角色回合结束时，若你本回合杀死过角色，你可以摸X张牌并进行一个额外回合。（X为已死亡角色数）",
 		qsmx_guixin: "归心",
 		qsmx_guixin_info: "锁定技，其他角色摸牌时，若摸牌数不少于2，其需将一张牌交给你。",
 		qsmx_quanbian: "权变",

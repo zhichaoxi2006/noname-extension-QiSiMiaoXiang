@@ -9827,10 +9827,12 @@ export const skill = {
 								characters,
 								'character'
 							]
-						]
+						],
+						true,
 					);
-					next.set('ai', function(){
-						return Math.random();
+					next.set('ai', function(button){
+						var rank = get.rank(button.link, true);
+						return get.attitude(player, target) * rank;
 					})
 					var result = await next.forResult();
 					target.changeCharacter([result.links[0]]);

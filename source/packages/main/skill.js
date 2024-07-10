@@ -5002,8 +5002,8 @@ export const skill = {
 			discard: false,
 			selectCard: 2,
 			prompt: "将2张手牌当做“财”置入你的武将牌上并摸1张牌",
-			check(card) {
-				return true;
+			filter:function(event, player){
+				return player.countCards('h') > 1;
 			},
 			async content(event, trigger, player) {
 				player.loseToSpecial(event.cards, "qsmx_liancai", player);
@@ -5011,7 +5011,7 @@ export const skill = {
 				player.markSkill("qsmx_liancai");
 			},
 			ai: {
-				order: 9,
+				order: 12,
 				result: {
 					player: 2,
 				},
@@ -7101,6 +7101,9 @@ export const skill = {
 						.getStorage("qsmx_tuxi_blocker")
 						.includes(event.player)
 				);
+			},
+			check:function(event, player) {
+				return get.attitude(player, event.player) <= 0;
 			},
 			async content(event, trigger, player) {
 				trigger.cancel();
@@ -9709,8 +9712,150 @@ export const skill = {
 			},
 			"_priority":0,
 		},
+		qsmx_shima: {
+			trigger: {
+				global: 'gameStart'
+			},
+			persevereSkill:true,
+			forced:true,
+			locked:true,
+			content:function(){
+				player.disableEquip(3, 4);
+			},
+			group: 'qsmx_shima_nohorse',
+			subSkill:{
+				nohorse: {
+					trigger: {
+						player: 'enableEquipBefore'
+					},
+					filter:function(event, player){
+						return event.slots.includes('equip3') || event.slots.includes('equip4');
+					},
+					content:function(){
+						while (trigger.slots.includes("equip3")) trigger.slots.remove("equip3");
+						while (trigger.slots.includes("equip4")) trigger.slots.remove("equip4");
+					},
+				},
+			},
+		},
+		qsmx_cuike: {
+			mod: {
+				aiOrder(player, card, num) {
+					if (
+						num <= 0 ||
+						get.itemtype(card) !== "card" ||
+						get.type(card) !== "equip"
+					)
+						return num;
+					let eq = player.getEquip(get.subtype(card));
+					if (
+						eq &&
+						get.equipValue(card) - get.equipValue(eq) <
+							Math.max(1.2, 6 - player.hp)
+					)
+						return 0;
+				},
+			},
+			intro: {
+				mark: function (dialog, storage, player) {
+					var cards = player.getCards("s", (card) =>
+						card.hasGaintag("qsmx_cuike")
+					);
+					if (!cards || !cards.length) return;
+					dialog.addAuto(cards);
+				},
+				markcount: function (storage, player) {
+					return player.countCards("s", (card) =>
+						card.hasGaintag("qsmx_cuike")
+					);
+				},
+			},
+			locked: false,
+			enable: "phaseUse",
+			position: "h",
+			filter:function(event, player){
+				return game.hasPlayer(current => {
+					if(player == current) return false;
+					return current.countCards('he') > 0;
+				});
+			},
+			filterCard: true,
+			filterTarget: function (card, player, target) {
+				if(!target.countCards('he'))return false;
+				return player != target;
+			},
+			discard: false,
+			selectCard: 2,
+			prompt: "将两张手牌当做“金”置入你的武将牌上",
+			async content(event, trigger, player) {
+				player.gainPlayerCard(event.target);
+				player.loseToSpecial(event.cards, "qsmx_cuike", player);
+				player.markSkill("qsmx_cuike");
+			},
+			ai: {
+				order: 12,
+				result: {
+					player: 1,
+					target: -1,
+				},
+				threaten: 1.5,
+			},
+			_priority: 0,
+		},
+		qsmx_tongqu: {
+			enable: 'phaseUse',
+			usable: 1,
+			filterTarget:true,
+			content:async function(event, trigger, player){
+				if (!_status.characterlist) {
+					lib.skill.pingjian.initList();
+				}
+				let target = event.target;
+				let name = target.name1;
+				let rawName = get.rawName(name);
+				let characters = [];
+				for (const key of _status.characterlist) {
+					if (get.rawName(key) == rawName) {
+						characters.add(key);
+					}
+				}
+				if (characters.length) {
+					var next = player.chooseButton(
+						[
+							'选择一名同名武将替换其武将牌',
+							[
+								characters,
+								'character'
+							]
+						]
+					);
+					next.set('ai', function(){
+						return Math.random();
+					})
+					var result = await next.forResult();
+					target.changeCharacter([result.links[0]]);
+				} else {
+					player.draw(7);
+				}
+			},
+			ai: {
+				order:13,
+				result: {
+					player:1,
+					target:function(){
+						return Math.random();
+					},
+				}
+			}
+		},
 	},
 	translate: {
+		qsmx_shima: "失马",
+		qsmx_shima_info: "持恒技，游戏开始时，你废除你的坐骑栏，你的坐骑栏无法恢复。",
+		qsmx_cuike: "催氪",
+		qsmx_cuike_info: "①出牌阶段，你可以获得一名其他角色的一张牌并将两张手牌当做“金”置入你的武将牌上。<br>②你可以如手牌般使用或打出“金”。",
+		qsmx_tongqu: "通渠",
+		qsmx_tongqu_info: "出牌阶段限一次，你可以将一名武将的武将牌替换为同名武将（若其没有同名武将，则改为你摸七张牌）",
 		qsmx_lianpo: "连破",
 		qsmx_lianpo_info: "一名角色回合结束时，若你本回合杀死过角色，你可以摸X张牌并进行一个额外回合。（X为已死亡角色数）",
 		qsmx_guixin: "归心",

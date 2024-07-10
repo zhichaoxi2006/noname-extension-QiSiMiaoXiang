@@ -955,7 +955,12 @@ export async function content(config, pack) {
 				set: function (newValue) {
 					if (newValue != player._nameList[0]) {
 						var tempList = player._nameList.remove(undefined);
-						player.changeCharacter(tempList, false);
+						var next = game.createEvent('restoreCharacter', false, _status.event.getParent());
+						next.player = player;
+						next.tempList = tempList;
+						next.setContent(function(){
+							player.changeCharacter(event.tempList, false)
+						});
 					}
 					return (player._name1 = newValue);
 				},
@@ -968,7 +973,12 @@ export async function content(config, pack) {
 				set: function (newValue) {
 					if (newValue != player._nameList[1]) {
 						var tempList = player._nameList.remove(undefined);
-						player.changeCharacter(tempList, false);
+						var next = game.createEvent('restoreCharacter', false, _status.event.getParent());
+						next.player = player;
+						next.tempList = tempList;
+						next.setContent(function(){
+							player.changeCharacter(event.tempList, false)
+						});
 					}
 					return (player._name2 = newValue);
 				},

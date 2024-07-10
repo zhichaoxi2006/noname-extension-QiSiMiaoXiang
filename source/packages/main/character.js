@@ -400,6 +400,13 @@ export const character = async function () {
 				['qsmx_zhouji', 'qsmx_zhuiji', 'qsmx_fuhuo'],
 				["ext:奇思妙想/resource/image/character/qsmx_kobe_bryant.jpg"],
 			],
+			qsmx_gocar: [
+				"none",
+				"key",
+				"4/4",
+				['qsmx_shima', 'qsmx_cuike','qsmx_tongqu'],
+				["ext:奇思妙想/resource/image/character/qsmx_gocar.jpg"],
+			],
 		},
 		characterTitle: {
 			qsmx_longinus: "百夫长",
@@ -470,7 +477,7 @@ export const character = async function () {
 					"qsmx_cenhun",
 				],
 				qsmx_touhou: ["qsmx_matara_okina", "qsmx_zhengxie", "qsmx_junko"],
-				qsmx_meme: ['qsmx_kobe_bryant', "qsmx_zhangxianzhong",]
+				qsmx_meme: ['qsmx_kobe_bryant', "qsmx_zhangxianzhong", "qsmx_gocar"]
 			},
 		},
 		translate: {
@@ -494,6 +501,7 @@ export const character = async function () {
 			qsmx_zhangliao: "妙张辽",
 			qsmx_huatuo: "妙华佗",
 			qsmx_zhangliang: "妙张梁",
+			qsmx_gocar: "游卡桌游",
 			qsmx_caopi: "妙曹丕",
 			qsmx_machao: "妙马超",
 			qsmx_zhengxie: "鬼人正邪",

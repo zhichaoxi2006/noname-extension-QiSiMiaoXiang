@@ -9850,8 +9850,140 @@ export const skill = {
 				}
 			}
 		},
+		qsmx_huanmeng: {
+			trigger: {
+				player: "phaseZhunbeiBegin"
+			},
+			frequent:true,
+			initList:function () {
+				var list,
+					skills = [];
+				var banned = [];
+				if (get.mode() == "guozhan") {
+					list = [];
+					for (var i in lib.characterPack.mode_guozhan) list.push(i);
+				} else if (_status.connectMode) list = get.charactersOL();
+				else {
+					list = [];
+					for (var i in lib.character) {
+						if (lib.filter.characterDisabled2(i) || lib.filter.characterDisabled(i)) continue;
+						list.push(i);
+					}
+				}
+				for (var i of list) {
+					if (i.indexOf("gz_jun") == 0) continue;
+					for (var j of lib.character[i][3]) {
+						var skill = lib.skill[j];
+						if (!skill || skill.zhuSkill || banned.includes(j)) continue;
+						if (skill.ai && (skill.ai.combo || skill.ai.notemp || skill.ai.neg)) continue;
+						if (skill.derivation) {
+							if(Array.isArray(skill.derivation)){
+								let bool = skill.derivation.some(current=>current.includes('_faq'));
+								if(bool) {
+									continue;
+								}
+							} else if(skill.derivation.includes('_faq') || !lib.skill[skill.derivation]){
+								continue;
+							}
+							skills.add(j);
+						}
+					}
+				}
+				_status.huanmeng_list = skills;
+			},
+			content:async function(event, trigger, player){
+				if (!_status.huanmeng_list) {
+					lib.skill.qsmx_huanmeng.initList();
+				}
+				var list = _status.huanmeng_list
+				.filter(function (i) {
+					return !player.hasDerivationSkill(i, null, null, false);
+				})
+				.randomGets(5);
+				event.videoId = lib.status.videoId++;
+				var func = function (skills, id, player) {
+					 var dialog = ui.create.dialog("forcebutton");
+					 dialog.videoId = id;
+					 dialog.add("令" + get.translation(player) + "获得一个技能");
+					 for (var i = 0; i < skills.length; i++) {
+						dialog.add('<div class="popup pointerdiv" style="width:80%;display:inline-block"><div class="skill">【' + get.translation(skills[i]) + "】</div><div>" + lib.translate[skills[i] + "_info"] + "</div></div>");
+					}
+					dialog.addText(" <br> ");
+				};
+				if (player.isOnline()) player.send(func, list, event.videoId, player);
+				else if (player == game.me) func(list, event.videoId, player);
+				var next = player.chooseControl(list);
+				next.set("ai", function () {
+					var controls = _status.event.controls;
+					return controls[0];
+				});
+				var result = await next.forResult();
+				game.broadcastAll("closeDialog", event.videoId);
+				var skill = lib.skill[result.control];
+				var derivation = [];
+				if (typeof skill.derivation == 'string') {
+					derivation.add(skill.derivation);
+				} else if(Array.isArray(skill.derivation)){
+					derivation.addArray(skill.derivation);
+				}
+				player.addSkills(derivation);
+			}
+		},
+		qsmx_zaomeng: {
+			enable: 'phaseUse',
+			popup:false,
+			content:async function(event, trigger, player){
+				var skills = player.getSkills(true, false, false).filter(skill => {
+					var info = get.info(skill);
+					if (!info || info.charlotte || get.skillInfoTranslation(skill, player).length == 0) return false;
+					return true;
+				});
+				var result = await player
+					.chooseControl(skills, "cancel2")
+					.set(
+						"choiceList",
+						skills.map(i => {
+							return '<div class="skill">【' + get.translation(lib.translate[i + "_ab"] || get.translation(i).slice(0, 2)) + "】</div><div>" + get.skillInfoTranslation(i, player) + "</div>";
+						})
+					)
+					.set("displayIndex", false)
+					.set("prompt", "造梦：失去一个技能")
+					.set("ai", () => {
+						var player = _status.event.player,
+							choices = _status.event.controls.slice();
+						var negs = choices.filter(i => {
+							var info = get.info(i);
+							if (!info || !info.ai) return false;
+							return info.ai.neg || info.ai.halfneg;
+						});
+						if (negs.length) return negs.randomGet();
+						return "cancel2";
+					}).forResult();
+				if (result.control != "cancel2") {
+					var skill = result.control;
+					player.logSkill(event.name);
+					player.removeSkills(skill);
+					var result2 = await player.chooseControl("摸牌", "获得技能").set("ai",function(){
+						return "摸牌";
+					}).forResult();
+					if (result2.control == "摸牌") {
+						player.draw();
+					} else {
+						var result3 = await player.chooseTarget(true).set('filterTarget', function(card, player, target){
+							if (player == target) return false;
+							return !target.hasSkill(skill, null, null, false)
+						}).forResult();
+						result3.targets[0].addSkills(skill);
+					}
+				}
+			}
+		},
 	},
 	translate: {
+		qsmx_zaomeng: "造梦",
+		qsmx_zaomeng_info: "出牌阶段，你可以失去一个技能并选择一项：1.摸一张牌，2.令一名其他角色获得你失去的技能。",
+		qsmx_huanmeng: "幻梦",
+		qsmx_huanmeng_info: "准备阶段，你可以获得一个有关联衍生技的技能中所有关联衍生技。",
 		qsmx_shima: "失马",
 		qsmx_shima_info: "持恒技，游戏开始时，你废除你的坐骑栏，你的坐骑栏无法恢复。",
 		qsmx_cuike: "催氪",

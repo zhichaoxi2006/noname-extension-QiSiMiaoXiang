@@ -1205,6 +1205,18 @@ export async function content(config, pack) {
 			next.forceDie = true;
 			return next;
 		},
+		hasDerivationSkill: function(skill, arg1, arg2, arg3) {
+			var info = lib.skill[skill];
+			if (!info || !info.derivation)return;
+			if (Array.isArray(info.derivation)) {
+				var bool = info.derivation.every(
+					current => this.hasSkill(current, arg1, arg2, arg3)
+				);
+				return bool;
+			} else {
+				return this.hasSkill(info.derivation, arg1, arg2, arg3);
+			}
+		},
 	});
 	//lib.element.content
 	Object.assign(lib.element.content, {

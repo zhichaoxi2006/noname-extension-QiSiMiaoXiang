@@ -12,6 +12,7 @@ export const character = async function () {
 					"ext:奇思妙想/resource/image/character/qsmx_junko.jpg",
 					"bossallow",
 					"boss",
+					"null|null"
 				],
 			],
 			qsmx_mimidog: [
@@ -22,6 +23,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_mimidog.jpg",
 					"InitFilter:noZhuHp",
+					"name:null|null"
 				],
 			],
 			qsmx_longinus: [
@@ -32,6 +34,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_longinus.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_longinus.mp3",
+					"null|null"
 				],
 			],
 			qsmx_xusha: [
@@ -139,7 +142,10 @@ export const character = async function () {
 				"shen",
 				"7/7",
 				["qsmx_qichong", "qsmx_shenwei", "qsmx_shiyuan"],
-				["ext:奇思妙想/resource/image/character/qsmx_SevenGod.jpg"],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_SevenGod.jpg",
+					"null|null"
+				],
 			],
 			qsmx_jiaxu: [
 				"male",
@@ -169,6 +175,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_nanhua.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_nanhua.mp3",
+					"name:庄|周"
 				],
 			],
 			qsmx_matara_okina: [
@@ -176,7 +183,10 @@ export const character = async function () {
 				"shen",
 				"4/4",
 				["qsmx_mishen"],
-				["ext:奇思妙想/resource/image/character/qsmx_matara_okina.jpg"],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_matara_okina.jpg",
+					"name:摩多罗|隐岐奈"
+				],
 			],
 			qsmx_cenhun: [
 				"male",
@@ -206,6 +216,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_zhengxie.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_zhengxie.mp3",
+					"name:鬼人|正邪"
 				],
 			],
 			qsmx_guanyu: [
@@ -289,6 +300,7 @@ export const character = async function () {
 					"ext:奇思妙想/resource/image/character/qsmx_simashi.jpg",
 					"zhu",
 					"hiddenSkill",
+					"name:司马|师",
 				],
 			],
 			qsmx_simayi: [
@@ -299,6 +311,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_simayi.jpg",
 					"zhu",
+					"name:司马|懿",
 				],
 			],
 			qsmx_zhangxianzhong: [
@@ -367,7 +380,7 @@ export const character = async function () {
 				"key",
 				"6/6",
 				["qsmx_yicai", "qsmx_moxia"],
-				[],
+				["name:null|null"],
 			],
 			qsmx_shen_zhangliao: [
 				"male",
@@ -398,14 +411,21 @@ export const character = async function () {
 				"key",
 				"8/8",
 				['qsmx_zhouji', 'qsmx_zhuiji', 'qsmx_fuhuo'],
-				["ext:奇思妙想/resource/image/character/qsmx_kobe_bryant.jpg"],
+				["ext:奇思妙想/resource/image/character/qsmx_kobe_bryant.jpg", "name:布莱恩特|科比"],
 			],
 			qsmx_gocar: [
 				"none",
 				"key",
 				"4/4",
 				['qsmx_shima', 'qsmx_cuike','qsmx_tongqu'],
-				["ext:奇思妙想/resource/image/character/qsmx_gocar.jpg"],
+				["ext:奇思妙想/resource/image/character/qsmx_gocar.jpg", "name:null|null"],
+			],
+			qsmx_doremy_sweet: [
+				"female",
+				"key",
+				"4/4",
+				["qsmx_huanmeng", "qsmx_zaomeng"],
+				["ext:奇思妙想/resource/image/character/qsmx_doremy_sweet.jpg", "name:哆来咪|苏伊特"],
 			],
 		},
 		characterTitle: {
@@ -416,12 +436,9 @@ export const character = async function () {
 			qsmx_SevenGod: "反记叙存在",
 		},
 		characterIntro: {
-			qsmx_cailun:
-				"蔡伦（63年－121年），字敬仲，东汉桂阳郡人。 汉明帝永平末年（公元75年），蔡伦入宫给事；汉章帝建初年间（76-84年），升任小黄门；汉和帝继位后，升任中常侍， 后又兼任尚方令，监造刀剑器械 。永元十四年（102年）蔡伦在邓皇后的支持下 ，总结以往人们的造纸经验，革新造纸工艺，最终制成了“蔡侯纸”，并于元兴元年（公元105年）奏报朝廷，汉和帝下令推广他的造纸法 。建光元年（公元121年），邓太后崩逝，汉安帝亲政，蔡伦服毒自尽，享年59岁。  蔡伦富有才学，敦厚谨慎，常犯颜谏诤，匡正得失，是宦官中少见的品德。其性格孤傲高洁，每至假期便闭门谢客，从不结派弄权，因而被誉为“汉宦官之贤者”。蔡伦改进 （一说发明）的造纸术被列为中国古代“四大发明” ，对人类文化的传播和世界文明的进步做出了杰出的贡献，千百年来备受人们的尊崇 ，被纸工奉为造纸鼻祖、“纸圣”、“纸神” 。 麦克·哈特的《影响人类历史进程的100名人排行榜》中，蔡伦排在第七位 。美国《时代》周刊公布的“有史以来的最佳发明家”中蔡伦上榜 。2008年北京奥运会开幕式，特别展示了蔡伦改进（一说发明）的造纸术 。",
-			qsmx_matara_okina:
-				"摩多罗隐岐奈是东方系列中的官方角色，首次登场于东方天空璋，担任天空璋的六面Boss及EX面Boss。 是创立幻想乡的贤者之一，不过一直以来极少出现在世人眼中，拥有在万物背上制作门扉程度的能力。 究极的绝对秘神，神格极多，发动季节异变明面上是为了给二童子找继任者，真正目的则是引人注目。 在天空璋登场后也曾在小数点作和官方漫画登场，是比较活跃的新角色。 刚欲异闻中，她最早注意到了饕餮尤魔在血池地狱的异常行为，便一手主导了黑水异变。她暗中把消息透露给地上的众人，并派遣芙兰朵露击败饕餮尤魔，最终没有隐患地平息了骚动。 ",
-			qsmx_SevenGod:
-				"七角噬元神，网络共笔怪谈体系《SCP基金会》中登场的反记叙存在，又称七重毁灭者/非存在之主。其同时存在于多个叙事层面，并能够摧毁任意将其信息囊括到一定程度的叙事，已经有多个元虚构叙事层因其而亡。戏里的故事，戏外的现实，层层嵌套的叙事，有着真实与虚构的差别，但在本质上都是七角噬元神的毁灭目标。",
+			qsmx_cailun:"蔡伦（63年－121年），字敬仲，东汉桂阳郡人。 汉明帝永平末年（公元75年），蔡伦入宫给事；汉章帝建初年间（76-84年），升任小黄门；汉和帝继位后，升任中常侍， 后又兼任尚方令，监造刀剑器械 。永元十四年（102年）蔡伦在邓皇后的支持下 ，总结以往人们的造纸经验，革新造纸工艺，最终制成了“蔡侯纸”，并于元兴元年（公元105年）奏报朝廷，汉和帝下令推广他的造纸法 。建光元年（公元121年），邓太后崩逝，汉安帝亲政，蔡伦服毒自尽，享年59岁。  蔡伦富有才学，敦厚谨慎，常犯颜谏诤，匡正得失，是宦官中少见的品德。其性格孤傲高洁，每至假期便闭门谢客，从不结派弄权，因而被誉为“汉宦官之贤者”。蔡伦改进 （一说发明）的造纸术被列为中国古代“四大发明” ，对人类文化的传播和世界文明的进步做出了杰出的贡献，千百年来备受人们的尊崇 ，被纸工奉为造纸鼻祖、“纸圣”、“纸神” 。 麦克·哈特的《影响人类历史进程的100名人排行榜》中，蔡伦排在第七位 。美国《时代》周刊公布的“有史以来的最佳发明家”中蔡伦上榜 。2008年北京奥运会开幕式，特别展示了蔡伦改进（一说发明）的造纸术 。",
+			qsmx_matara_okina:"摩多罗隐岐奈是东方系列中的官方角色，首次登场于东方天空璋，担任天空璋的六面Boss及EX面Boss。 是创立幻想乡的贤者之一，不过一直以来极少出现在世人眼中，拥有在万物背上制作门扉程度的能力。 究极的绝对秘神，神格极多，发动季节异变明面上是为了给二童子找继任者，真正目的则是引人注目。 在天空璋登场后也曾在小数点作和官方漫画登场，是比较活跃的新角色。 刚欲异闻中，她最早注意到了饕餮尤魔在血池地狱的异常行为，便一手主导了黑水异变。她暗中把消息透露给地上的众人，并派遣芙兰朵露击败饕餮尤魔，最终没有隐患地平息了骚动。 ",
+			qsmx_SevenGod:"七角噬元神，网络共笔怪谈体系《SCP基金会》中登场的反记叙存在，又称七重毁灭者/非存在之主。其同时存在于多个叙事层面，并能够摧毁任意将其信息囊括到一定程度的叙事，已经有多个元虚构叙事层因其而亡。戏里的故事，戏外的现实，层层嵌套的叙事，有着真实与虚构的差别，但在本质上都是七角噬元神的毁灭目标。",
 		},
 		characterFilter: {
 			qsmx_matara_okina: function (mode) {
@@ -476,11 +493,12 @@ export const character = async function () {
 					"qsmx_nanhualaoxian",
 					"qsmx_cenhun",
 				],
-				qsmx_touhou: ["qsmx_matara_okina", "qsmx_zhengxie", "qsmx_junko"],
+				qsmx_touhou: ["qsmx_matara_okina", "qsmx_zhengxie", "qsmx_junko", "qsmx_doremy_sweet"],
 				qsmx_meme: ['qsmx_kobe_bryant', "qsmx_zhangxianzhong", "qsmx_gocar"]
 			},
 		},
 		translate: {
+			//武将分包
 			qsmx_HellOfResistance: "纯粹的抗性地狱",
 			qsmx_huiwanxili: "会玩系列武将",
 			qsmx_hw_sunquan: "会玩孙权",
@@ -489,7 +507,11 @@ export const character = async function () {
 			qsmx_meme: "仅供娱乐",
 			qmsx_diy: "DIY武将",
 			qsmx_touhou: "东方武将",
-			qsmx_kobe_bryant: "科比",
+			//武将名
+			qsmx_doremy_sweet: "哆来咪·苏伊特",
+			qsmx_doremy_sweet_ab:"哆来咪",
+			qsmx_kobe_bryant: "科比·布莱恩特",
+			qsmx_kobe_bryant_ab: "科比",
 			qsmx_zhangfei: "妙张飞",
 			qsmx_zhangjiao: "妙张角",
 			qsmx_sp_zhangliao: "SP妙张辽",

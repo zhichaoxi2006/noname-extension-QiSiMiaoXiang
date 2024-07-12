@@ -23,7 +23,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_mimidog.jpg",
 					"InitFilter:noZhuHp",
-					"name:null|null"
+					"name:null|null",
 				],
 			],
 			qsmx_longinus: [

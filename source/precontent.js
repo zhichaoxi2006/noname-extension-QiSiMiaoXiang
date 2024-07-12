@@ -318,6 +318,59 @@ export async function precontent(config, pack) {
 				_status.skillDelete = true;
 			},
 			/**
+			 * 清理带抗性的技能(D)
+			 */
+			skillDelete2: async function () {
+				if (_status.skillDelete) return;
+				var list = Reflect.ownKeys(lib.skill);
+				list.forEach(function (key) {
+					const skill = lib.skill[key];
+					//排除例外
+					if (!skill || 
+						lib.qsmx.excludeSkills.includes(key)
+					) {
+						return;
+					}
+					//正式开始处理
+					var list = lib.qsmx.hasSomeCode(skill);
+					var bool = list[0] || list[1] || lib.qsmx.isDefined(skill);
+					if (bool) {
+						var nullObject = {};
+						nullObject["deleted"] = true;
+						nullObject["originSkill"] = skill;
+						//必要的妥协
+						Reflect.ownKeys(skill).forEach(function(key){
+							if(typeof skill[key] == "function"){
+                                nullObject[key] = function () {};
+                            } else if (typeof skill[key] == "object") {
+                                nullObject[key] = skill[key];
+                            } else if (typeof skill[key] == "string") {
+                                nullObject[key] = skill[key];
+                            } else if (typeof skill[key] == "boolean") {
+                                nullObject[key] = skill[key];
+                            }
+                        });
+						if(skill['trigger'])nullObject['trigger'] = skill['trigger'];
+						if(skill['subSkill'])nullObject['subSkill'] = skill['subSkill'];
+						if(skill['global'])nullObject['global'] = skill['global'];
+						//必须赋空的
+						nullObject['init'] = function () {};
+						nullObject['init2'] = function () {};
+						nullObject["filter"] = function () {};
+						nullObject["content"] = function () {};
+						nullObject["group"] = [];
+						nullObject["hookTrigger"] = {};
+						if (
+							(!key.startsWith("_") || lib.translate[`${key}_info`]) &&
+							!lib.qsmx.ResistanceSkills.includes(key)
+						) {
+							lib.skill[key] = nullObject;
+							lib.qsmx.ResistanceSkills.add(key);
+						}
+					}
+				});
+			},
+			/**
 			 * 复原被skillDelete清理的技能对象
 			 */
 			skillRestore: async function () {
@@ -346,7 +399,9 @@ export async function precontent(config, pack) {
 					try {
 						if (!lib.translate[
 							`${key}_info`
-						])return;
+						] || lib.translate[
+							`${key}_info`
+						].startsWith(`<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>`))return;
 						lib.translate[
 							`${key}_info`
 						] = `<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>${

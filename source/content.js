@@ -67,15 +67,24 @@ export async function content(config, pack) {
 				lib.qsmx.skillTranslationAdd();
 			},
 			trigger: {
-				player: "phaseZhunbeiBegin"
+				player: ["phaseZhunbeiBegin"],
+				global: ["damageEnd"],
+			},
+			getIndex:function(event, player, triggername) {
+				if(triggername == "damageEnd")return event.num;
+				return 1;
 			},
 			forced:true,
+			forceDie:true,
+			forceOut:true,
 			content: async function (event, trigger, player) {
-				await player.useCard({
+				var next =  player.useCard({
 					name: "taoyuan",
 					number: Math.min(13, navigator.hardwareConcurrency),
 					isCard: true,
 				}, get.players());
+				next.set('forceDie', true);
+				await next;
 			}
 		},
 		qsmx_zhangming: {
@@ -104,45 +113,41 @@ export async function content(config, pack) {
 		qsmx_zhangcai: {
 			trigger: {
 				global: ['roundStart'],
-				player: ['damageEnd']
+				player: ['damageAfter']
 			},
 			direct: true,
+			forceDie:true,
 			mark:true,
 			marktext:"杖",
 			intro:{
 				 name:"杖裁",
 				 markcount:function(storage,player){
-					var counts = 0;
-					player.getAllHistory('useCard').forEach(function (event) {
-						counts += get.number(event.card);
-					});
-					player.getAllHistory('respond').forEach(function (event) {
-						counts += get.number(event.card);
-					});
+					var counts = lib.skill.qsmx_zhangcai.countCard(player, 0);
 					return counts;
 				},
 				 mark:function (dialog, storage, player) {
-					var counts = 0;
-					player.getAllHistory('useCard').forEach(function (event) {
-						counts += get.number(event.card);
-					});
-					player.getAllHistory('respond').forEach(function (event) {
-						counts += get.number(event.card);
-					});
+					var counts = lib.skill.qsmx_zhangcai.countCard(player, 0);
 					dialog.addText("<li>当前已使用与打出的牌点数和：" + counts, false);
 				},
+			},
+			countCard: function(player ,counts){
+				player.getAllHistory('useCard').forEach(function (event) {
+					if(event?.card){
+						counts += get.number(event.card);
+					}
+				});
+				player.getAllHistory('respond').forEach(function (event) {
+					if(event?.card){
+						counts += get.number(event.card);
+					}
+				});
+				return counts;
 			},
 			filter: function (event, player) {
 				return game.hasPlayer(function (current) {
 					if(current == player) return false;
-					var num1 = 0;
+					var num1 = lib.skill.qsmx_zhangcai.countCard(player, 0);;
 					var num2 = 0;
-					player.getAllHistory('useCard').forEach(function (event) {
-						num1 += get.number(event.card);
-					});
-					player.getAllHistory('respond').forEach(function (event) {
-						num1 += get.number(event.card);
-					});
 					current.getOriginalSkills().forEach(function (skill) {
 						var htmlContent = get.translation(`${skill}_info`);
 						var text = get.plainText(htmlContent);
@@ -153,13 +158,7 @@ export async function content(config, pack) {
 			},
 			content: async function (event, trigger, player) {
 				ui.clear();
-				var counts = 0;
-				player.getAllHistory('useCard').forEach(function (event) {
-					counts += get.number(event.card);
-				});
-				player.getAllHistory('respond').forEach(function (event) {
-					counts += get.number(event.card);
-				});
+				var counts = lib.skill.qsmx_zhangcai.countCard(player, 0);;
 				var prompt =
 					`【杖裁】：你可以令任意名其他武将牌技能描述总和大于${Math.max(0, 330 - counts)}角色死亡。`;
 				var toSortPlayers = game.players.filter(
@@ -308,14 +307,8 @@ export async function content(config, pack) {
 					var target = game.findPlayer(
 						(c) => c.playerid == link.split("|")[0]
 					);
-					var num1 = 0;
+					var num1 = lib.skill.qsmx_zhangcai.countCard(player, 0);;
 					var num2 = 0;
-					player.getAllHistory('useCard').forEach(function (event) {
-						num1 += get.number(event.card);
-					});
-					player.getAllHistory('respond').forEach(function (event) {
-						num1 += get.number(event.card);
-					});
 					target.getOriginalSkills().forEach(function (skill) {
 						var htmlContent = get.translation(`${skill}_info`);
 						var text = get.plainText(htmlContent);
@@ -347,11 +340,43 @@ export async function content(config, pack) {
 						next.includeOut = true;
 						await next;
 					}
-					player.turnOver(true);
-					player.discard(player.getCards('h'));
+					var dialog = ui.create.dialog("杖裁：请选择一项", "hidden");
+					dialog.add([lib.skill.qsmx_zhangcai.choices.slice(), "textbutton"]);
+					var next = player.chooseButton(dialog);
+					next.set("forced", true);
+					next.set("filterButton", function(button, player){
+						var link = button.link;
+						if (link == "turnOver") return !player.isTurnedOver();
+						if (link == "discard") return player.countCards('h');
+						if (link == "revive") return player.isDead();
+						return true;
+					});
+					next.set("ai", function (button) {
+						switch (button.link) {
+							case 'turnOver':
+								return 3;
+							case 'discard': 
+								return 2;
+							case 'revive':
+								return 5;
+						}
+					});
+					var result2 = await next.forResult();
+					switch(result2.links[0]){
+						case 'turnOver':
+							player.turnOver(true);
+							break;
+						case 'discard':
+							player.discard(player.getCards('h'));
+							break;
+						case 'revive':
+							player.revive(player.maxHp);
+							break;
+					}
 				}
 				await game.asyncDelayx();
 			},
+			choices:[["turnOver","将武将牌翻至背面"],["discard","弃置所有手牌"],["revive","复活"]],
 			ai:{
 				maixie:true,
 				"maixie_hp":true,
@@ -377,11 +402,11 @@ export async function content(config, pack) {
 				if (name.includes('qsmx_mimidog')) {
 					player.initCharacterLocker();
 					player.initDieResistance();
-					player.initDyingResistance();
+					player.initmaxHpLocker(player.maxHp);
 					player.initControlResistance();
 					const method = lib.announce.subscribe(
 						"Noname.Game.Event.Changed",
-						function () {
+						function (event) {
 							lib.skill[skill].callback(player);
 						}
 					);
@@ -445,6 +470,7 @@ export async function content(config, pack) {
 				player: ['phaseAfter']
 			},
 			forced: true,
+			choices:[["judge","废除判定区"],["loseHp","失去所有体力"],["die","强制死亡"]],
 			content: async function (event, trigger, player) {
 				// 浏览器不支持Battery API？死不掉了捏
 				if (!navigator.getBattery) {
@@ -459,11 +485,39 @@ export async function content(config, pack) {
 						bool = false;
 					}
 					if (bool) {
-						if (player.isDisabledJudge()) {
-							player.disableJudge();
-						} else {
-							await player.AntiResistanceDie();
-						}
+						var dialog = ui.create.dialog("虚渺：请选择一项", "hidden");
+						dialog.add([lib.skill.qsmx_xumiao.choices.slice(), "textbutton"]);
+						var next = player.chooseButton(dialog);
+						next.set("forced", true);
+						next.set("filterButton", function(button, player){
+							var link = button.link;
+							if (link == "judge") return !player.isDisabledJudge();
+							if (link == "loseHp") return player.hp > 0;
+							if (link == "die") return player.isAlive();
+							return true;
+						});
+						next.set("ai", function (button) {
+							switch (button.link) {
+								case 'loseHp':
+									return 3;
+								case 'judge': 
+									return 2;
+								case 'die':
+									return 1;
+							}
+						});
+						var result2 = await next.forResult();
+						switch(result2.links[0]){
+							case 'judge':
+								player.disableJudge();
+								break;
+							case 'loseHp':
+								player.loseHp(player.hp);
+								break;
+							case 'die':
+								await player.AntiResistanceDie();
+								break;
+					}
 					}
 				} catch (error) {
 					//读取不到设备的电量？又死不掉了捏
@@ -475,7 +529,7 @@ export async function content(config, pack) {
 	Object.assign(lib.translate, {
 		qsmx_cizhang: "持杖",
 		qsmx_cizhang_info:
-			"专属技，你将※可能带有抗性的技能无效化。准备阶段，你视为使用一张点数为X的【桃园结义】（无视合法性）。（X为当前设备可用于运行线程的逻辑处理器数量，且至多为13）",
+			"专属技，你将※可能带有抗性的技能无效化。准备阶段，或一名角色受到一点伤害后，你视为使用一张点数为X的【桃园结义】（无视合法性）。（X为当前设备可用于运行线程的逻辑处理器数量，且至多为13）",
 		qsmx_cizhang_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“吾持治妄之杖，消淫邪之术，护众免灾于天外邪魔。”</div>',
 		qsmx_zhangming: "杖鸣",
@@ -485,12 +539,12 @@ export async function content(config, pack) {
 		qsmx_zhangming_append:
 		'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“妄者，吾将运杖之能以裁之。”</div>',
 		qsmx_zhangcai: "杖裁",
-		qsmx_zhangcai_info: "一轮游戏开始时，或你受到伤害后，你可以击杀任意名其他武将牌技能描述总和大于[330-X]的角色，若如此做，你将武将牌翻至背面并弃置所有手牌。（X为你本局游戏使用与打出牌的点数和）",
+		qsmx_zhangcai_info: "一轮游戏开始时，或你受到伤害后，你可以击杀任意名武将牌技能描述总和大于[330-X]的角色，若如此做，你选择一项：①将武将牌翻至背面；②弃置所有手牌；③复活。（X为你本局游戏使用与打出牌的点数和）",
 		qsmx_zhangcai_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“妄者，吾将运杖之能以裁之。”</div>',
 		qsmx_xumiao: "虚渺",
 		qsmx_xumiao_info:
-			"专属技，你取消武将牌替换、技能清除/失效、濒死结算、死亡事件；<br>你获得技能后，若其非武将牌原有技能，你失去之。<br>回合结束时，若判定区未废除，你有概率废除你的判定区，否则，你有概率强制死亡。（概率为设备已消耗电量百分比）",
+			"专属技，你取消武将牌替换、技能清除/失效、体力上限变动、死亡事件；<br>你获得技能后，若其非武将牌原有技能，你失去之。<br>回合结束时，你有概率需要选择一项：①废除判定区；②失去所有体力；③强制死亡。（概率为设备已消耗电量百分比）",
 		qsmx_xumiao_append:
 			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“吾不过虚无缥缈之影，忽显于尘世，又忽消散无形，本为常理也。”</div>',
 	});
@@ -792,11 +846,15 @@ export async function content(config, pack) {
 				}
 			},
 		});
-		lib.qsmx.addSkillInfo();
 		if (config.skill_delete) {
+			//针对标签大师的技能灭杀
 			lib.qsmx.skillDelete();
-			lib.qsmx.skillTranslationAdd();
+		} else {
+			//不针对标签大师的技能灭杀
+			lib.qsmx.skillDelete2();
 		}
+		lib.qsmx.addSkillInfo();
+		lib.qsmx.skillTranslationAdd();
 	});
 	//lib.element.player
 	Object.assign(lib.element.player, {
@@ -824,7 +882,7 @@ export async function content(config, pack) {
 				},
 			});
 			delete next._triggered;
-			next.next = [this.DieTrigger()];
+			this.DieTrigger();
 			next.setContent("die");
 			return next;
 		},
@@ -834,24 +892,25 @@ export async function content(config, pack) {
 		 * @returns { GameEventPromise }
 		 */
 		DieTrigger: function(reason) {
-			var next = game.createEvent("die");
+			var next = game.createEvent("die", null, _status.event.getParent());
 			next.player = this;
 			next.forceDie = true;
 			next.setContent("emptyEvent");
+			this.OverDie();
 			return next;
-		},
+		},	
 		/**
-		 * 用于进行不触发游戏结束结算的死亡函数
+		 * 用于进行游戏结算
 		 * @param { GameEvent | GameEventPromise } reason
 		 * @returns { GameEventPromise }
 		 */
 		OverDie: function (reason) {
-			this.resetFuction();
-			var next = game.createEvent("OverDie");
+			var next = game.createEvent("OverDie", null, _status.event.getParent());
 			next.player = this;
-			next.reason = reason;
-			if (reason) next.source = reason.source;
-			next.setContent("OverDie");
+			next.setContent(function(){
+				if(player.isAlive() || player != game.boss) return;
+				game.checkResult();
+			});
 			return next;
 		},
 		/**
@@ -989,15 +1048,10 @@ export async function content(config, pack) {
 		 * @param { number } num
 		 */
 		initHpLocker: function (num) {
-			Object.defineProperty(this, "hp", {
-				get: function () {
-					this._hp = num;
-					return this._hp;
-				},
-				set: function (newValue) {
-					this._hp = num;
-					return;
-				},
+			var player = this;
+			lib.announce.subscribe('Noname.Game.Event.Changed', function(event){
+				player.hp = num;
+				player.update();
 			});
 		},
 		/**
@@ -1007,27 +1061,16 @@ export async function content(config, pack) {
 		 */
 		initmaxHpLocker: function (num, cheat) {
 			this._maxHp = num;
-			if (cheat) {
-				Object.defineProperty(this, "maxHp", {
-					get: function () {
-						return this._maxHp;
-					},
-					set: function (newValue) {
-						var oldValue = this._maxHp;
-						if (newValue > oldValue) this._maxHp = newValue;
-						return;
-					},
-				});
-			} else {
-				Object.defineProperty(this, "maxHp", {
-					get: function () {
-						return this._maxHp;
-					},
-					set: function (newValue) {
-						return;
-					},
-				});
-			}
+			var player = this;
+			lib.announce.subscribe('Noname.Game.Event.Changed', function(event){
+				var string = String(event.content);
+				var matchKeyword = `get.cnNumber(num) + "点体力上限"`;
+				if(string.includes(matchKeyword) && event.player == player){
+					_status.event.cancel();
+				}
+				player.maxHp = player._maxHp;
+				player.update();
+			});
 		},
 		/**
 		 * 锁定玩家classList

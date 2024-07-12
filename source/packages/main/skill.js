@@ -9696,6 +9696,9 @@ export const skill = {
 				return player.hasSkill('qsmx_jianxiong') && player.hasSkill('qsmx_fangzhu') && player.hasSkill('qsmx_huituo') && !player.storage.qsmx_quanbian;
 			},
 			forced:true,
+			ai:{
+				combo: "qsmx_renshi",
+			},
 		},
 		qsmx_lianpo: {
 			audio:"lianpo",
@@ -9915,7 +9918,9 @@ export const skill = {
 				var next = player.chooseControl(list);
 				next.set("ai", function () {
 					var controls = _status.event.controls;
-					return controls[0];
+					var list = controls.slice();
+					list.removeArray(["yijin", "reguhuo"]);
+					return list.randomGet();
 				});
 				var result = await next.forResult();
 				game.broadcastAll("closeDialog", event.videoId);

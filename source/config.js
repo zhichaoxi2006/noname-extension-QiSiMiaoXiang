@@ -20,7 +20,7 @@ export const config = {
 	},
 	difficulty_of_boss: {
 		name: "Boss难度",
-		init: "easy",
+		init: 0,
 		item: {
 			0:"简单（Easy）",
 			1: "普通（Normal）",

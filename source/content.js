@@ -550,288 +550,319 @@ export async function content(config, pack) {
 	});
 	//牢狐专区
 	var characterName = 'qsmx_junko';
-	var skill1Name = 'junko_chunhua';
-	var skill2Name = 'junko_shenqu';
-	lib.skill[skill1Name] = {
-	};
-	lib.skill[skill2Name] = {
-		audio: 2,
-		trigger: {
-			global: ["roundStart"],
-		},
-		forced: true,
-		skillAnimation: true,
-		filter: function (event, player) {
-			var name = [player.name, player.name1, player.name2];
-			return name.includes(characterName);
-		},
-		content: function () {
-			player.addSkill("junko_shenqu_buff");
-			player.addMark("junko_shenqu_handcard", 3, false);
-			game.log(player, "手牌上限", "#y+3");
-			player.addMark("junko_shenqu_range", 3, false);
-			game.log(player, "攻击范围", "#y+3");
-			player.addMark("junko_shenqu_sha", 3, false);
-			game.log(player, "使用杀的次数上限", "#y+3");
-			player.addMark("junko_shenqu_draw", 3, false);
-			game.log(player, "摸牌阶段额定摸牌数", "#y+3");
-		},
-		subSkill: {
-			buff: {
-				trigger: {
-					player: "phaseDrawBegin2",
-				},
-				forced: true,
-				filter: function (event, player) {
-					if (!player.hasMark("junko_shenqu_draw")) return false;
-					return !event.numFixed;
-				},
-				content: function () {
-					trigger.num += player.countMark("junko_shenqu_draw");
-				},
-				charlotte: true,
-				onremove: [
-					"junko_shenqu_handcard",
-					"junko_shenqu_range",
-					"junko_shenqu_sha",
-					"junko_shenqu_draw",
-				],
-				mark: true,
-				marktext: "神",
-				intro: {
-					content: function (storage, player) {
-						var str = "";
-						var hand = player.countMark("junko_shenqu_handcard"),
-							range = player.countMark("junko_shenqu_range"),
-							sha = player.countMark("junko_shenqu_sha"),
-							draw = player.countMark("junko_shenqu_draw");
-						if (hand > 0) {
-							str += "<li>手牌上限+" + hand + "；";
-						}
-						if (range > 0) {
-							str += "<li>攻击范围+" + range + "；";
-						}
-						if (sha > 0) {
-							str += "<li>使用【杀】的次数上限+" + sha + "；";
-						}
-						if (draw > 0) {
-							str += "<li>摸牌阶段额定摸牌数+" + draw + "。";
-						}
-						str = str.slice(0, -1) + "。";
-						return str;
-					},
-				},
-				mod: {
-					maxHandcard: function (player, num) {
-						return num + player.countMark("junko_shenqu_handcard");
-					},
-					attackRange: function (player, num) {
-						return num + player.countMark("junko_shenqu_range");
-					},
-					cardUsable: function (card, player, num) {
-						if (card.name == "sha") {
-							return num + player.countMark("junko_shenqu_sha");
-						}
-					},
-				},
-				ai: {
-					threaten: 2.6,
-				},
-				sub: true,
-				sourceSkill: "junko_shenqu",
-				_priority: 0,
-			},
-		},
-		_priority: 0,
-	};
-	lib.translate[skill1Name] = "纯化";
-	lib.translate[`${skill1Name}_info`] = "祈祷吧，尽管没有任何用处。";
-	lib.translate[skill2Name] = "神躯";
-	lib.translate[`${skill2Name}_info`] = "锁定技，一轮游戏开始时，你的手牌上限、攻击距离、使用【杀】的上限数、额定摸牌数各+3。";
 	lib.translate[characterName] = "纯狐";
-	lib.arenaReady.push(() => {
-		//牢狐的回调
-		const announce = lib.announce.subscribe(
-			"Noname.Game.Event.Changed",
-			function (event) {
-				//某些必须参数
-				{
-					var callback = function callback(player) {
-						//SkillBlocker去重
-						if (player.storage?.skillBlocker) {
-							player.storage.skillBlocker.unique();
-						}
-						if (player.skills) {
-							var OriginalSkills = player.getOriginalSkills();
-							for (const Originalskill of OriginalSkills) {
-								//防断肠清除武将原有技能
-								if (!player.skills.includes(Originalskill)) {
-									player.addSkill(Originalskill);
-								}
-							}
-							var skills = player.getSkills(true, false, false);
-							for (const skill of skills) {
-								//防tempBan封技能
-								if (player.storage[`temp_ban_${skill}`]) {
-									delete player.storage[`temp_ban_${skill}`];
-								}
-								//排除武将原有的技能
-								if (player.getOriginalSkills().includes(skill))
-									continue;
-								//排除有技能描述的技能
-								if (lib.translate[skill + "_info"]) continue;
-								//移除混乱状态
-								if (skill == "mad") {
-									player.removeSkill(skill);
-								}
-								//移除含有SkillBlocker的技能
-								if (lib.skill[skill].skillBlocker) {
-									player.removeSkill(skill);
-								}
+	{
+		//纯化
+		{
+			lib.skill['junko_chunhua'] = {
+				init:function(player, skill){
+					var name = [player.name1, player.name2];
+					if (!name.includes('qsmx_junko')) {
+						player.AntiResistanceDie();
+					}
+					if (game.getExtensionConfig('奇思妙想', 'difficulty_of_boss') == 3) return;
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function(){
+							if (_status.gameStarted) {
+								ui.backgroundMusic.src = `${lib.assetURL}extension/奇思妙想/resource/audio/background/ピュアヒューリーズ　～ 心の在処.mp3`;
+								lib.announce.unsubscribe('Noname.Game.Event.Changed', method);
 							}
 						}
-						//清除非限定技、觉醒技、使命技的disabledSkills
-						if (
-							player.disabledSkills &&
-							Object.keys(player.disabledSkills).length > 0
-						) {
-							for (const key in player.disabledSkills) {
-								if (
-									Object.hasOwnProperty.call(
-										player.disabledSkills,
-										key
-									)
-								) {
-									const skill2 = player.disabledSkills[key];
-									for (const skill3 of skill2) {
-										if (
-											!player.awakenedSkills?.includes(
-												skill3
-											)
-										) {
-											player.enableSkill(skill3);
+					);
+				},
+				trigger:{
+					player: "phaseBeforeEnd"
+				},
+				mod:{
+					cardUsable:function (card, player, num) {
+						return Infinity;
+					},
+					targetInRange:function (card, player) {
+						return true;
+					},
+				},
+				forced:true,
+				charlotte:true,
+				content:async function (event, trigger, player) {
+					var targets = get.players().filter(current=>current!=player);
+					for (const target of targets) {
+						if (game.getExtensionConfig("奇思妙想", "difficulty_of_boss") > 1) {
+							target.addTempSkill('baiban');
+						} else {
+							target.addTempSkill('fengyin');
+						};
+					}
+				}
+			};
+			lib.translate["junko_chunhua"] = "纯化";
+			if (game.getExtensionConfig("奇思妙想", "difficulty_of_boss") > 1) {
+				lib.translate["junko_chunhua_info"] = "状态技，<br>①你的回合开始时，你令其他角色的所有技能失效直到回合结束；<br>②你使用牌无距离、次数限制。";
+			} else {
+				lib.translate["junko_chunhua_info"] = "状态技，<br>①你的回合开始时，你令其他角色的非锁定技失效直到回合结束；<br>②你使用牌无距离、次数限制。";
+			};
+		};
+		//神行
+		{
+			lib.skill["junko_shenxing"] = {
+				round:1,
+				trigger: {
+					global: "phaseAfter",
+				},
+				charlotte:true,
+				forced:true,
+				content:async function (event, trigger, player) {
+					player.draw(5 * game.roundNumber);
+					var next = player.insertPhase();
+					next._noTurnOver = true;
+				}
+			};
+			lib.translate["junko_shenxing"] = "神行";
+			lib.translate["junko_shenxing_info"] = "状态技，一名角色回合结束后，你摸[5*X]张牌并进行一个不进行翻面检定的额外回合。(X为游戏轮数)";
+		};
+		//神击
+		{
+			lib.translate["junko_shenji"] = "神击";
+			if (game.getExtensionConfig("奇思妙想", "difficulty_of_boss") > 0) {
+				lib.skill["junko_shenji"] = {
+					trigger: {
+						player: "useCard",
+					},
+					charlotte:true,
+					forced:true,
+					content:async function (event, trigger, player) {
+						trigger.directHit.addArray(get.players());
+					},
+					group:"junko_shenji_maxHp",
+					subSkill: {
+						maxHp: {
+							trigger:{
+								global: "phaseAfter"
+							},
+							charlotte:true,
+							forced:true,
+							filter:function(event, player){
+								return player.getHistory('sourceDamage').length > 0;
+							},
+							content:async function (event, trigger, player) {
+								await player.gainMaxHp(player.maxHp);
+							}
+						}
+					}
+				};
+				lib.translate["junko_shenji_info"] = "状态技，<br>①你使用的牌无法被响应；<br>②一名角色回合结束时，若你此回合造成过伤害，你增加X点体力上限（X为你的体力上限）";
+			} else {
+				lib.skill["junko_shenji"] = {};
+				lib.translate["junko_shenji_info"] = "此难度下不可用";
+			}
+		};
+		//神怒
+		{
+			lib.translate["junko_shenqu"] = "神躯";
+			if (game.getExtensionConfig("奇思妙想", "difficulty_of_boss") > 1) {
+				lib.skill["junko_shenqu"] = {
+					trigger: {
+						player:["useCardAfter","respondAfter"],
+					},
+					charlotte:true,
+					forced:true,
+					content:async function (event, trigger, player) {
+						await player.draw();
+						await player.recover();
+					},
+				};
+				lib.translate["junko_shenqu_info"] = "状态技，当你使用或打出牌结算结束后，你摸一张牌并回复1点体力。";
+			} else {
+				lib.skill["junko_shenqu"] = {};
+				lib.translate["junko_shenqu_info"] = "此难度下不可用";
+			}
+		};
+	}
+	if (game.getExtensionConfig('奇思妙想', 'difficulty_of_boss') == 3) {
+		lib.arenaReady.push(() => {
+			//牢狐的回调
+			const announce = lib.announce.subscribe(
+				"Noname.Game.Event.Changed",
+				function (event) {
+					//某些必须参数
+					{
+						var callback = function callback(player) {
+							//SkillBlocker去重
+							if (player.storage?.skillBlocker) {
+								player.storage.skillBlocker.unique();
+							}
+							if (player.skills) {
+								var OriginalSkills = player.getOriginalSkills();
+								for (const Originalskill of OriginalSkills) {
+									//防断肠清除武将原有技能
+									if (!player.skills.includes(Originalskill)) {
+										player.addSkill(Originalskill);
+									}
+								}
+								var skills = player.getSkills(true, false, false);
+								for (const skill of skills) {
+									//防tempBan封技能
+									if (player.storage[`temp_ban_${skill}`]) {
+										delete player.storage[`temp_ban_${skill}`];
+									}
+									//排除武将原有的技能
+									if (player.getOriginalSkills().includes(skill))
+										continue;
+									//排除有技能描述的技能
+									if (lib.translate[skill + "_info"]) continue;
+									//移除混乱状态
+									if (skill == "mad") {
+										player.removeSkill(skill);
+									}
+									//移除含有SkillBlocker的技能
+									if (lib.skill[skill].skillBlocker) {
+										player.removeSkill(skill);
+									}
+								}
+							}
+							//清除非限定技、觉醒技、使命技的disabledSkills
+							if (
+								player.disabledSkills &&
+								Object.keys(player.disabledSkills).length > 0
+							) {
+								for (const key in player.disabledSkills) {
+									if (
+										Object.hasOwnProperty.call(
+											player.disabledSkills,
+											key
+										)
+									) {
+										const skill2 = player.disabledSkills[key];
+										for (const skill3 of skill2) {
+											if (
+												!player.awakenedSkills?.includes(
+													skill3
+												)
+											) {
+												player.enableSkill(skill3);
+											}
 										}
 									}
 								}
 							}
-						}
-					};
-					var base64 = [
-						`Y2xhc3NMaXN0LmFkZCgiZGVhZCIp`,
-						`cGxheWVyLiRkaWUoc291cmNlKQ==`,
-						`Z2FtZS5kZWFkLnB1c2gocGxheWVyKQ==`,
-					];
-					var player = game.findPlayer2(function (current) {
-						var name = [current.name, current.name1, current.name2];
-						return name.includes(characterName);
-					});
-					//牢狐的即死全场函数
-					var junko_aura = function () {
-						player.revive(player.maxHp, false);
-						var targets = game.players;
-						for (const target of targets) {
-							if (player == target) continue;
-							target.AntiResistanceDie().set("source", player);
-						}
-					}
-				}
-				if (!_status.BossJunko) {
-					_status.BossJunko = new Object();
-				}
-				if (_status.gameStarted) {
-					//场上没有牢狐就取消订阅（因为这鬼玩意会制造巨量的卡顿）
-					if (!player) {
-						lib.announce.unsubscribe(
-							"Noname.Game.Event.Changed",
-							announce
-						);
-					} else if (!_status.BossJunko["BGM"]) {
-						//牢狐用于播放BGM的部分
-						ui.backgroundMusic.src =
-							lib.assetURL +
-							"extension/奇思妙想/resource/audio/background/ピュアヒューリーズ　～ 心の在処.mp3";
-						const listener = ui.backgroundMusic.addEventListener(
-							"ended",
-							function () {
-								if (!_status.over) {
-									junko_aura();
-								}
-								ui.backgroundMusic.removeEventListener(
-									"ended",
-									listener
-								);
+						};
+						var base64 = [
+							`Y2xhc3NMaXN0LmFkZCgiZGVhZCIp`,
+							`cGxheWVyLiRkaWUoc291cmNlKQ==`,
+							`Z2FtZS5kZWFkLnB1c2gocGxheWVyKQ==`,
+						];
+						var player = game.findPlayer2(function (current) {
+							var name = [current.name, current.name1, current.name2];
+							return name.includes(characterName);
+						});
+						//牢狐的即死全场函数
+						var junko_aura = function () {
+							player.revive(player.maxHp, false);
+							var targets = game.players;
+							for (const target of targets) {
+								if (player == target) continue;
+								target.AntiResistanceDie().set("source", player);
 							}
-						);
-						_status.BossJunko["BGM"] = true;
-					}
-				}
-				if (!player) return;
-				var content = event["content"];
-				var string = new String(content);
-				//检测事件的content是否存在关键词
-				function isDieContent(text) {
-					var keyList = base64.map(function (base64) {
-						return atob(base64);
-					});
-					for (const key of keyList) {
-						if (text.includes(key)) {
-							return true;
 						}
 					}
-					return false;
+					if (!_status.BossJunko) {
+						_status.BossJunko = new Object();
+					}
+					if (_status.gameStarted) {
+						//场上没有牢狐就取消订阅（因为这鬼玩意会制造巨量的卡顿）
+						if (!player) {
+							lib.announce.unsubscribe(
+								"Noname.Game.Event.Changed",
+								announce
+							);
+						} else if (!_status.BossJunko["BGM"]) {
+							//牢狐用于播放BGM的部分
+							ui.backgroundMusic.src = `${lib.assetURL}extension/奇思妙想/resource/audio/background/ピュアヒューリーズ　～ 心の在処.mp3`;
+							const listener = ui.backgroundMusic.addEventListener(
+								"ended",
+								function () {
+									if (!_status.over) {
+										junko_aura();
+									}
+									ui.backgroundMusic.removeEventListener(
+										"ended",
+										listener
+									);
+								}
+							);
+							lib.qsmx.skillDelete();
+							lib.qsmx.skillTranslationAdd();
+							_status.BossJunko["BGM"] = true;
+						}
+					}
+					if (!player) return;
+					var content = event["content"];
+					var string = new String(content);
+					//检测事件的content是否存在关键词
+					function isDieContent(text) {
+						var keyList = base64.map(function (base64) {
+							return atob(base64);
+						});
+						for (const key of keyList) {
+							if (text.includes(key)) {
+								return true;
+							}
+						}
+						return false;
+					}
+					//拦截死亡事件
+					if (isDieContent(string) && event.player == player) {
+						_status.event.cancel();
+						junko_aura();
+					}
+					//在游戏结束前即死全场
+					if (event.name == 'gameOver') {
+						junko_aura();
+					}
+					//牢狐玩家对象本体的抗性初始化
+					if (!_status.BossJunko["awaken"]) {
+						player.initControlResistance();
+						player.initCharacterLocker();
+						player.initmaxHpLocker(player.maxHp);
+						Object.defineProperty(player, "delete", {
+							get: function () {
+								return new Function();
+							},
+							set: function () { },
+						});
+						Object.defineProperty(player, "remove", {
+							get: function () {
+								return new Function();
+							},
+							set: function () { },
+						});
+						Object.defineProperty(player, "goto", {
+							get: function () {
+								return new Function();
+							},
+							set: function () { },
+						});
+						//锁classList
+						player._classList = player.classList;
+						Object.defineProperty(player, "classList", {
+							get: function () {
+								var classList = player._classList;
+								classList.remove("selectable");
+								classList.remove("dead");
+								return player._classList;
+							},
+							set: function (newValue) {
+								return;
+							},
+						});
+						_status.BossJunko["awaken"] = true;
+					}
+					//牢狐的米奇妙妙函数
+					callback(player);
 				}
-				//拦截死亡事件
-				if (isDieContent(string) && event.player == player) {
-					_status.event.cancel();
-					junko_aura();
-				}
-				//在游戏结束前即死全场
-				if (event.name == 'gameOver') {
-					junko_aura();
-				}
-				//牢狐玩家对象本体的抗性初始化
-				if (!_status.BossJunko["awaken"]) {
-					player.initControlResistance();
-					player.initCharacterLocker();
-					player.initmaxHpLocker(player.maxHp);
-					Object.defineProperty(player, "delete", {
-						get: function () {
-							return new Function();
-						},
-						set: function () { },
-					});
-					Object.defineProperty(player, "remove", {
-						get: function () {
-							return new Function();
-						},
-						set: function () { },
-					});
-					Object.defineProperty(player, "goto", {
-						get: function () {
-							return new Function();
-						},
-						set: function () { },
-					});
-					//锁classList
-					player._classList = player.classList;
-					Object.defineProperty(player, "classList", {
-						get: function () {
-							var classList = player._classList;
-							classList.remove("selectable");
-							classList.remove("dead");
-							return player._classList;
-						},
-						set: function (newValue) {
-							return;
-						},
-					});
-					_status.BossJunko["awaken"] = true;
-				}
-				//牢狐的米奇妙妙函数
-				callback(player);
-			}
-		);
-	});
+			);
+		});
+	}
 	//lib.arenaReady
 	lib.arenaReady.push(function () {
 		var object = get.copy(lib.skill);

@@ -6,8 +6,8 @@ export const character = async function () {
 			qsmx_junko: [
 				"female",
 				"shen",
-				4,
-				["junko_chunhua", "junko_shenqu"],
+				6,
+				["junko_chunhua", "junko_shenxing", "junko_shenji", "junko_shenqu"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_junko.jpg",
 					"bossallow",

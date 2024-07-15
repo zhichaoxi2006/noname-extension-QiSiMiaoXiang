@@ -13,7 +13,7 @@ export async function content(config, pack) {
 	lib.onwash.push(() =>
 		game.createEvent("pileWashed", false).setContent("emptyEvent")
 	);
-	//game
+	//修改游戏结束函数并备份
 	game.over = function () {
 		var next = game.createEvent("gameOver");
 		next.arguments = arguments;
@@ -57,10 +57,11 @@ export async function content(config, pack) {
 			return;
 		});
 	};
+	lib.qsmx.backupOver = game.over;
 	//眯咪狗专区
 	Object.assign(lib.skill, {
 		qsmx_cizhang: {
-			audio:2,
+			prehidden:true,
 			group:["qsmx_cizhang_mark"],
 			init:function(player, skill){
 				lib.qsmx.skillDelete();
@@ -115,6 +116,7 @@ export async function content(config, pack) {
 				global: ['roundStart'],
 				player: ['damageAfter']
 			},
+			prehidden:true,
 			direct: true,
 			forceDie:true,
 			mark:true,
@@ -863,6 +865,154 @@ export async function content(config, pack) {
 			);
 		});
 	}
+	//正邪专区
+	Object.assign(lib.skill, {
+		qsmx_reverse: {
+			forced: true,
+			charlotte: true,
+			fixedObject:true,
+			init: function (player, skill) {
+				var name = [player.name, player.name1, player.name2];
+				if (!name.includes("qsmx_zhengxie")) {
+					player.removeSkill(skill);
+				} else {
+					_status.GameResultReverse = true;
+					player.initCharacterLocker();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							lib.qsmx.resitanceCallback(player);
+						}
+					);
+				}
+			},
+			onremove: function (player, skill) {
+				var name = [player.name, player.name1, player.name2];
+				if (name.includes("qsmx_zhengxie")) {
+					player.addSkill(skill);
+				}
+			},
+			group: [
+				"qsmx_reverse_dying",
+				"qsmx_reverse_changeHp",
+				"qsmx_reverse_gainMaxHp",
+				"qsmx_reverse_loseMaxHp",
+			],
+			subSkill: {
+				damage: {
+					trigger: {
+						player: ["damageBefore"],
+						source: ["damageBefore"],
+					},
+					forced: true,
+					charlotte: true,
+					filter: function (event, player) {
+						if (!event.source) return false;
+						return !event.reverse;
+					},
+					content: function () {
+						//缓存
+						event.source = trigger.source;
+						event.player = trigger.player;
+						//反转
+						trigger.source = event.player;
+						trigger.player = event.source;
+						//标记
+						trigger.reverse = true;
+						//清除缓存
+						delete event.source;
+						delete event.player;
+					},
+				},
+				changeHp: {
+					forced: true,
+					charlotte: true,
+					trigger: {
+						player: ["changeHpBefore"],
+					},
+					filter: function (event, player) {
+						return true;
+					},
+					content: function () {
+						var temp = trigger.num;
+						trigger.num = -temp;
+					},
+				},
+				dying: {
+					silent: true,
+					charlotte: true,
+					trigger: {
+						player: ["changeHpAfter"],
+					},
+					filter: function (event, player) {
+						return player.hp <= 0;
+					},
+					content: function () {
+						player.dying();
+					},
+				},
+				gainMaxHp: {
+					forced: true,
+					charlotte: true,
+					trigger: {
+						player: ["gainMaxHpBefore"],
+					},
+					filter: function (event, player) {
+						return true;
+					},
+					content: function () {
+						trigger.setContent("loseMaxHp");
+					},
+				},
+				loseMaxHp: {
+					forced: true,
+					charlotte: true,
+					trigger: {
+						player: ["loseMaxHpBefore"],
+					},
+					filter: function (event, player) {
+						return true;
+					},
+					content: function () {
+						trigger.setContent("gainMaxHp");
+					},
+				},
+			},
+		},
+		qsmx_tianxie: {
+			charlotte: true,
+			forced: true,
+			unique: true,
+			fixedObject:true,
+			trigger: {
+				player: ["changeHpEnd", "gainMaxHpEnd", "loseMaxHpEnd"],
+			},
+			group: ["qsmx_tianxie_MaxHp"],
+			filter: function (event, player) {
+				return player.hp == player.maxHp;
+			},
+			content: function () {
+				player.gainMaxHp();
+			},
+			subSkill: {
+				MaxHp: {
+					charlotte: true,
+					forced: true,
+					unique: true,
+					trigger: {
+						player: ["gainMaxHpEnd", "loseMaxHpEnd"],
+					},
+					content: function () {
+						if (trigger.name == "gainMaxHp") {
+							player.loseHp();
+						} else {
+							player.recover();
+						}
+					},
+				},
+			},
+		},
+	});
 	//lib.arenaReady
 	lib.arenaReady.push(function () {
 		var object = get.copy(lib.skill);
@@ -886,6 +1036,19 @@ export async function content(config, pack) {
 		}
 		lib.qsmx.addSkillInfo();
 		lib.qsmx.skillTranslationAdd();
+		//复原game.over函数所用回调
+		const announce = lib.announce.subscribe(
+			"Noname.Game.Event.Changed",
+			function (event) {
+				game.over = lib.qsmx.backupOver;
+			}
+		);
+		//想你了，牢狐
+		if (!game.getExtensionConfig("奇思妙想", "boss_to_normal")) {
+			if (lib.character['qsmx_junko']) {
+				lib.character['qsmx_junko'][4].addArray(["bossallow","boss"]);
+			}
+		}
 	});
 	//lib.element.player
 	Object.assign(lib.element.player, {
@@ -2058,4 +2221,8 @@ export async function content(config, pack) {
 		"qsmx_jiaxu",
 		"qsmx_mimidog",
 	]);
+	//对于哆来咪的加强
+	if (!_status.dunshi_list) lib.skill.dunshi.initList();
+	var derivation = _status.dunshi_list.slice();
+	lib.skill.dunshi.derivation = derivation;
 }

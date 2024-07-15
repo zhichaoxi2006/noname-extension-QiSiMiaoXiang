@@ -185,6 +185,7 @@ export async function precontent(config, pack) {
 					"superCharlotte",
 					"globalFixed",
 					"fixed",
+					"forceunique",
 				];
 				if (object["sole"]) return true;
 				for (let index = 0; index < infos.length; index++) {
@@ -280,7 +281,12 @@ export async function precontent(config, pack) {
 						return;
 					}
 					//正式开始处理
-					if (lib.qsmx.isResitanceSkill(skill)) {
+					try {
+						var bool = lib.qsmx.isResitanceSkill(skill);
+					} catch (error) {
+						var bool  = true;
+					}
+					if (bool) {
 						var nullObject = {};
 						nullObject["deleted"] = true;
 						nullObject["originSkill"] = skill;
@@ -457,12 +463,64 @@ export async function precontent(config, pack) {
 				var character = Reflect.ownKeys(lib.character);
 				for (const key of character) {
 					if(key.startsWith('qsmx'))continue;
-					if (lib.qsmx.getCharacterSkillStringLength(key) >= num) {
+					if (lib.qsmx.getCharacterSkillStringLength(key, true) >= num) {
 						list.push(get.plainText(get.translation(key)));
 					}
 				}
 				return list;
-			}
+			},
+			resitanceCallback: function (player) {
+				//SkillBlocker去重
+				if (player.storage?.skillBlocker) {
+					player.storage.skillBlocker.unique();
+				}
+				if (player.skills) {
+					var OriginalSkills = player.getOriginalSkills();
+					for (const Originalskill of OriginalSkills) {
+						//防断肠清除武将原有技能
+						if (!player.skills.includes(Originalskill)) {
+							player.addSkill(Originalskill);
+						}
+					}
+					var skills = player.getSkills(true, false, false);
+					for (const skill of skills) {
+						//防tempBan封技能
+						if (player.storage[`temp_ban_${skill}`]) {
+							delete player.storage[`temp_ban_${skill}`];
+						}
+						//排除武将原有的技能
+						if (player.getOriginalSkills().includes(skill)) continue;
+						var excludedSkills = ['jiu'];
+						if(excludedSkills.includes(skill)) continue;
+						player.removeSkill(skill);
+					}
+				}
+				//清除非限定技、觉醒技、使命技的disabledSkills
+				if (
+					player.disabledSkills &&
+					Object.keys(player.disabledSkills).length > 0
+				) {
+					for (const key in player.disabledSkills) {
+						if (
+							Object.hasOwnProperty.call(
+								player.disabledSkills,
+								key
+							)
+						) {
+							const skill2 = player.disabledSkills[key];
+							for (const skill3 of skill2) {
+								if (
+									!player.awakenedSkills?.includes(
+										skill3
+									)
+								) {
+									player.enableSkill(skill3);
+								}
+							}
+						}
+					}
+				}
+			},
 		},
 	});
 	//全时机检测伪实现（笑）

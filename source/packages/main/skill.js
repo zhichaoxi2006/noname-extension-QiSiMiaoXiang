@@ -21,6 +21,12 @@ export const skill = {
 					player.removeSkill(skill);
 				} else {
 					player.initCharacterLocker();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							lib.qsmx.resitanceCallback(player);
+						}
+					);
 				}
 			},
 			onremove: function (player, skill) {
@@ -286,11 +292,9 @@ export const skill = {
 				if (!name.includes("qsmx_baozheng")) return false;
 				return true;
 			},
-			content: function () {
-				"step 0";
+			content: async function (event, trigger, player) {
 				player.getStorage("qsmx_xingpan").length = 0;
 				player.syncStorage("qsmx_xingpan");
-				("step 1");
 				var prompt = "【刑判】：你可以对一名其他角色进行地狱审判。";
 				var toSortPlayers = game.players.filter((c) => c != player);
 				var next = player.chooseButton([1, 1]).set("createDialog", [
@@ -404,7 +408,7 @@ export const skill = {
 					return -get.attitude(player, target);
 				});
 				next.includeOut = true;
-				("step 2");
+				var result = await next.forResult();
 				if (result.bool) {
 					player.$skill(get.translation(event.name));
 					var links = result.links;
@@ -415,16 +419,15 @@ export const skill = {
 						);
 						for (let index = 0; index < targets.length; index++) {
 							const target = targets[index];
-							target.resetFuction();
+							game.log(target, "被", player, "送进无间地狱");
 							var next = target.AntiResistanceDie();
 							next.includeOut = true;
-							game.log(target, "被", player, "送进无间地狱");
+							await next;
 						}
 					}
 				}
-				("step 3");
-				player.turnOver();
-				game.delayx();
+				await player.turnOver();
+				game.asyncDelayx();
 			},
 			subSkill: {
 				judgeCancelled: {
@@ -1913,6 +1916,12 @@ export const skill = {
 				} else {
 					player.storage[skill] = [];
 					player.initCharacterLocker();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							lib.qsmx.resitanceCallback(player);
+						}
+					);
 				}
 			},
 			onremove: function (player, skill) {
@@ -2078,7 +2087,7 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		qsmx_dinghhuo: {
+		qsmx_dinghuo: {
 			audio: "nzry_dinghuo",
 			enable: ["chooseToUse"],
 			filterCard: function (card) {
@@ -2444,6 +2453,12 @@ export const skill = {
 					player.removeSkill(skill);
 				} else {
 					player.initCharacterLocker();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							lib.qsmx.resitanceCallback(player);
+						}
+					);
 				}
 			},
 			onremove: function (player, skill) {
@@ -3309,6 +3324,12 @@ export const skill = {
 					player.removeSkill(skill);
 				} else {
 					player.initCharacterLocker();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							lib.qsmx.resitanceCallback(player);
+						}
+					);
 				}
 			},
 			onremove: function (player, skill) {
@@ -3654,6 +3675,12 @@ export const skill = {
 					player.removeSkill(skill);
 				} else {
 					player.initCharacterLocker();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							lib.qsmx.resitanceCallback(player);
+						}
+					);
 				}
 			},
 			onremove: function (player, skill) {
@@ -4103,187 +4130,6 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		qsmx_cizhang: {
-			forced: true,
-			silent: true,
-			trigger: {
-				global: ["roundStart"],
-			},
-			filter: function (event, player) {
-				var name = [player.name, player.name1, player.name2];
-				if (!name.includes("qsmx_mimidog")) return false;
-				return true;
-			},
-			init: function (player, skill) {
-				var name = [player.name, player.name1, player.name2];
-				if (!name.includes("qsmx_mimidog")) {
-					player.removeSkill(skill);
-				} else {
-					player.initCharacterLocker();
-				}
-			},
-			content: function () {
-				"step 0";
-				player.damage(Math.max(1, player.countDisabledSlot()));
-				("step 1");
-				var prompt =
-					"【持杖】：你可以令任意名武将牌上的技能数不小于你未废除的装备槽数的其他角色死亡。";
-				var toSortPlayers = game.players.filter((c) => c != player);
-				var next = player
-					.chooseButton([1, Infinity])
-					.set("createDialog", [
-						prompt,
-						[
-							toSortPlayers.map((i) => `${i.playerid}|${i.name}`),
-							(item, type, position, noclick, node) => {
-								const info = item.split("|"),
-									_item = item;
-								const playerid = parseInt(info[0]);
-								item = info[1];
-								if (node) {
-									node.classList.add("button");
-									node.classList.add("player");
-									node.style.display = "";
-								} else {
-									node = ui.create.div(
-										".button.character",
-										position
-									);
-								}
-								node._link = item;
-								node.link = item;
-
-								const func = function (node, item) {
-									if (item != "unknown")
-										node.setBackground(item, "character");
-									if (node.node) {
-										node.node.name.remove();
-										node.node.hp.remove();
-										node.node.group.remove();
-										node.node.intro.remove();
-										if (node.node.replaceButton)
-											node.node.replaceButton.remove();
-									}
-									node.node = {
-										name: ui.create.div(".name", node),
-										group: ui.create.div(".identity", node),
-										intro: ui.create.div(".intro", node),
-									};
-									const currentPlayer = game.players.find(
-										(current) =>
-											current.playerid == playerid
-									);
-									const infoitem = [
-										currentPlayer.sex,
-										currentPlayer.group,
-										`${currentPlayer.hp}/${currentPlayer.maxHp}/${currentPlayer.hujia}`,
-									];
-									node.node.name.innerHTML =
-										get.slimName(item);
-									if (
-										lib.config.buttoncharacter_style ==
-											"default" ||
-										lib.config.buttoncharacter_style ==
-											"simple"
-									) {
-										if (
-											lib.config.buttoncharacter_style ==
-											"simple"
-										) {
-											node.node.group.style.display =
-												"none";
-										}
-										node.classList.add("newstyle");
-										node.node.name.dataset.nature =
-											get.groupnature(
-												get.bordergroup(infoitem)
-											);
-										node.node.group.dataset.nature =
-											get.groupnature(
-												get.bordergroup(infoitem),
-												"raw"
-											);
-									}
-									node.node.name.style.top = "8px";
-									if (
-										node.node.name.querySelectorAll("br")
-											.length >= 4
-									) {
-										node.node.name.classList.add("long");
-										if (
-											lib.config.buttoncharacter_style ==
-											"old"
-										) {
-											node.addEventListener(
-												"mouseenter",
-												ui.click.buttonnameenter
-											);
-											node.addEventListener(
-												"mouseleave",
-												ui.click.buttonnameleave
-											);
-										}
-									}
-									node.node.intro.innerHTML =
-										lib.config.intro;
-									node.node.group.style.backgroundColor =
-										get.translation(
-											`${get.bordergroup(infoitem)}Color`
-										);
-								};
-								node.refresh = func;
-								node.refresh(node, item);
-
-								node.link = _item;
-								return node;
-							},
-						],
-					]);
-				next.set("ai", function (button) {
-					var link = button.link;
-					var target = game.players.find(
-						(c) => c.playerid == link.split("|")[0]
-					);
-					return -get.attitude(player, target);
-				});
-				next.set("filterButton", function (button) {
-					var link = button.link;
-					var target = game.players.find(
-						(c) => c.playerid == link.split("|")[0]
-					);
-					var num = target.getOriginalSkills().length;
-					if (num >= player.countEnabledSlot()) return true;
-				});
-				next.includeOut = true;
-				("step 2");
-				if (result.bool) {
-					player.$skill(get.translation(event.name));
-					var links = result.links;
-					for (let index = 0; index < links.length; index++) {
-						const link = links[index];
-						var targets = game.players.filter(
-							(c) => c.playerid == link.split("|")[0]
-						);
-						for (let index = 0; index < targets.length; index++) {
-							const target = targets[index];
-							target.resetFuction();
-							var next = target.AntiResistanceDie();
-							next.includeOut = true;
-							game.log(target, "被", player, "不讲武德地偷袭");
-						}
-					}
-				}
-				("step 3");
-				game.delayx();
-			},
-			effect: function (card, player, target) {
-				if (get.tag(card, "damage")) {
-					return [1, 5];
-				}
-			},
-			popup: false,
-			_priority: 1,
-		},
 		qsmx_yangbai: {
 			forced: true,
 			usable: 1,
@@ -4342,95 +4188,6 @@ export const skill = {
 					},
 				},
 			},
-		},
-		qsmx_mingli: {
-			forced: true,
-			silent: true,
-			firstDo: true,
-			group: ["qsmx_mingli_phaseBefore", "qsmx_mingli_damageCancelled"],
-			trigger: {
-				global: "gameStart",
-				player: "enterGame",
-			},
-			filter: function (event, player) {
-				var name = [player.name, player.name1, player.name2];
-				if (!name.includes("qsmx_mimidog")) return false;
-				return true;
-			},
-			init: function (player, skill) {
-				var name = [player.name, player.name1, player.name2];
-				if (!name.includes("qsmx_mimidog")) {
-					player.removeSkill(skill);
-				} else {
-					player.initCharacterLocker();
-				}
-			},
-			onremove: function (player, skill) {
-				player.addSkill(skill);
-			},
-			content: function () {
-				player.initDieResistance();
-				player.initDyingResistance();
-				player.initControlResistance();
-				player.initMadResistance();
-				player.initHpLocker(player.hp);
-				player.initmaxHpLocker(player.maxHp);
-			},
-			subSkill: {
-				phaseBefore: {
-					trigger: {
-						global: "phaseBefore",
-					},
-					forced: true,
-					popup: false,
-					silent: true,
-					lastDo: true,
-					filter: function (event, player) {
-						return true;
-					},
-					content: function () {
-						player.storage.qsmx_mingli = 0;
-					},
-					sub: true,
-					_priority: 1,
-				},
-				damageCancelled: {
-					forced: true,
-					silent: true,
-					trigger: {
-						player: ["damageCancelled"],
-					},
-					filter: function (event, player) {
-						var currentPhase = _status.currentPhase;
-						if (!currentPhase) return false;
-						return true;
-					},
-					content: function () {
-						"step 0";
-						player.storage.qsmx_mingli++;
-						("step 1");
-						var currentPhase = _status.currentPhase;
-						var storage = player.storage.qsmx_mingli;
-						var OriginalSkills = currentPhase.getOriginalSkills();
-						if (currentPhase && storage > OriginalSkills.length) {
-							player.AntiResistanceDie();
-						}
-					},
-					_priority: 0,
-					sub: true,
-					popup: false,
-				},
-			},
-			ai: {
-				HpResistance: true,
-				maxHpResistance: true,
-				DieResistance: true,
-			},
-			popup: false,
-			audioname2: {
-				key_shiki: "shiki_omusubi",
-			},
-			_priority: 1,
 		},
 		qsmx_yangkuang: {
 			mark: true,
@@ -5238,6 +4995,12 @@ export const skill = {
 					player.removeSkill(skill);
 				} else {
 					player.initCharacterLocker();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							lib.qsmx.resitanceCallback(player);
+						}
+					);
 				}
 			},
 			onremove: function (player, skill) {
@@ -6080,149 +5843,6 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		qsmx_reverse: {
-			forced: true,
-			charlotte: true,
-			init: function (player, skill) {
-				var name = [player.name, player.name1, player.name2];
-				if (!name.includes("qsmx_zhengxie")) {
-					player.removeSkill(skill);
-				} else {
-					_status.GameResultReverse = true;
-					player.initCharacterLocker();
-				}
-			},
-			onremove: function (player, skill) {
-				var name = [player.name, player.name1, player.name2];
-				if (name.includes("qsmx_zhengxie")) {
-					player.addSkill(skill);
-				}
-			},
-			group: [
-				"qsmx_reverse_dying",
-				"qsmx_reverse_changeHp",
-				"qsmx_reverse_gainMaxHp",
-				"qsmx_reverse_loseMaxHp",
-			],
-			subSkill: {
-				damage: {
-					trigger: {
-						player: ["damageBefore"],
-						source: ["damageBefore"],
-					},
-					forced: true,
-					charlotte: true,
-					filter: function (event, player) {
-						if (!event.source) return false;
-						return !event.reverse;
-					},
-					content: function () {
-						//缓存
-						event.source = trigger.source;
-						event.player = trigger.player;
-						//反转
-						trigger.source = event.player;
-						trigger.player = event.source;
-						//标记
-						trigger.reverse = true;
-						//清除缓存
-						delete event.source;
-						delete event.player;
-					},
-				},
-				changeHp: {
-					forced: true,
-					charlotte: true,
-					trigger: {
-						player: ["changeHpBefore"],
-					},
-					filter: function (event, player) {
-						return true;
-					},
-					content: function () {
-						var temp = trigger.num;
-						trigger.num = -temp;
-					},
-				},
-				dying: {
-					silent: true,
-					charlotte: true,
-					trigger: {
-						player: ["changeHpAfter"],
-					},
-					filter: function (event, player) {
-						return player.hp <= 0;
-					},
-					content: function () {
-						player.dying();
-					},
-				},
-				gainMaxHp: {
-					forced: true,
-					charlotte: true,
-					trigger: {
-						player: ["gainMaxHpBefore"],
-					},
-					filter: function (event, player) {
-						return true;
-					},
-					content: function () {
-						trigger.setContent("loseMaxHp");
-					},
-				},
-				loseMaxHp: {
-					forced: true,
-					charlotte: true,
-					trigger: {
-						player: ["loseMaxHpBefore"],
-					},
-					filter: function (event, player) {
-						return true;
-					},
-					content: function () {
-						trigger.setContent("gainMaxHp");
-					},
-				},
-			},
-		},
-		qsmx_tianxie: {
-			charlotte: true,
-			forced: true,
-			unique: true,
-			onremove: function (player, skill) {
-				var name = [player.name, player.name1, player.name2];
-				if (name.includes("qsmx_zhengxie")) {
-					player.addSkill(skill);
-				}
-			},
-			trigger: {
-				player: ["changeHpEnd", "gainMaxHpEnd", "loseMaxHpEnd"],
-			},
-			group: ["qsmx_tianxie_MaxHp"],
-			filter: function (event, player) {
-				return player.hp == player.maxHp;
-			},
-			content: function () {
-				player.gainMaxHp();
-			},
-			subSkill: {
-				MaxHp: {
-					charlotte: true,
-					forced: true,
-					unique: true,
-					trigger: {
-						player: ["gainMaxHpEnd", "loseMaxHpEnd"],
-					},
-					content: function () {
-						if (trigger.name == "gainMaxHp") {
-							player.loseHp();
-						} else {
-							player.recover();
-						}
-					},
-				},
-			},
-		},
 		qsmx_zhiheng: {
 			audio: "rezhiheng",
 			trigger: {
@@ -6944,6 +6564,12 @@ export const skill = {
 				player.initControlResistance();
 				player.initmaxHpLocker(player.maxHp, true);
 				player.initControlResistance();
+				const method = lib.announce.subscribe(
+					"Noname.Game.Event.Changed",
+					function (event) {
+						lib.qsmx.resitanceCallback(player);
+					}
+				);
 				player.dieAfter = function () {
 					var event = _status.event;
 					if (
@@ -7673,6 +7299,12 @@ export const skill = {
 					player.initmaxHpLocker(player.maxHp, true);
 					player.initControlResistance();
 					player.initDieResistance();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							lib.qsmx.resitanceCallback(player);
+						}
+					);
 				} else {
 					player.removeSkill(skill);
 				}
@@ -8617,6 +8249,12 @@ export const skill = {
 				if (player.getOriginalSkills().includes(skill)) {
 					player.addSkillBlocker(skill);
 					player.initCharacterLocker();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							lib.qsmx.resitanceCallback(player);
+						}
+					);
 				} else {
 					player.AntiResistanceDie();
 				}
@@ -10216,7 +9854,7 @@ export const skill = {
 		qsmx_shajue_info: "你造成伤害后，你可以视为对目标使用一张普通【杀】。",
 		qsmx_qichong: "七重",
 		qsmx_qichong_info:
-			'专属技，你取消技能清除/失效、武将牌替换、濒死结算、体力变动、体力上限变动；洗牌后，若洗牌次数不小于七，你和你的阵营获得本局游戏的胜利；你受到的伤害结算后，若<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mo stretchy="false">(</mo><mi>X</mi><mo>−</mo><mi>Y</mi><mo stretchy="false">)</mo><mo>+</mo><mo stretchy="false">(</mo><mfrac><mi>Z</mi><mrow><mi>W</mi><mo>×</mo><mi>V</mi></mrow></mfrac><msup><mo stretchy="false">)</mo><mrow><mi>U</mi><mo>−</mo><mi>T</mi></mrow></msup><mo>=</mo><mn>42</mn></math>，你死亡，你取消不以此法的死亡。（X、Y、Z、W、V、U、T分别为造成伤害的牌对应实体牌花色数、颜色数、类型数、点数和、牌名字数和、牌名数、属性数）',
+			'专属技，你取消技能清除/失效、武将牌替换、濒死结算、体力变动、体力上限变动；洗牌后，若洗牌次数不小于七，你令所有敌方角色强制死亡；你受到的伤害结算后，若<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mo stretchy="false">(</mo><mi>X</mi><mo>−</mo><mi>Y</mi><mo stretchy="false">)</mo><mo>+</mo><mo stretchy="false">(</mo><mfrac><mi>Z</mi><mrow><mi>W</mi><mo>×</mo><mi>V</mi></mrow></mfrac><msup><mo stretchy="false">)</mo><mrow><mi>U</mi><mo>−</mo><mi>T</mi></mrow></msup><mo>=</mo><mn>42</mn></math>，你死亡，你取消不以此法的死亡。（X、Y、Z、W、V、U、T分别为造成伤害的牌对应实体牌花色数、颜色数、类型数、点数和、牌名字数和、牌名数、属性数）',
 		qmsx_duanwu: "锻武",
 		qsmx_difu: "地府",
 		qsmx_difu_info:
@@ -10344,8 +9982,18 @@ export const skill = {
 			"出牌阶段，你可以弃置一张武器牌或坐骑牌，或流失一点体力，对一名其他角色造成X点不触发伤害时机的伤害。（X为你与其的距离）",
 		qsmx_anjian: "暗箭",
 		qsmx_anjian_info: "锁定技，你即将造成的伤害均视为无来源伤害。",
+		qsmx_dinghhuo: "绽火",
+		qsmx_dinghhuo_info:
+			"你可以将普通锦囊牌当【火烧连营】，延时锦囊牌当【火山】，基本牌当【火杀】使用；你造成/受到属性伤害时，此伤害+1/-1。",
+		qsmx_qianxun: "谦逊",
+		qsmx_qianxun_info:
+			"锁定技，你不能成为【顺手牵羊】和【乐不思蜀】的目标。",
+		qmsx_lianying: "连营",
+		qmsx_lianying_info:
+			"出牌阶段，你可以将任意张牌交给一名未横置的角色令其横置；当你失去最后的手牌时，你可以摸一张牌。",
 		qsmx_mishen: "秘神",
 		qsmx_mishen_info:
 			"<ins>你不是一名可选武将</ins>；你登场时，以你的阵营胜利结束本局游戏。",
+			
 	},
 };

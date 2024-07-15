@@ -10,8 +10,6 @@ export const character = async function () {
 				["junko_chunhua", "junko_shenxing", "junko_shenji", "junko_shenqu"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_junko.jpg",
-					"bossallow",
-					"boss",
 					"null|null"
 				],
 			],
@@ -102,7 +100,7 @@ export const character = async function () {
 				"male",
 				"wu",
 				"4/4",
-				["qsmx_qianxun", "qsmx_dinghhuo", "qmsx_lianying"],
+				["qsmx_qianxun", "qsmx_dinghuo", "qmsx_lianying"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_luxun.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_luxun.mp3",
@@ -501,13 +499,13 @@ export const character = async function () {
 			//武将分包
 			qsmx_HellOfResistance: "纯粹的抗性地狱",
 			qsmx_huiwanxili: "会玩系列武将",
-			qsmx_hw_sunquan: "会玩孙权",
-			qsmx_hw_zhonghui: "会玩钟会",
-			qsmx_shen_zhangliao: "妙神张辽",
 			qsmx_meme: "仅供娱乐",
 			qmsx_diy: "DIY武将",
 			qsmx_touhou: "东方武将",
 			//武将名
+			qsmx_hw_sunquan: "会玩孙权",
+			qsmx_hw_zhonghui: "会玩钟会",
+			qsmx_shen_zhangliao: "妙神张辽",
 			qsmx_doremy_sweet: "哆来咪·苏伊特",
 			qsmx_doremy_sweet_ab:"哆来咪",
 			qsmx_kobe_bryant: "科比·布莱恩特",

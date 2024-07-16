@@ -169,7 +169,6 @@ export async function precontent(config, pack) {
 				)
 			},
 			/**
-			 * 检测对象的特定属性是否被定义
 			 * @param { object } object
 			 * @returns { boolean }
 			 */
@@ -271,6 +270,7 @@ export async function precontent(config, pack) {
 			 */
 			skillDelete: async function () {
 				if (_status.skillDelete) return;
+				console.time('技能灭杀');
 				var list = Reflect.ownKeys(lib.skill);
 				list.forEach(function (key) {
 					const skill = lib.skill[key];
@@ -322,12 +322,14 @@ export async function precontent(config, pack) {
 					}
 				});
 				_status.skillDelete = true;
+				console.timeEnd('技能灭杀');
 			},
 			/**
 			 * 清理带抗性的技能(D)
 			 */
 			skillDelete2: async function () {
 				if (_status.skillDelete) return;
+				console.time('技能灭杀');
 				var list = Reflect.ownKeys(lib.skill);
 				list.forEach(function (key) {
 					const skill = lib.skill[key];
@@ -375,6 +377,7 @@ export async function precontent(config, pack) {
 						}
 					}
 				});
+				console.timeEnd('技能灭杀');
 			},
 			/**
 			 * 复原被skillDelete清理的技能对象

@@ -5543,13 +5543,6 @@ export const skill = {
 				}
 			},
 		},
-		qsmx_winwin: {
-			charlotte: true,
-			init: function (player, skill) {
-				if (!_status.forceWin) _status.forceWin = [];
-				_status.forceWin.add(player);
-			},
-		},
 		qsmx_jianxiong: {
 			audio: 'dcjianxiong',
 			trigger: {
@@ -9495,7 +9488,7 @@ export const skill = {
 			trigger: {
 				player: "phaseZhunbeiBegin"
 			},
-			frequent:true,
+			forced:true,
 			initList:function () {
 				var list,
 					skills = [];
@@ -9621,12 +9614,65 @@ export const skill = {
 				}
 			}
 		},
+		qsmx_eshen: {
+			trigger: {
+				player: "dieAfter",
+			},
+			forceDie:true,
+			skillAnimation:true,
+			cost:async function(event, trigger, player) {
+				var next = player.chooseTarget('令一名其他角色获得“厄神”', function(target){
+					return !target.hasSkill('qsmx_eshen');
+				});
+				next.set("ai", function(target){
+					let playerx = _status.event.player
+					return -get.attitude(playerx, target);
+				});
+				event.result = await next.forResult();
+			},
+			content:async function(event, trigger, player){
+				const target = event.targets[0];
+				await target.addSkills("qsmx_eshen");
+			},
+			group: "qsmx_eshen_gameOver",
+			subSkill: {
+				gameOver: {
+					trigger: {
+						global:["gameOver"],
+					},
+					forced:true,
+					filter:function(event, player){
+						return player.isAlive();
+					},
+					content:async function(event, trigger, player){
+						await player.die();
+					},
+				}
+			},
+		},
+		qsmx_chonggou: {
+			trigger: {
+				global: 'roundStart'
+			},
+			forced:true,
+			forceDie:true,
+			filter:function(event, player){
+				return player.isDead();
+			},
+			content:async function(event, trigger, player){
+				player.revive(player.maxHp);
+			}
+		},
 	},
 	translate: {
+		qsmx_eshen: "厄神",
+		qsmx_eshen_info: "①锁定技，游戏即将结束时，若你未死亡，你死亡。<br>②你死亡时，你可以令一名其他角色获得“厄神”。",
+		qsmx_chonggou: "重构",
+		qsmx_chonggou_info: "锁定技，一轮游戏开始时，若你已死亡，你复活。",
 		qsmx_zaomeng: "造梦",
 		qsmx_zaomeng_info: "出牌阶段，你可以失去一个技能并选择一项：1.摸一张牌，2.令一名其他角色获得你失去的技能。",
 		qsmx_huanmeng: "幻梦",
-		qsmx_huanmeng_info: "准备阶段，你可以获得一个有关联衍生技的技能中所有关联衍生技。",
+		qsmx_huanmeng_info: "锁定技，准备阶段，你获得一个有关联衍生技的技能中所有关联衍生技。",
 		qsmx_shima: "失马",
 		qsmx_shima_info: "持恒技，游戏开始时，你废除你的坐骑栏，你的坐骑栏无法恢复。",
 		qsmx_cuike: "催氪",
@@ -9793,28 +9839,17 @@ export const skill = {
 		qsmx_zhiheng: "制衡",
 		qsmx_zhiheng_info:
 			"你使用或打出牌时，你可以摸[X+1]张牌，然后弃置X张牌。（X为你手牌数与装备区牌数之和，至多为你的体力上限）",
-		qsmx_tianxie: "天邪",
-		qsmx_tianxie_info:
-			"状态技，你的体力变动后，若你体力与体力上限相同，你增加一点体力上限；你增加/扣减体力上限后，你流失/回复一点体力。",
-		qsmx_reverse: "反转",
-		qsmx_reverse_info:
-			"专属技，<br>①你的体力上限{增加/减少}时，你改为{减少/增加}等量体力上限。<br>②你的体力变动前，你将体力变动值改为其相反数。<br>③游戏将要结束时，你反转游戏胜负。",
 		qsmx_xingshang: "行殇",
 		qsmx_xingshang_info:
 			"一名角色死亡后，你可以获得其武将牌上的任意个技能，然后增加一点体力上限并回复一点体力。",
 		qsmx_fangzhu: "放逐",
 		qsmx_fangzhu_info:
-			"你受到1点伤害后，你可以令一名其他角色摸X张牌标记为“放逐”并强制翻面；一名有“放逐”牌的角色翻面时，你弃置其一张牌取消之。（X为你损失的体力值）",
+			"3",
 		qsmx_yibing: "义兵",
 		qsmx_yibing_info: "测试中",
 		qsmx_jianxiong: "奸雄",
 		qsmx_jianxiong_info:
 			"你受到伤害后，你可以获得造成伤害的牌、造成伤害的技能、转化造成伤害的牌的技能，然后你摸一张牌并令此技能的摸牌数+1（至多为7）。",
-		qsmx_winwin: "赢麻",
-		qsmx_winwin_info:
-			"状态技，游戏将要结束时，你改为以你独自胜利结束本局游戏。",
-		qsmx_winwin_append:
-			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“你赢赢赢，最后是输光光。”</div>',
 		qsmx_qingguo: "倾国",
 		qsmx_qingguo_info:
 			"①你可以将一张黑色牌当做【闪】使用或打出。<br>②你使用或打出【闪】时，你摸一张牌。<br>③一名其他角色使用牌时，若牌的目标包含你，你可以打出一张【闪】令此牌对你无效。",

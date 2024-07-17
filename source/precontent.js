@@ -33,9 +33,6 @@ export async function precontent(config, pack) {
 					"",
 				],
 			},
-			SVG: {
-				fontCache: "global", // 共享字体缓存可以优化SVG渲染后的缩放
-			},
 		},
 	};
 	(function () {
@@ -237,7 +234,12 @@ export async function precontent(config, pack) {
 				return false;
 			},
 			hasSomeCode: function (object) {
-				var code = String(lib.init.stringifySkill(object));
+				//不要问为什么这里要try...catch...，问就是邪门写法的技能
+				try {
+					var code = lib.init.stringifySkill(object);
+				} catch (error) {
+					return [null, null, null];
+				}
 				return [lib.qsmx.hasEncryptedCode(code), lib.qsmx.hasObjectCode(code), lib.qsmx.hasChangeBossCode(code)];
 			},
 			/**
@@ -293,25 +295,25 @@ export async function precontent(config, pack) {
 						//必要的妥协
 						Reflect.ownKeys(skill).forEach(function(key){
 							if(typeof skill[key] == "function"){
-                                nullObject[key] = function () {};
-                            } else if (typeof skill[key] == "object") {
-                                nullObject[key] = skill[key];
-                            } else if (typeof skill[key] == "string") {
-                                nullObject[key] = skill[key];
-                            } else if (typeof skill[key] == "boolean") {
-                                nullObject[key] = skill[key];
-                            }
-                        });
+								nullObject[key] = function () {};
+							} else if (typeof skill[key] == "object") {
+								nullObject[key] = skill[key];
+							} else if (typeof skill[key] == "string") {
+								nullObject[key] = skill[key];
+							} else if (typeof skill[key] == "boolean") {
+								nullObject[key] = skill[key];
+							}
+						});
 						if(skill['trigger'])nullObject['trigger'] = skill['trigger'];
 						if(skill['subSkill'])nullObject['subSkill'] = skill['subSkill'];
 						if(skill['global'])nullObject['global'] = skill['global'];
 						//必须赋空的
-						nullObject['init'] = function () {};
-						nullObject['init2'] = function () {};
-						nullObject["filter"] = function () {};
-						nullObject["content"] = function () {};
-						nullObject["group"] = [];
-						nullObject["hookTrigger"] = {};
+						if(skill['init'])nullObject['init'] = function () {};
+						if(skill['init2'])nullObject['init2'] = function () {};
+						if(skill['filter'])nullObject["filter"] = function () {};
+						if(skill['content'])nullObject["content"] = function () {};
+						if(skill['group'])nullObject["group"] = [];
+						if(skill['hookTrigger'])nullObject["hookTrigger"] = {};
 						if (
 							(!key.startsWith("_") || lib.translate[`${key}_info`]) &&
 							!lib.qsmx.ResistanceSkills.includes(key)
@@ -341,13 +343,17 @@ export async function precontent(config, pack) {
 					}
 					//正式开始处理
 					var list = lib.qsmx.hasSomeCode(skill);
-					var bool = list[0] || list[1] || lib.qsmx.isDefined(skill);
+					try {
+						var bool = list[0] || list[1] || lib.qsmx.isDefined(skill);
+					} catch (error) {
+						var bool  = true;
+					}
 					if (bool) {
 						var nullObject = {};
 						nullObject["deleted"] = true;
 						nullObject["originSkill"] = skill;
 						//必要的妥协
-						Reflect.ownKeys(skill).forEach(function(key){
+						Object.keys(skill).forEach(function(key){
 							if(typeof skill[key] == "function"){
                                 nullObject[key] = function () {};
                             } else if (typeof skill[key] == "object") {
@@ -362,12 +368,12 @@ export async function precontent(config, pack) {
 						if(skill['subSkill'])nullObject['subSkill'] = skill['subSkill'];
 						if(skill['global'])nullObject['global'] = skill['global'];
 						//必须赋空的
-						nullObject['init'] = function () {};
-						nullObject['init2'] = function () {};
-						nullObject["filter"] = function () {};
-						nullObject["content"] = function () {};
-						nullObject["group"] = [];
-						nullObject["hookTrigger"] = {};
+						if(skill['init'])nullObject['init'] = function () {};
+						if(skill['init2'])nullObject['init2'] = function () {};
+						if(skill['filter'])nullObject["filter"] = function () {};
+						if(skill['content'])nullObject["content"] = function () {};
+						if(skill['group'])nullObject["group"] = [];
+						if(skill['hookTrigger'])nullObject["hookTrigger"] = {};
 						if (
 							(!key.startsWith("_") || lib.translate[`${key}_info`]) &&
 							!lib.qsmx.ResistanceSkills.includes(key)
@@ -410,7 +416,7 @@ export async function precontent(config, pack) {
 							`${key}_info`
 						] || lib.translate[
 							`${key}_info`
-						].startsWith(`<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>`))return;
+						].startsWith(`<ins>检测到此技能可能存在抗性，此技能已被无效化。</ins><br>`))return;
 						lib.translate[
 							`${key}_info`
 						] = `<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>${

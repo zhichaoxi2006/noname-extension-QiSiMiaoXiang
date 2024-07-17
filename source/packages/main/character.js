@@ -3,6 +3,17 @@ import { basic } from "../../basic.js";
 export const character = async function () {
 	var pack = {
 		character: {
+			qsmx_yorigami_yhion_and_yorigami_jyoon: [
+				"female",
+				"shen",
+				4,
+				["qsmx_eshen", "qsmx_chonggou"],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_yorigami_yhion_and_yorigami_jyoon.jpg",
+					"依神|紫苑-依神|女苑",
+					"unseen",
+				],
+			],
 			qsmx_junko: [
 				"female",
 				"shen",
@@ -59,7 +70,7 @@ export const character = async function () {
 				"male",
 				"wu",
 				"4/4",
-				["rezhiheng", "rejiuyuan", "qsmx_huiwan", "qsmx_winwin"],
+				["rezhiheng", "rejiuyuan", "qsmx_huiwan"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_hw_sunquan.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_hw_sunquan.mp3",
@@ -210,7 +221,7 @@ export const character = async function () {
 				"female",
 				"key",
 				"1/2",
-				["qsmx_tianxie", "qsmx_reverse"],
+				[],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_zhengxie.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_zhengxie.mp3",
@@ -506,6 +517,8 @@ export const character = async function () {
 			qsmx_hw_sunquan: "会玩孙权",
 			qsmx_hw_zhonghui: "会玩钟会",
 			qsmx_shen_zhangliao: "妙神张辽",
+			qsmx_yorigami_yhion_and_yorigami_jyoon: "依神紫苑&依神女苑",
+			qsmx_yorigami_yhion_and_yorigami_jyoon_ab: "依神姐妹",
 			qsmx_doremy_sweet: "哆来咪·苏伊特",
 			qsmx_doremy_sweet_ab:"哆来咪",
 			qsmx_kobe_bryant: "科比·布莱恩特",

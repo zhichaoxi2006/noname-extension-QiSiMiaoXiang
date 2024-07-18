@@ -9844,7 +9844,7 @@ export const skill = {
 			"一名角色死亡后，你可以获得其武将牌上的任意个技能，然后增加一点体力上限并回复一点体力。",
 		qsmx_fangzhu: "放逐",
 		qsmx_fangzhu_info:
-			"3",
+			"你受到1点伤害后，你可以令一名其他角色摸X张牌标记为“放逐”并强制翻面；一名有“放逐”牌的角色翻面时，你弃置其一张牌取消之。（X为你损失的体力值）",
 		qsmx_yibing: "义兵",
 		qsmx_yibing_info: "测试中",
 		qsmx_jianxiong: "奸雄",

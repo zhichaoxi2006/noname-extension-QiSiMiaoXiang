@@ -7009,7 +7009,10 @@ export const skill = {
 				);
 			},
 			getIndex: function (event) {
-				return event.cards.length;
+				if(event.cards){
+					return event.cards.length;
+				}
+				return 1;
 			},
 			frequent: function (event, player) {
 				if (event.name == "gain")
@@ -8680,7 +8683,7 @@ export const skill = {
 				var list = ["将其击杀", "视为对其与你使用一张【桃园结义】"];
 				const {
 					result: { control },
-				} = await player.chooseControlList(list).set("ai", () => {
+				} = await player.chooseControlList(`选择一项对${target.name}执行`,list).set("ai", () => {
 					var controls = _status.event.controls.slice();
 					if (get.attitude(player, target) <= 0) return "选项一";
 					return controls.randomGet();
@@ -9550,7 +9553,7 @@ export const skill = {
 				next.set("ai", function () {
 					var controls = _status.event.controls;
 					var list = controls.slice();
-					list.removeArray(["yijin", "reguhuo"]);
+					list.removeArray(["yijin", "reguhuo", "sbzz_guitu"]);
 					return list.randomGet();
 				});
 				var result = await next.forResult();

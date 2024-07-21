@@ -404,7 +404,7 @@ export async function content(config, pack) {
 				var name = [player.name, player.name1, player.name2];
 				if (name.includes('qsmx_mimidog')) {
 					player.initCharacterLocker();
-					player.initDieResistance();
+					player.initDieResistance(true);
 					player.initmaxHpLocker(player.maxHp);
 					player.initControlResistance();
 					const method = lib.announce.subscribe(
@@ -584,20 +584,30 @@ export async function content(config, pack) {
 		//神行
 		{
 			lib.skill["junko_shenxing"] = {
-				round:1,
 				trigger: {
-					global: "phaseAfter",
+					global: "phaseBegin",
 				},
 				charlotte:true,
 				forced:true,
+				round:1,
 				content:async function (event, trigger, player) {
-					player.draw(5 * game.roundNumber);
-					var next = player.insertPhase();
-					next._noTurnOver = true;
-				}
+					await player.draw(5 * game.roundNumber);
+					var cards = Array.from(ui.ordering.childNodes);
+					while (cards.length) {
+						cards.shift().discard();
+					}
+					var evt = _status.event.getParent("phase");
+					if (evt) { 
+						game.resetSkills();
+						_status.event = evt;
+						_status.event.finish();
+						_status.event.untrigger(true);
+					}
+					player.insertPhase(event.name).set('_noTurnOver', true);
+				},
 			};
 			lib.translate["junko_shenxing"] = "神行";
-			lib.translate["junko_shenxing_info"] = "状态技，一名角色回合结束后，你摸[5*X]张牌并进行一个不进行翻面检定的额外回合。(X为游戏轮数)";
+			lib.translate["junko_shenxing_info"] = "状态技，一名角色的回合开始时，你摸[5*X]张牌，然后你结束当前回合并进行一个不进行翻面检定的额外回合。(X为游戏轮数)";
 		};
 		//神击
 		{
@@ -1179,7 +1189,7 @@ export async function content(config, pack) {
 		/**
 		 * 初始化死亡抗性
 		 */
-		initDieResistance: function () {
+		initDieResistance: function (noHpChange) {
 			var player = this;
 			//牢狐那照搬的（
 			var base64 = [
@@ -1206,8 +1216,10 @@ export async function content(config, pack) {
 					}
 					if (isDieContent(string) && event.player == player) {
 						_status.event.cancel();
-						player.hp = player.maxHp;
-						player.update();
+						if (!noHpChange) {
+							player.hp = player.maxHp;
+							player.update();
+						}
 					}
 				}
 			);

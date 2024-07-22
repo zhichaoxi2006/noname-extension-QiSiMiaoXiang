@@ -62,6 +62,7 @@ export async function precontent(config, pack) {
 		});
 		const prefix = {
 			qsmx: [
+				"qsmx_zhaoyun",
 				"qsmx_simayi",
 				"qsmx_liubei",
 				"qsmx_machao",
@@ -95,7 +96,7 @@ export async function precontent(config, pack) {
 			],
 			qsmx_hw: ["qsmx_hw_sunquan", "qsmx_hw_zhonghui"],
 			qsmx_sp: ["qsmx_sp_zhangliao"],
-			qsmx_shen: ["qsmx_shen_zhangjiao", "qsmx_shen_zhangliao"],
+			qsmx_shen: ["qsmx_shen_zhangjiao", "qsmx_shen_zhangliao", "qsmx_shen_zhangfei", "qsmx_shen_xunyu"],
 		};
 		for (var i of prefix["qsmx_sp"]) lib.translate[i + "_prefix"] = "SP妙";
 		for (var i of prefix["qsmx_shen"])

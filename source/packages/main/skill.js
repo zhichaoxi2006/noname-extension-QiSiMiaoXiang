@@ -9666,8 +9666,114 @@ export const skill = {
 				player.revive(player.maxHp);
 			}
 		},
+		qsmx_longdan: {
+			audio:2,
+			enable:["chooseToUse","chooseToRespond"],
+			filter:function (event, player) {
+				var basicCards = [];
+				for (const cardPack of Object.keys(lib.cardPack)) {
+					basicCards.addArray(lib.cardPack[cardPack]);
+				}
+				basicCards = basicCards.filter(name => get.type2(name) == 'basic');
+				for (var i of basicCards) {
+					if (event.filterCard(get.autoViewAs({ name: i }, "unsure"), player, event)) return true;
+				}
+				return false;
+			},
+			chooseButton:{
+				dialog:function (event, player) {
+					var basicCards = [];
+					var list = [];
+					for (const cardPack of Object.keys(lib.cardPack)) {
+						basicCards.addArray(lib.cardPack[cardPack]);
+					}
+					for (const name of basicCards) {
+						if (name == "sha") {
+							if (event.filterCard(get.autoViewAs({ name }, "unsure"), player, event)) list.push(["基本", "", "sha"]);
+							for (var nature of lib.linked) {
+								if (event.filterCard(get.autoViewAs({ name, nature }, "unsure"), player, event)) list.push(["基本", "", "sha", nature]);
+							}
+						} else if (get.type2(name) == "basic" && event.filterCard(get.autoViewAs({ name }, "unsure"), player, event)) {
+							list.push(["基本", "", name]);
+						}
+					}
+					return ui.create.dialog("龙胆", [list, "vcard"]);
+				},
+				check:function (button) {
+					if (_status.event.getParent().type != "phase") return 1;
+					var player = _status.event.player;
+					if (["wugu", "zhulu_card", "yiyi", "lulitongxin", "lianjunshengyan", "diaohulishan"].includes(button.link[2])) return 0;
+					return player.getUseValue({
+						name: button.link[2],
+						nature: button.link[3],
+					});
+				},
+				backup:function (links, player) {
+					return {
+						filterCard: true,
+						popname: true,
+						check: function (card) {
+							return 8 - get.value(card);
+						},
+						position: "hse",
+						viewAs: { name: links[0][2], nature: links[0][3] },
+						onuse:function(links, player){
+							var card = links.card;
+							if (!lib.inpile.includes(card.name)) {
+								var next = game.createEvent("qsmx_longdan_tempBan", false, _status.event.getParent());
+								next.player = player;
+								next.setContent(function () {
+									player.tempBanSkill("qsmx_longdan");
+								});
+							}
+						}
+					};
+				},
+				prompt:function (links, player) {
+					return "将一张牌当做" + (get.translation(links[0][3]) || "") + get.translation(links[0][2]) + "使用";
+				},
+			},
+			hiddenCard:function (player, name) {
+				var type = get.type2(name);
+				return type == "basic";
+			},
+			ai:{
+				fireAttack:true,
+				respondSha:true,
+				respondShan:true,
+				skillTagFilter:function (player) {
+					if (false) return false;
+				},
+				order:1,
+				result:{
+					player:function (player) {
+						if (_status.event.dying) return get.attitude(player, _status.event.dying);
+						return 1;
+					},
+				},
+			},
+			"_priority":0,
+		},
+		qsmx_juejing: {
+			audio:"xinjuejing",
+			trigger:{
+				player:"phaseZhunbeiBegin",
+			},
+			forced:true,
+			content:function () {
+				player.draw(player.getDamagedHp() + 1);
+			},
+			mod:{
+				maxHandcard:(player, num) => num + 2,
+			},
+			"_priority":0,
+		},
 	},
 	translate: {
+		qsmx_juejing: "绝境",
+		qsmx_juejing_info: "锁定技。①准备阶段，你摸[X+1]张牌（X为你已损失的体力值）。②你的手牌上限+2。",
+		qsmx_longdan: "龙胆",
+		qsmx_longdan_info: "你可以将一张牌当作任意基本牌使用或打出，若牌堆中没有你以此法使用或打出的牌名，你令此技能失效直到回合结束。",
 		qsmx_eshen: "厄神",
 		qsmx_eshen_info: "①锁定技，游戏即将结束时，若你未死亡，你死亡。<br>②你死亡时，你可以令一名其他角色获得“厄神”。",
 		qsmx_chonggou: "重构",

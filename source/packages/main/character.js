@@ -10,7 +10,7 @@ export const character = async function () {
 				["qsmx_eshen", "qsmx_chonggou"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_yorigami_yhion_and_yorigami_jyoon.jpg",
-					"依神|紫苑-依神|女苑",
+					"name:依神|紫苑-依神|女苑",
 					"unseen",
 				],
 			],
@@ -21,7 +21,7 @@ export const character = async function () {
 				["junko_chunhua", "junko_shenxing", "junko_shenji", "junko_shenqu"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_junko.jpg",
-					"null|null"
+					"name:null|null"
 				],
 			],
 			qsmx_mimidog: [
@@ -436,6 +436,27 @@ export const character = async function () {
 				["qsmx_huanmeng", "qsmx_zaomeng"],
 				["ext:奇思妙想/resource/image/character/qsmx_doremy_sweet.jpg", "name:哆来咪|苏伊特"],
 			],
+			qsmx_shen_zhangfei: [
+				"male",
+				"shen",
+				"4/4",
+				[],
+				["ext:奇思妙想/resource/image/character/qsmx_shen_zhangfei.jpg", "unseen"],
+			],
+			qsmx_shen_xunyu: [
+				"male",
+				"shen",
+				"3/3",
+				[],
+				["ext:奇思妙想/resource/image/character/qsmx_shen_xunyu.jpg", "unseen"],
+			],
+			qsmx_zhaoyun: [
+				"male",
+				"shu",
+				"4/4",
+				["qsmx_longdan"],
+				["ext:奇思妙想/resource/image/character/qsmx_zhaoyun.jpg"],
+			]
 		},
 		characterTitle: {
 			qsmx_longinus: "百夫长",
@@ -472,6 +493,8 @@ export const character = async function () {
 					"qsmx_hw_sunquan",
 				],
 				qmsx_diy: [
+					"qsmx_shen_xunyu",
+					"qsmx_shen_zhangfei",
 					"qsmx_liubei",
 					"qsmx_simayi",
 					"qsmx_sp_zhangliao",
@@ -514,6 +537,9 @@ export const character = async function () {
 			qmsx_diy: "DIY武将",
 			qsmx_touhou: "东方武将",
 			//武将名
+			qsmx_zhaoyun: "妙赵云",
+			qsmx_shen_xunyu: "妙神荀彧",
+			qsmx_shen_zhangfei:"妙神张飞",
 			qsmx_hw_sunquan: "会玩孙权",
 			qsmx_hw_zhonghui: "会玩钟会",
 			qsmx_shen_zhangliao: "妙神张辽",

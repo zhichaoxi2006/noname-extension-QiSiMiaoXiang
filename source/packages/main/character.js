@@ -388,8 +388,8 @@ export const character = async function () {
 				"male",
 				"key",
 				"6/6",
-				["qsmx_yicai", "qsmx_moxia"],
-				["name:null|null"],
+				["qsmx_yinwu", "qsmx_yinan", "qsmx_guangshi"],
+				["ext:奇思妙想/resource/image/character/qsmx_yemoxia.jpg", "name:null|null"],
 			],
 			qsmx_shen_zhangliao: [
 				"male",
@@ -454,7 +454,7 @@ export const character = async function () {
 				"male",
 				"shu",
 				"4/4",
-				["qsmx_longdan"],
+				["qsmx_longdan", "qsmx_juejing"],
 				["ext:奇思妙想/resource/image/character/qsmx_zhaoyun.jpg"],
 			]
 		},

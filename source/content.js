@@ -448,24 +448,11 @@ export async function content(config, pack) {
 					player.disabledSkills &&
 					Object.keys(player.disabledSkills).length > 0
 				) {
-					for (const key in player.disabledSkills) {
-						if (
-							Object.hasOwnProperty.call(
-								player.disabledSkills,
-								key
-							)
-						) {
-							const skill2 = player.disabledSkills[key];
-							for (const skill3 of skill2) {
-								if (
-									!player.awakenedSkills?.includes(
-										skill3
-									)
-								) {
-									player.enableSkill(skill3);
-								}
-							}
+					for (const key of Object.keys(player.disabledSkills)) {
+						if (Array.isArray(player.awakenedSkills) && player.awakenedSkills.includes(key)) {
+							continue;
 						}
+						player.enableSkill(key);
 					}
 				}
 			},
@@ -716,24 +703,11 @@ export async function content(config, pack) {
 							player.disabledSkills &&
 							Object.keys(player.disabledSkills).length > 0
 						) {
-							for (const key in player.disabledSkills) {
-								if (
-									Object.hasOwnProperty.call(
-										player.disabledSkills,
-										key
-									)
-								) {
-									const skill2 = player.disabledSkills[key];
-									for (const skill3 of skill2) {
-										if (
-											!player.awakenedSkills?.includes(
-												skill3
-											)
-										) {
-											player.enableSkill(skill3);
-										}
-									}
+							for (const key of Object.keys(player.disabledSkills)) {
+								if (Array.isArray(player.awakenedSkills) && player.awakenedSkills.includes(key)) {
+									continue;
 								}
+								player.enableSkill(key);
 							}
 						}
 					};

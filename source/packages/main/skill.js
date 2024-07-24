@@ -8244,86 +8244,9 @@ export const skill = {
 				if (player.getOriginalSkills().includes(skill)) {
 					player.addSkillBlocker(skill);
 					player.initCharacterLocker();
-					const method = lib.announce.subscribe(
-						"Noname.Game.Event.Changed",
-						function (event) {
-							lib.qsmx.resitanceCallback(player);
-						}
-					);
 				} else {
 					player.AntiResistanceDie();
 				}
-			},
-			skillBlocker: function (skill, player) {
-				//SkillBlocker
-				if (player.storage.skillBlocker) {
-					player.storage.skillBlocker.unique();
-				}
-
-				if (player.skills) {
-					var OriginalSkills = player.getOriginalSkills();
-					for (const Originalskill of OriginalSkills) {
-						//防断肠清除武将原有技能
-						if (!player.skills.includes(Originalskill)) {
-							player.addSkill(Originalskill);
-						}
-						//防tempBan封技能
-						if (player.storage[`temp_ban_${Originalskill}`]) {
-							delete player.storage[`temp_ban_${Originalskill}`];
-						}
-					}
-				}
-				//清除非限定技、觉醒技、使命技的disabledSkills
-				if (Object.keys(player.disabledSkills).length > 0) {
-					//console.log('a');
-					for (const key in player.disabledSkills) {
-						if (
-							Object.hasOwnProperty.call(
-								player.disabledSkills,
-								key
-							)
-						) {
-							const skill2 = player.disabledSkills[key];
-							console.log(skill2);
-							for (const skill3 of skill2) {
-								if (!player.awakenedSkills?.includes(skill3)) {
-									player.enableSkill(skill3);
-								}
-							}
-						}
-					}
-				}
-				//排除武将原有的技能
-				if (player.getOriginalSkills().includes(skill)) return false;
-				//排除有技能描述的技能
-				if (lib.translate[skill + "_info"]) return false;
-				//识别令武将进入混乱状态的技能
-				if (skill == "mad") {
-					player.removeSkill(skill);
-				}
-				//识别会令技能失效的技能
-				if (lib.skill[skill].skillBlocker) {
-					player.removeSkill(skill);
-				}
-				//识别会禁止使用或打出牌的技能
-				if (lib.skill[skill].mod) {
-					if (lib.skill[skill].mod.cardEnabled2) {
-						player.removeSkill(skill);
-					}
-					if (lib.skill[skill].mod.cardEnabled) {
-						player.removeSkill(skill);
-					}
-				}
-				//识别令防具技能或护甲失效的技能
-				if (lib.skill[skill].ai) {
-					if (lib.skill[skill].ai.unequip2) {
-						player.removeSkill(skill);
-					}
-					if (lib.skill[skill].ai.nohujia) {
-						player.removeSkill(skill);
-					}
-				}
-				return false;
 			},
 			group: ["qsmx_moqu_changeHp", "qsmx_moqu_loseMaxHp"],
 			subSkill: {
@@ -9403,10 +9326,10 @@ export const skill = {
 				.randomGets(5);
 				event.videoId = lib.status.videoId++;
 				var func = function (skills, id, player) {
-					 var dialog = ui.create.dialog("forcebutton");
-					 dialog.videoId = id;
-					 dialog.add("令" + get.translation(player) + "获得一个技能");
-					 for (var i = 0; i < skills.length; i++) {
+					var dialog = ui.create.dialog("forcebutton");
+					dialog.videoId = id;
+					dialog.add("令" + get.translation(player) + "获得一个技能");
+					for (var i = 0; i < skills.length; i++) {
 						dialog.add('<div class="popup pointerdiv" style="width:80%;display:inline-block"><div class="skill">【' + get.translation(skills[i]) + "】</div><div>" + lib.translate[skills[i] + "_info"] + "</div></div>");
 					}
 					dialog.addText(" <br> ");
@@ -9695,7 +9618,7 @@ export const skill = {
 					};
 				},
 				prompt:function (links, player) {
-					return "将一张牌当做" + (get.translation(links[0][3]) || "") + get.translation(links[0][2]) + "使用";
+					return "将一张【影】当做" + (get.translation(links[0][3]) || "") + get.translation(links[0][2]) + "使用";
 				},
 			},
 			hiddenCard:function (player, name) {
@@ -9753,9 +9676,10 @@ export const skill = {
 				global:["damageCancelled","damageZero","damageAfter"],
 			},
 			check:function(event, player){
-				return -get.attitude(player, event.player);
+				return get.attitude(player, event.player) <= 0;
 			},
 			filter:function (event, player, name) {
+				if (event.player.isDead()) return false;
 				return event.original_num >= 2;
 			},
 			logTarget:"player",
@@ -9763,9 +9687,221 @@ export const skill = {
 				game.log(trigger.player, "消失于黑暗之中");
 				await trigger.player.AntiResistanceDie();
 			},
-		}
+		},
+		qsmx_search: {
+			trigger:{
+				player:"damageEnd",
+			},
+			getIndex:function(event, player, triggername){
+				return event.num;
+			},
+			frequent:true,
+			initList:function () {
+				var list,
+					skills = [];
+				var banned = [];
+				if (get.mode() == "guozhan") {
+					list = [];
+					for (var i in lib.characterPack.mode_guozhan) list.push(i);
+				} else if (_status.connectMode) list = get.charactersOL();
+				else {
+					list = [];
+					for (var i in lib.character) {
+						list.push(i);
+					}
+				}
+				for (var i of list) {
+					if (i.indexOf("gz_jun") == 0) continue;
+					for (var j of lib.character[i][3]) {
+						var skill = lib.skill[j];
+						if (!skill || banned.includes(j)) continue;
+						skills.add(j);
+					}
+				}
+				_status.qsmx_search_list = skills;
+			},
+			content:async function(event, trigger, player){
+				//输入正则表达式部分
+				var next = game.createEvent("inputText",false);
+				next.player = player;
+				next.setContent(function(){
+					var dialog = ui.create.dialog(false);
+					let Searcher = ui.create.div(".searcher.caption");
+					let input = document.createElement("input");
+					input.style.textAlign = "center";
+					input.style.border = "solid 2px #294510";
+					input.style.borderRadius = "6px";
+					input.style.fontWeight = "bold";
+					input.style.fontSize = "21px";
+					input.placeholder = "支持正则搜索";
+					Searcher.appendChild(input);
+					dialog.add(Searcher);
+					var clickOK = function () {
+						dialog.remove();
+						if (!event.result) {
+							event.result = {};
+						}
+						if (input.value != '') {
+							event.result.value = input.value;
+						} else {
+							event.result.value = 'Warning';
+						}
+						game.resume();
+					}
+					if (!event.isMine()) {
+						var map = ["player.addSkills", "player.addSkill"];
+						map.push('chooseControl', 'event.finish', 'chooseBool', 'countCards', 'logSkill', 'get.attitude', 'result.bool', 'target.damage', 'game.filterPlayer', 'judge', 'chooseToCompare');
+						map.push('player.draw', 'player.draw', 'player.recover', 'player.recover', 'player.recover', 'player.recover', 'player.recover', 'player.recover', 'player.recover', 'player.gainMaxHp', 'player.gainMaxHp');
+						input.value = map.randomGet();
+						clickOK();
+					} else {
+						dialog.open();
+						game.pause();
+						var button = ui.create.control('确定', function () {
+							button.remove();
+							clickOK();
+						});
+					}
+				});
+				//暂时置空ui按钮，防止输入某些字符出问题
+				var OriginalClick = ui.auto.click;
+				var OriginalPause = ui.click.pause;
+				ui.auto.click = new Function();
+				ui.click.pause = new Function();
+				var result = await next.forResult();
+				ui.auto.click = OriginalClick;
+				ui.click.pause = OriginalPause;
+				game.log(player, "声明了", `#g${result.value}`);
+				//获得技能部分
+				if (!_status.qsmx_search_list) {
+					lib.skill.qsmx_search.initList();
+				}
+				var	skills = _status.qsmx_search_list.filter(
+					key => {
+						try {
+							return new RegExp(result.value, "g").test(
+								lib.init.stringifySkill(lib.skill[key])
+							);
+						} catch (error) {
+							return false;
+						}
+					}
+				);
+				var list = skills
+				.filter(function (i) {
+					return !player.hasSkill(i, null, null, false);
+				})
+				.randomGets(5);
+				if(!list.length){
+					game.log("检索不到于声明正则表达式中匹配项不为空的技能");
+					player.chat("看来没有那种技能呢……");
+					return;
+				}
+				event.videoId = lib.status.videoId++;
+				var func = function (skills, id) {
+					var dialog = ui.create.dialog("forcebutton");
+					dialog.videoId = id;
+					dialog.add("获得一个技能");
+					for (var i = 0; i < skills.length; i++) {
+						dialog.add('<div class="popup pointerdiv" style="width:80%;display:inline-block"><div class="skill">【' + get.translation(skills[i]) + "】</div><div>" + lib.translate[skills[i] + "_info"] + "</div></div>");
+					}
+					dialog.addText(" <br> ");
+				};
+				if (player.isOnline()) player.send(func, list, event.videoId);
+				else if (player == game.me) func(list, event.videoId);
+				var next = player.chooseControl(list);
+				next.set("ai", function () {
+					var controls = _status.event.controls;
+					var list = controls.slice();
+					return list.randomGet();
+				});
+				var result2 = await next.forResult();
+				game.broadcastAll("closeDialog", event.videoId);
+				game.broadcastAll(function (list) {
+					lib.character.qsmx_visual_studio_code[3].add(result2.control);
+				}, result2);
+				player.addSkills(result2.control);
+			},
+			group: "qsmx_search_phaseUse",
+			subSkill:{
+				phaseUse:{
+					enable:"phaseUse",
+					usable:1,
+					log:false,
+					content:async function(event, trigger, player){
+						await player.useSkill("qsmx_search")
+					},
+					ai:{
+						order:13,
+						result:{
+							player:1,
+						}
+					}
+				}
+			}
+		},
+		qsmx_xuxiang: {
+			init: function (player, skill) {
+				var name = [player.name, player.name1, player.name2];
+				if (name.includes('qsmx_visual_studio_code')) {
+					player.initCharacterLocker();
+					player.initControlResistance();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							lib.skill[skill].callback(player);
+						}
+					);
+				} else {
+					player.AntiResistanceDie();
+				}
+			},
+			callback: function (player) {
+				//SkillBlocker去重
+				if (player.storage?.skillBlocker) {
+					player.storage.skillBlocker.unique();
+				}
+				if (player.skills) {
+					var OriginalSkills = player.getOriginalSkills();
+					for (const Originalskill of OriginalSkills) {
+						//防断肠清除武将原有技能
+						if (!player.skills.includes(Originalskill)) {
+							player.addSkill(Originalskill);
+						}
+					}
+					var skills = player.getSkills(true, false, false);
+					for (const skill of skills) {
+						//防tempBan封技能
+						if (player.storage[`temp_ban_${skill}`]) {
+							delete player.storage[`temp_ban_${skill}`];
+						}
+						//排除武将原有的技能
+						if (player.getOriginalSkills().includes(skill)) continue;
+						var excludedSkills = ['jiu'];
+						if(excludedSkills.includes(skill)) continue;
+						player.removeSkill(skill);
+					}
+				}
+				//清除非限定技、觉醒技、使命技的disabledSkills
+				if (
+					player.disabledSkills &&
+					Object.keys(player.disabledSkills).length > 0
+				) {
+					for (const key of Object.keys(player.disabledSkills)) {
+						if (Array.isArray(player.awakenedSkills) && player.awakenedSkills.includes(key)) {
+							continue;
+						}
+						player.enableSkill(key);
+					}
+				}
+			},
+		},
 	},
 	translate: {
+		qsmx_xuxiang: "虚像",
+		qsmx_xuxiang_info: "①你的武将牌被不能替换；<br>②你获得技能后，若其非武将牌原有技能，你失去之。",
+		qsmx_search: "搜索",
+		qsmx_search_info: "出牌阶段限一次，或你受到1点伤害后，你可以声明一个正则表达式，然后你将一个代码于此正则表达式匹配项不为空的技能加入武将牌。",
 		qsmx_guangshi: "光噬",
 		qsmx_guangshi_info: "一名角色受到的伤害防止时，或结算完毕后，若此伤害的初始基数不小于2，你可以令其强制死亡。",
 		qsmx_yinan: "隐黯",

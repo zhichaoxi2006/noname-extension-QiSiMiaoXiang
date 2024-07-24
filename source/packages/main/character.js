@@ -456,7 +456,17 @@ export const character = async function () {
 				"4/4",
 				["qsmx_longdan", "qsmx_juejing"],
 				["ext:奇思妙想/resource/image/character/qsmx_zhaoyun.jpg"],
-			]
+			],
+			qsmx_visual_studio_code: [
+				"none",
+				"key",
+				"4/4",
+				[
+					"qsmx_search",
+					"qsmx_xuxiang"
+				],
+				["ext:奇思妙想/resource/image/character/qsmx_visual_studio_code.jpg"],
+			],
 		},
 		characterTitle: {
 			qsmx_longinus: "百夫长",
@@ -526,7 +536,7 @@ export const character = async function () {
 					"qsmx_cenhun",
 				],
 				qsmx_touhou: ["qsmx_matara_okina", "qsmx_zhengxie", "qsmx_junko", "qsmx_doremy_sweet"],
-				qsmx_meme: ['qsmx_kobe_bryant', "qsmx_zhangxianzhong", "qsmx_gocar"]
+				qsmx_meme: ['qsmx_kobe_bryant', "qsmx_zhangxianzhong", "qsmx_gocar", "qsmx_visual_studio_code"]
 			},
 		},
 		translate: {
@@ -537,6 +547,8 @@ export const character = async function () {
 			qmsx_diy: "DIY武将",
 			qsmx_touhou: "东方武将",
 			//武将名
+			qsmx_visual_studio_code: "Visual Studio Code",
+			qsmx_visual_studio_code_ab: "VSCode",
 			qsmx_zhaoyun: "妙赵云",
 			qsmx_shen_xunyu: "妙神荀彧",
 			qsmx_shen_zhangfei:"妙神张飞",

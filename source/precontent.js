@@ -1,4 +1,6 @@
-import { lib, game, ui, get, ai, _status } from "../../../noname.js";
+import { lib, game, ui, get, ai, _status, Game } from "../../../noname.js";
+import { GameEventManager } from "../../../noname/library/element/gameEvent.js";
+import compiler from "../../../noname/library/element/GameEvent/compilers/dist/ContentCompiler.js";
 import { getRepoTags, request, getRepoFilesList } from "./update.js";
 export async function precontent(config, pack) {
 	//MathJax
@@ -108,40 +110,8 @@ export async function precontent(config, pack) {
 	Object.assign(lib, {
 		qsmx: {
 			over: game.over,
-			excludeSkills: ["global", "globalmap"],
+			excludeSkills: ["global", "globalmap", "autoswap"],
 			ResistanceSkills: [],
-			defineProperty: function () {
-				var skills = Object.keys(lib.skill);
-				var character = Object.keys(lib.character);
-				var translate = Object.keys(lib.translate);
-				for (let index = 0; index < skills.length; index++) {
-					const key = skills[index];
-					if (key.startsWith("qsmx_") || key.startsWith("_qsmx_")) {
-						Object.defineProperty(lib.skill, key, {
-							writable: false,
-							configurable: false,
-						});
-					}
-				}
-				for (let index = 0; index < character.length; index++) {
-					const key = character[index];
-					if (key.startsWith("qsmx_")) {
-						Object.defineProperty(lib.character, key, {
-							writable: false,
-							configurable: false,
-						});
-					}
-				}
-				for (let index = 0; index < translate.length; index++) {
-					const key = translate[index];
-					if (key.startsWith("qsmx_")) {
-						Object.defineProperty(lib.translate, key, {
-							writable: false,
-							configurable: false,
-						});
-					}
-				}
-			},
 			addSkillInfo: function () {
 				var skills = Object.keys(lib.skill);
 				for (let index = 0; index < skills.length; index++) {
@@ -160,6 +130,7 @@ export async function precontent(config, pack) {
 				var list = lib.qsmx.hasSomeCode(object);
 				if(list[2])return false;
 				return (
+					lib.qsmx.isTooMuchSkillTrigger(object) ||
 					lib.qsmx.isTooMuchSkillTag(object) ||
 					lib.qsmx.isDefined(object) ||
 					list[0] ||
@@ -192,6 +163,25 @@ export async function precontent(config, pack) {
 					}
 				}
 				if (count >= 2) return true;
+				return false;
+			},
+			/**
+			 * 
+			 * @param { Skill } info 
+			 * @returns { Boolean }
+			 */
+			isTooMuchSkillTrigger: function(info){
+				var list = [];
+				if (info.trigger) {
+					for (const key of Object.keys(info.trigger)) {
+						if (typeof info.trigger[key] == "string") {
+							list.add(info.trigger[key]);
+						} else {
+							list.addArray(info.trigger[key]);
+						}
+					}
+					return list.length > 12;
+				}
 				return false;
 			},
 			/**
@@ -534,19 +524,32 @@ export async function precontent(config, pack) {
 		},
 	});
 	//全时机检测伪实现（笑）
-	lib.qsmx.event = get.copy(_status.event, true);
 	try {
-		Object.defineProperty(_status, "event", {
-			get: function () {
-				return lib.qsmx.event;
-			},
-			set: function (event) {
-				lib.qsmx.event = event;
-				//在赋值之后进行消息推送
+		if (_status.eventManager) {
+			//针对1103v2事件重构的修改
+			class eventStackArray extends Array{};
+			eventStackArray.prototype.push = function(){
 				lib.announce.publish("Noname.Game.Event.Changed", _status.event);
-			},
-		});
+				return Array.prototype.push.apply(this, arguments);
+			}
+			Object.setPrototypeOf(_status.eventManager.eventStack, eventStackArray.prototype);
+		} else {
+			//祖宗之法
+			lib.qsmx.currentEvent = get.copy(_status.event, true);
+			Object.defineProperty(_status, "event", {
+				get: function () {
+					return lib.qsmx.currentEvent;
+				},
+				set: function (event) {
+					lib.qsmx.currentEvent = event;
+					//在赋值之后进行消息推送
+					lib.announce.publish("Noname.Game.Event.Changed", event);
+				},
+				configurable:true,
+				enumerable:true,
+			});
+		}
 	} catch (err) {
-		console.error(err)
+		throw new Error(err);
 	}
 }

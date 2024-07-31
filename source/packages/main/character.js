@@ -21,7 +21,8 @@ export const character = async function () {
 				["junko_chunhua", "junko_shenxing", "junko_shenji", "junko_shenqu"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_junko.jpg",
-					"name:null|null"
+					"name:null|null",
+					"forbidai",
 				],
 			],
 			qsmx_mimidog: [
@@ -33,6 +34,7 @@ export const character = async function () {
 					"ext:奇思妙想/resource/image/character/qsmx_mimidog.jpg",
 					"InitFilter:noZhuHp",
 					"name:null|null",
+					"forbidai",
 				],
 			],
 			qsmx_longinus: [
@@ -43,7 +45,8 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_longinus.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_longinus.mp3",
-					"null|null"
+					"null|null",
+					"forbidai",
 				],
 			],
 			qsmx_xusha: [
@@ -64,6 +67,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_huangzhong.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_huangzhong.mp3",
+					"forbidai",
 				],
 			],
 			qsmx_hw_sunquan: [
@@ -74,6 +78,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_hw_sunquan.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_hw_sunquan.mp3",
+					"forbidai",
 				],
 			],
 			qsmx_sunquan: [
@@ -95,6 +100,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_baozheng.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_baozheng.mp3",
+					"forbidai",
 				],
 			],
 			qsmx_hw_zhonghui: [
@@ -105,6 +111,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_hw_zhonghui.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_hw_zhonghui.mp3",
+					"forbidai",
 				],
 			],
 			qsmx_luxun: [
@@ -126,6 +133,7 @@ export const character = async function () {
 					"ext:奇思妙想/resource/image/character/qsmx_sunce.jpg",
 					"zhu",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_sunce.mp3",
+					"forbidai",
 				],
 			],
 			qsmx_liubei: [
@@ -144,7 +152,10 @@ export const character = async function () {
 				"qun",
 				"3/3",
 				["qsmx_zaozhi", "qsmx_yishua"],
-				["ext:奇思妙想/resource/image/character/qsmx_cailun.jpg"],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_cailun.jpg",
+					"forbidai",
+				],
 			],
 			qsmx_SevenGod: [
 				"female",
@@ -153,7 +164,8 @@ export const character = async function () {
 				["qsmx_qichong", "qsmx_shenwei", "qsmx_shiyuan"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_SevenGod.jpg",
-					"null|null"
+					"null|null",
+					"forbidai",
 				],
 			],
 			qsmx_jiaxu: [
@@ -164,6 +176,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_jiaxu.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_jiaxu.mp3",
+					"forbidai",
 				],
 			],
 			qsmx_wangshuang: [
@@ -184,7 +197,7 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_nanhua.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_nanhua.mp3",
-					"name:庄|周"
+					"name:庄|周",
 				],
 			],
 			qsmx_matara_okina: [
@@ -194,7 +207,7 @@ export const character = async function () {
 				["qsmx_mishen"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_matara_okina.jpg",
-					"name:摩多罗|隐岐奈"
+					"name:摩多罗|隐岐奈",
 				],
 			],
 			qsmx_cenhun: [
@@ -225,7 +238,8 @@ export const character = async function () {
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_zhengxie.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_zhengxie.mp3",
-					"name:鬼人|正邪"
+					"name:鬼人|正邪",
+					"forbidai",
 				],
 			],
 			qsmx_guanyu: [
@@ -310,6 +324,7 @@ export const character = async function () {
 					"zhu",
 					"hiddenSkill",
 					"name:司马|师",
+					"forbidai",
 				],
 			],
 			qsmx_simayi: [
@@ -330,6 +345,7 @@ export const character = async function () {
 				["qsmx_tudiao", "qsmx_qisha", "qsmx_xianzhong"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_zhangxianzhong.jpg",
+					"forbidai",
 				],
 			],
 			qsmx_zhangfei: [
@@ -455,7 +471,9 @@ export const character = async function () {
 				"shu",
 				"4/4",
 				["qsmx_longdan", "qsmx_juejing"],
-				["ext:奇思妙想/resource/image/character/qsmx_zhaoyun.jpg"],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_zhaoyun.jpg",
+				],
 			],
 			qsmx_visual_studio_code: [
 				"none",
@@ -465,7 +483,10 @@ export const character = async function () {
 					"qsmx_search",
 					"qsmx_xuxiang"
 				],
-				["ext:奇思妙想/resource/image/character/qsmx_visual_studio_code.jpg"],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_visual_studio_code.jpg",
+					"forbidai",
+				],
 			],
 		},
 		characterTitle: {

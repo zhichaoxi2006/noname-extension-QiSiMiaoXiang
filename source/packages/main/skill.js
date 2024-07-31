@@ -2461,9 +2461,6 @@ export const skill = {
 					);
 				}
 			},
-			onremove: function (player, skill) {
-				player.addSkill(skill);
-			},
 			filter: function (event, player) {
 				var name = [player.name, player.name1, player.name2];
 				if (!name.includes("qsmx_sunce")) return false;
@@ -2529,12 +2526,7 @@ export const skill = {
 				maxHpResistance: true,
 				DieResistance: true,
 			},
-			init: (player, skill) => (player.storage[skill] = []),
 			popup: false,
-			audioname2: {
-				key_shiki: "shiki_omusubi",
-			},
-			_priority: 1,
 		},
 		qsmx_jiang: {
 			audio: "jiang",
@@ -2620,7 +2612,6 @@ export const skill = {
 					},
 				},
 			},
-			_priority: 0,
 		},
 		qsmx_taoni: {
 			forced: true,
@@ -2837,7 +2828,6 @@ export const skill = {
 					});
 				}
 			},
-			_priority: -25,
 		},
 		qsmx_shishen: {
 			silent: true,
@@ -9454,7 +9444,7 @@ export const skill = {
 			}
 		},
 		qsmx_longdan: {
-			audio:2,
+			audio:"ollongdan",
 			enable:["chooseToUse","chooseToRespond"],
 			filter:function (event, player) {
 				var basicCards = [];
@@ -9555,6 +9545,14 @@ export const skill = {
 		},
 		qsmx_yinwu: {
 			audio:2,
+			mod: {
+				aiValue:function(player, card, num) {
+					if (card.name == 'ying') return num + 1;
+				},
+				aiUseful:function(player, card, num) {
+					if (card.name == 'ying') return num + 1;
+				},
+			},
 			enable:["chooseToUse","chooseToRespond"],
 			filter:function (event, player) {
 				if(!player.countCards('hes',{name:'ying'})) return false;
@@ -9600,7 +9598,7 @@ export const skill = {
 					return {
 						filterCard: true,
 						popname: true,
-						check: function (card) {
+						ai1: function (card) {
 							return 8 - get.value(card);
 						},
 						position: "hse",
@@ -9667,6 +9665,24 @@ export const skill = {
 					content: function () {
 						trigger.cancel();
 					},
+					ai: {
+						filterDamage:true,
+						maixie:true,
+						maixie_hp:true,
+						nofire:true,
+						nothunder:true,
+						nodamage:true,
+						skillTagFilter:function (player, tag, arg) {
+							if (["maixie", "maixie_hp", "nofire", "nothunder", "nodamage"].includes(tag)) {
+								return player.getHistory("damage").length > 0;
+							}
+						},
+						effect:{
+							target:function (card, player, target, current) {
+								if (get.tag(card, "damage") && player.getHistory("damage").length > 0) return "zeroplayertarget";
+							},
+						},
+					}
 				}
 			},
 		},
@@ -9749,7 +9765,7 @@ export const skill = {
 						game.resume();
 					}
 					if (!event.isMine()) {
-						var map = ["player.addSkills", "player.addSkill"];
+						var map = ["player.addSkills", "player.addSkill", "gainSkills", "trigger.player.AntiResistanceDie"];
 						map.push('chooseControl', 'event.finish', 'chooseBool', 'countCards', 'logSkill', 'get.attitude', 'result.bool', 'target.damage', 'game.filterPlayer', 'judge', 'chooseToCompare');
 						map.push('player.draw', 'player.draw', 'player.recover', 'player.recover', 'player.recover', 'player.recover', 'player.recover', 'player.recover', 'player.recover', 'player.gainMaxHp', 'player.gainMaxHp');
 						input.value = map.randomGet();
@@ -9762,6 +9778,13 @@ export const skill = {
 							clickOK();
 						});
 					}
+					input.addEventListener("keydown", (e) => {
+						if (e.key == "Enter") {
+							button.remove();
+							clickOK();
+						}
+						e.stopPropagation();
+					});
 				});
 				//暂时置空ui按钮，防止输入某些字符出问题
 				var OriginalClick = ui.auto.click;
@@ -9907,7 +9930,7 @@ export const skill = {
 		qsmx_yinan: "隐黯",
 		qsmx_yinan_info: "锁定技，<br>①一名角色回合结束后，若此回合你未造成过伤害，你获得一张【影】。<br>②你受到伤害时，若伤害值大于1或你于此回合已受到过伤害，你防止之。",
 		qsmx_yinwu: "影武",
-		qsmx_yinwu_info: "你可以将一张【影】当作任意※伤害类牌使用或打出，然后你摸一张牌。",
+		qsmx_yinwu_info: "你可以将一张【影】当作任意※伤害类牌使用或打出，若你如此做，你摸一张牌。",
 		qsmx_juejing: "绝境",
 		qsmx_juejing_info: "锁定技。①准备阶段，你摸[X+1]张牌（X为你已损失的体力值）。②你的手牌上限+2。",
 		qsmx_longdan: "龙胆",
@@ -10023,7 +10046,7 @@ export const skill = {
 			"锁定技，你使用【杀】时，若你本局游戏使用的【杀】数和为7的倍数，你对此【杀】的所有目标造成一点湮灭伤害。",
 		qsmx_tudiao: "屠道",
 		qsmx_tudiao_info:
-			"其他角色于濒死状态外回复体力后，你可视为对其使用一张【杀】；<br>其他角色于判定阶段外执行判定后，你可视为对其使用一张【杀】；<br>其他角色于摸牌阶段外获得卡牌后，你可视为对其使用一张【杀】；<br>其他角色于出牌阶段外使用卡牌后，你可视为对其使用一张【杀】；<br>其他角色于弃牌阶段外弃置卡牌后，你可视为对其使用一张【杀】；<br>其他角色于结束阶段外翻转将牌后，你可视为对其使用一张【杀】；<br>其他角色于行动回合外造成伤害后，你可视为对其使用一张【杀】；",
+			"其他角色于濒死状态外回复体力后，你可视为对其使用一张【杀】；<br>其他角色于判定阶段外执行判定后，你可视为对其使用一张【杀】；<br>其他角色于摸牌阶段外获得卡牌后，你可视为对其使用一张【杀】；<br>其他角色于出牌阶段外使用卡牌后，你可视为对其使用一张【杀】；<br>其他角色于弃牌阶段外弃置卡牌后，你可视为对其使用一张【杀】；<br>其他角色于结束阶段外翻转将牌后，你可视为对其使用一张【杀】；<br>其他角色于行动回合外造成伤害后，你可视为对其使用一张【杀】。",
 		qsmx_xukong: "虚空",
 		qsmx_xukong_info:
 			"锁定技，你防止你即将受到的伤害并流失一点体力，然后你进行一次判定，若结果为{红色/黑色}，你{回复一点体力/获得牌堆底一张牌}。",
@@ -10258,8 +10281,8 @@ export const skill = {
 			"出牌阶段，你可以弃置一张武器牌或坐骑牌，或流失一点体力，对一名其他角色造成X点不触发伤害时机的伤害。（X为你与其的距离）",
 		qsmx_anjian: "暗箭",
 		qsmx_anjian_info: "锁定技，你即将造成的伤害均视为无来源伤害。",
-		qsmx_dinghhuo: "绽火",
-		qsmx_dinghhuo_info:
+		qsmx_dinghuo: "绽火",
+		qsmx_dinghuo_info:
 			"你可以将普通锦囊牌当【火烧连营】，延时锦囊牌当【火山】，基本牌当【火杀】使用；你造成/受到属性伤害时，此伤害+1/-1。",
 		qsmx_qianxun: "谦逊",
 		qsmx_qianxun_info:

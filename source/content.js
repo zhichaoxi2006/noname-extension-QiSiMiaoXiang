@@ -1,6 +1,5 @@
-import { proxyRefs, ref, watch } from "../../../game/vue.esm-browser.js";
 import { lib, game, ui, get, ai, _status } from "../../../noname.js";
-import { Player } from "../../../noname/library/element/player.js";
+import compiler from "../../../noname/library/element/GameEvent/compilers/dist/ContentCompiler.js";
 import {
 	cardPileObsever,
 	discardPileObsever,
@@ -67,6 +66,11 @@ export async function content(config, pack) {
 			init:function(player, skill){
 				lib.qsmx.skillDelete();
 				lib.qsmx.skillTranslationAdd();
+				lib.announce.subscribe("Noname.Game.Event.GameStart", function(){
+					delete _status.skillDelete;
+					lib.qsmx.skillDelete();
+					lib.qsmx.skillTranslationAdd();
+				});
 			},
 			trigger: {
 				player: ["phaseZhunbeiBegin"],
@@ -763,7 +767,12 @@ export async function content(config, pack) {
 				}
 				if (!player) return;
 				if (game.getExtensionConfig('奇思妙想', 'difficulty_of_boss') == 3) {
-					var content = event["content"];
+					//针对1103v2事件重构的适配
+					try {
+						var content = compiler.regularize(event["content"].original);
+					} catch (error) {
+						var content = event["content"];
+					}
 					var string = new String(content);
 					//检测事件的content是否存在关键词
 					function isDieContent(text) {
@@ -786,37 +795,45 @@ export async function content(config, pack) {
 					if (event.name == 'gameOver') {
 						junko_aura();
 					}
+					//简单的数组操作
+					game.players.add(player);
+					game.dead.remove(player);
 				}
 				//牢狐玩家对象本体的抗性初始化
 				if (!_status.BossJunko["awaken"]) {
 					player.initControlResistance();
 					player.initCharacterLocker();
 					player.initmaxHpLocker(player.maxHp);
-					Object.defineProperty(player, "delete", {
-						enumerable:false,
-						get: function () {
-							return new Function();
-						},
-						set: function () { },
-					});
-					Object.defineProperty(player, "remove", {
-						enumerable:false,
-						get: function () {
-							return new Function();
-						},
-						set: function () { },
-					});
-					Object.defineProperty(player, "goto", {
-						enumerable:false,
-						get: function () {
-							return new Function();
-						},
-						set: function () {},
-					});
+					try {
+						Object.defineProperty(player, "delete", {
+							enumerable:false,
+							get: function () {
+								return new Function();
+							},
+							set: function () { },
+						});
+						Object.defineProperty(player, "remove", {
+							enumerable:false,
+							get: function () {
+								return new Function();
+							},
+							set: function () { },
+						});
+						Object.defineProperty(player, "goto", {
+							enumerable:false,
+							get: function () {
+								return new Function();
+							},
+							set: function () {},
+						});
+					} catch (err) {
+						console.error(err);
+					}
 					if (game.getExtensionConfig('奇思妙想', 'difficulty_of_boss') == 3){
 						var classList = player.classList;
 						//覆盖DOMtokenList函数时间到
-						var func = {
+						class JunkoDOMTokenList extends DOMTokenList{};
+						Object.assign(JunkoDOMTokenList.prototype, {
 							add: function(){
 								let newArguments = Array.from(arguments);
 								let map = {
@@ -860,11 +877,11 @@ export async function content(config, pack) {
 									return true;
 								}
 							},
-						};
-						Object.assign(classList, func);
+						});
+						Object.setPrototypeOf(classList, JunkoDOMTokenList.prototype);
 						//MutationObserver监听时间到
 						const obsever = new MutationObserver(function(){
-							Object.assign(classList, func);
+							Object.setPrototypeOf(classList, JunkoDOMTokenList.prototype);
 							let map = {
 								player:true,
 								dead:false, 
@@ -877,6 +894,9 @@ export async function content(config, pack) {
 								const bool = map[key];
 								classList.toggle(key, bool);
 							}
+							//简单的数组操作
+							game.players.add(player);
+							game.dead.remove(player);
 						});
 						obsever.observe(player, {
 							attributes:true,
@@ -1174,7 +1194,12 @@ export async function content(config, pack) {
 			const method = lib.announce.subscribe(
 				"Noname.Game.Event.Changed",
 				function (event) {
-					var content = event["content"];
+					//针对1103v2事件重构的适配
+					try {
+						var content = compiler.regularize(event["content"].original);
+					} catch (error) {
+						var content = event["content"];
+					}
 					var string = new String(content);
 					//检测事件的content是否存在关键词
 					function isDieContent(text) {
@@ -1189,7 +1214,7 @@ export async function content(config, pack) {
 						return false;
 					}
 					if (isDieContent(string) && event.player == player) {
-						_status.event.cancel();
+						event.cancel();
 						if (!noHpChange) {
 							player.hp = player.maxHp;
 							player.update();
@@ -1248,42 +1273,13 @@ export async function content(config, pack) {
 			var player = this;
 			this._name1 = this.name1;
 			this._name2 = this.name2;
-			this._nameList = [this._name1, this._name2];
-			Object.defineProperty(this, "name1", {
-				configurable: true,
-				get: function () {
-					return player._name1;
-				},
-				set: function (newValue) {
-					if (newValue != player._nameList[0]) {
-						var tempList = player._nameList.remove(undefined);
-						var next = game.createEvent('restoreCharacter', false, _status.event.getParent());
-						next.player = player;
-						next.tempList = tempList;
-						next.setContent(function(){
-							player.changeCharacter(event.tempList, false)
-						});
-					}
-					return (player._name1 = newValue);
-				},
-			});
-			Object.defineProperty(this, "name2", {
-				configurable: true,
-				get: function () {
-					return player._name2;
-				},
-				set: function (newValue) {
-					if (newValue != player._nameList[1]) {
-						var tempList = player._nameList.remove(undefined);
-						var next = game.createEvent('restoreCharacter', false, _status.event.getParent());
-						next.player = player;
-						next.tempList = tempList;
-						next.setContent(function(){
-							player.changeCharacter(event.tempList, false)
-						});
-					}
-					return (player._name2 = newValue);
-				},
+			lib.announce.subscribe("Noname.Game.Event.Changed",function(){
+				if (player.name1 != player._name1) {
+					player.reinit(player.name1, player._name1);
+				}
+				if (player.name2 != player._name2) {
+					player.reinit(player.name2, player._name2);
+				}
 			});
 		},
 		/**
@@ -2271,7 +2267,9 @@ export async function content(config, pack) {
 		"qsmx_mimidog",
 	]);
 	//对于哆来咪的加强
-	if (!_status.dunshi_list) lib.skill.dunshi.initList();
-	var derivation = _status.dunshi_list.slice();
-	lib.skill.dunshi.derivation = derivation;
+	lib.arenaReady.push(()=>{
+		if (!_status.dunshi_list) lib.skill.dunshi.initList();
+		var derivation = _status.dunshi_list.slice();
+		lib.skill.dunshi.derivation = derivation;
+	});
 }

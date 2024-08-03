@@ -9505,7 +9505,12 @@ export const skill = {
 		},
 		qsmx_zhengtong: {
 			get zhuSkill(){
-				return !Boolean(game.findPlayer(current=>get.nameList(current).includes("qsmx_gocar")));
+				return !Boolean(game.findPlayer(
+					current=>{
+						var name = [current.name1, current.name2];
+						return name.includes("qsmx_gocar");
+					}
+				));
 			},
 			persevereSkill:true,
 			init:function(player, skill){

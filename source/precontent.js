@@ -528,13 +528,6 @@ export async function precontent(config, pack) {
 		if (_status.eventManager) {
 			//针对1103v2事件重构的修改
 			class eventStackArray extends Array{};
-			for (const key of Reflect.ownKeys(Array.prototype)) {
-				Object.defineProperty(eventStackArray.prototype, key, {
-					configurable:true,
-					enumerable:false,
-					value:Array.prototype[key],
-				});
-			}
 			Object.defineProperty(eventStackArray.prototype, "push", {
 				configurable:true,
 				enumerable:false,

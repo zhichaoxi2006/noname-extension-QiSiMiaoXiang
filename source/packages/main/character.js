@@ -442,7 +442,7 @@ export const character = async function () {
 				"none",
 				"key",
 				"4/4",
-				['qsmx_shima','qsmx_tongqu', "qsmx_zhengtong"],
+				["qsmx_shima", "qsmx_wude","qsmx_tongqu", "qsmx_zhengtong"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_gocar.jpg", 
 					"name:null|null", 

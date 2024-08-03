@@ -9307,48 +9307,201 @@ export const skill = {
 			usable: 1,
 			filterTarget:true,
 			content:async function(event, trigger, player){
-				if (!_status.characterlist) {
-					lib.skill.pingjian.initList();
-				}
-				let target = event.target;
-				let name = target.name1;
-				let rawName = get.rawName(name);
-				let characters = [];
+				var target = event.target;
+				var name = target.name1;
+				var rawName = get.rawName(name);
+				var characters = [];
 				for (const key of _status.characterlist) {
 					if (get.rawName(key) == rawName) {
 						characters.add(key);
 					}
 				}
-				if (characters.length) {
-					var next = player.chooseButton(
+				var next = player.chooseButton(
+					[
+						"请选择一项",
 						[
-							'选择一名同名武将替换其武将牌',
 							[
-								characters,
-								'character'
-							]
-						],
-						true,
-					);
-					next.set('ai', function(button){
-						var rank = get.rank(button.link, true);
-						return get.attitude(player, target) * rank;
-					})
-					var result = await next.forResult();
-					target.changeCharacter([result.links[0]]);
-				} else {
-					player.draw(7);
+								["replace", "选择一名同名武将替换武将牌"],
+								["loseMaxHp", "扣减一点体力上限并获得一点护甲"],
+								["mad", "陷入混乱"],
+								["blocker", "非锁定技失效"],
+							],
+							"textbutton"
+						]
+					]
+				);
+				next.set("ai", function(button){
+					switch (button.link) {
+						case "mad":
+							return get.attitude(player, target) > 0 ? 0 : Math.random() + 0.5;
+						case "loseMaxHp":
+							return get.attitude(player, target) > 0 ? 0 : 1;
+						case "replace":
+							return 0;
+						default:
+							return 0;
+					}
+				});
+				next.set("filterButton", function(button){
+					if (button.link == "replace") {
+						return Boolean(characters.length);
+					}
+					return true;
+				});
+				var result = await next.forResult();
+				if (result.bool) {
+					switch (result.links[0]) {
+						case "replace":
+							if (!_status.characterlist) {
+								lib.skill.pingjian.initList();
+							}
+							if (characters.length) {
+								var next2 = player.chooseButton(
+									[
+										'选择一名同名武将替换其武将牌',
+										[
+											characters,
+											'character'
+										]
+									],
+									true,
+								);
+								next.set('ai', function(button){
+									var rank = get.rank(button.link, true);
+									return get.attitude(player, target) * rank;
+								})
+								var result2 = await next2.forResult();
+								target.changeCharacter([result2.links[0]]);
+							}
+							break;
+						case "loseMaxHp":
+							target.loseMaxHp();
+							target.changeHujia();
+							break;
+						case "mad":
+							target.goMad({player:"phaseAfter"});
+							break;
+						case "blocker":
+							target.addTempSkill("fengyin",{player:"phaseAfter"});
+							break;
+						default:
+							break;
+					}	
 				}
 			},
 			ai: {
 				order:13,
 				result: {
-					player:1,
-					target:function(){
-						return Math.random();
-					},
+					target:-1,
 				}
 			}
+		},
+		qsmx_wude: {
+			enable: "phaseUse",
+			filter: function(event, player) {
+				return game.hasPlayer(current => {
+					return lib.skill.qsmx_wude.filterTarget(null, player, current);
+				});
+			},
+			discard: false,
+			lose: false,
+			delay: false,
+			filterTarget: function(card, player, target) {
+				if (player.getStorage("qsmx_wude_targeted").includes(target)) return false;
+				return player != target && target.countGainableCards(player, "hej") > 1;
+			},
+			content: async function(event, trigger, player) {
+				player.addTempSkill("qsmx_wude_targeted", "phaseUseAfter");
+				player.markAuto("qsmx_wude_targeted", [event.target]);
+				await player.gainPlayerCard(event.target, "hej", true, 2);
+				var list = [];
+				for (var name of lib.inpile) {
+					if (get.type(name) != "basic") continue;
+					var card = { name: name, isCard: true };
+					if (
+						lib.filter.cardUsable(card, player, event.getParent("chooseToUse")) &&
+						game.hasPlayer(current => {
+							return player.canUse(card, current);
+						})
+					) {
+						list.push(["基本", "", name]);
+					}
+					if (name == "sha") {
+						for (var nature of lib.inpile_nature) {
+							card.nature = nature;
+							if (
+								lib.filter.cardUsable(card, player, event.getParent("chooseToUse")) &&
+								game.hasPlayer(current => {
+									return player.canUse(card, current);
+								})
+							) {
+								list.push(["基本", "", name, nature]);
+							}
+						}
+					}
+				}
+				if (list.length) {
+					const result = await player
+						.chooseButton(["是否视为使用一张基本牌？", [list, "vcard"]])
+						.set("ai", function (button) {
+							var player = _status.event.player;
+							var card = {
+								name: button.link[2],
+								nature: button.link[3],
+								isCard: true,
+							};
+							if (card.name == "tao") {
+								if (player.hp == 1 || (player.hp == 2 && !player.hasShan()) || player.needsToDiscard()) return 5;
+								return 1;
+							}
+							if (card.name == "sha") {
+								if (
+									game.hasPlayer(function (current) {
+										return player.canUse(card, current) && get.effect(current, card, player, player) > 0;
+									})
+								) {
+									if (card.nature == "fire") return 2.95;
+									if (card.nature == "thunder" || card.nature == "ice") return 2.92;
+									return 2.9;
+								}
+								return 0;
+							}
+							if (card.name == "jiu") {
+								return 0.5;
+							}
+							return 0;
+						})
+						.forResult();
+					if (result && result.bool && result.links[0]) {
+						var card = {
+							name: result.links[0][2],
+							nature: result.links[0][3],
+							isCard: true,
+						};
+						await player.chooseUseTarget(card, true);
+					}
+				}
+			},
+			subSkill: {
+				targeted: {
+					onremove: true,
+					charlotte: true,
+				},
+			},
+			ai: {
+				fireAttack: true,
+				order: function(skill, player) {
+					return 10;
+				},
+				result: {
+					target: function(player, target) {
+						if (target.hasSkillTag("noh") && !target.countCards("e")) return -0.1;
+						if (target.hasSkillTag("noe") && !target.countCards("h")) return -0.1;
+						return -2;
+					},
+				},
+				threaten: 3,
+			},
 		},
 		qsmx_zhengtong: {
 			get zhuSkill(){
@@ -9356,13 +9509,16 @@ export const skill = {
 			},
 			persevereSkill:true,
 			init:function(player, skill){
-				lib.qsmx.skillDelete();
-				lib.qsmx.skillTranslationAdd();
-				lib.announce.subscribe("Noname.Game.Event.GameStart", function(){
-					delete _status.skillDelete;
+				if (_status.gameStarted) {
 					lib.qsmx.skillDelete();
 					lib.qsmx.skillTranslationAdd();
-				});
+				} else {
+					lib.announce.subscribe("Noname.Game.Event.GameStart", function(){
+						delete _status.skillDelete;
+						lib.qsmx.skillDelete();
+						lib.qsmx.skillTranslationAdd();
+					});
+				}
 				var classList = player.classList;
 				//重设classList的prototype
 				class goCarDOMTokenList extends DOMTokenList{};
@@ -10131,7 +10287,7 @@ export const skill = {
 		qsmx_qimou: "奇谋",
 		qsmx_qimou_info: "测试中",
 		qsmx_zhengtong: "正统",
-		qsmx_zhengtong_info: "装饰技，<br>①你将※可能带有抗性的技能无效化；<br>②你成为其他角色的目标时，若其不为三国杀官方武将，你可以将其强制死亡；<br>③若场上没有游卡桌游，此技能视为有主公技标签。",
+		qsmx_zhengtong_info: "装饰技，<br>①你将※可能带有抗性的技能无效化；<br>②你成为其他角色的目标时，若其不为三国杀官方武将，你可以将其强制死亡；<br>③若场上没有存活的“游卡桌游”，此技能视为有主公技标签。",
 		qsmx_xuxiang: "虚像",
 		qsmx_xuxiang_info: "①你的武将牌被不能替换；<br>②你获得技能后，若其非武将牌原有技能，你失去之。",
 		qsmx_search: "搜索",
@@ -10156,10 +10312,10 @@ export const skill = {
 		qsmx_huanmeng_info: "锁定技，准备阶段，你获得一个有关联衍生技的技能中所有关联衍生技。",
 		qsmx_shima: "失马",
 		qsmx_shima_info: "持恒技，游戏开始时，你废除你的坐骑栏，你的坐骑栏无法恢复。",
-		qsmx_cuike: "催氪",
-		qsmx_cuike_info: "①出牌阶段，你可以获得一名其他角色的一张牌并将两张手牌当做“金”置入你的武将牌上。<br>②你可以如手牌般使用或打出“金”。",
+		qsmx_wude: "无德",
+		qsmx_wude_info: "出牌阶段每名角色限一次，你可以获得一名角色区域内的两张牌，然后视为使用一张基本牌。",
 		qsmx_tongqu: "通渠",
-		qsmx_tongqu_info: "出牌阶段限一次，你可以将一名武将的武将牌替换为同名武将（若其没有同名武将，则改为你摸七张牌）",
+		qsmx_tongqu_info: "出牌阶段限一次，你可以选择一名角色，并执行一项：1.将其武将牌替换为同名武将，2.扣减其一点体力上限并令其获得一点护甲，3.令其陷入混乱直到其下一个回合结束，4.令其非锁定技失效直到其下一个回合结束。",
 		qsmx_lianpo: "连破",
 		qsmx_lianpo_info: "一名角色回合结束时，若你本回合杀死过角色，你可以摸X张牌并进行一个额外回合。（X为已死亡角色数）",
 		qsmx_guixin: "归心",

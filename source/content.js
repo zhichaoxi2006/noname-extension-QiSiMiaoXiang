@@ -2014,6 +2014,42 @@ export async function content(config, pack) {
 				}
 			},
 		},
+		_qsmx_duansha: {
+			trigger:{
+				player:"drawBegin",
+			},
+			lastDo:true,
+			forced:true,
+			filter:function(event, player){
+				return false;
+				var cards = Array.from(ui.cardPile.childNodes);
+				if (cards.filter(card=>card.name != "sha").length < event.num) {
+					return false;
+				}
+				if (event.bottom) {
+					cards = cards.slice(-1, -event.num);
+				} else {
+					cards = cards.slice(0, event.num - 1);
+				}
+				return cards.some(card=>card.name == "sha");
+			},
+			content:async function(event, trigger, player){
+				player.popup("断杀");
+				var cards = Array.from(ui.cardPile.childNodes)
+					.filter(card => card.name != "sha")
+					.randomGets(trigger.num);
+				var node = ui["cardPile"];
+				if (trigger.bottom) {
+					for (const card of cards) {
+						node.appendChild(card);
+					}
+				} else {
+					for (const card of cards) {
+						node.insertBefore(card, node.firstChild);
+					}
+				}
+			},
+		},
 		_qsmx_blueShield: {
 			silent: true,
 			trigger: {

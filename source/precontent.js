@@ -528,10 +528,21 @@ export async function precontent(config, pack) {
 		if (_status.eventManager) {
 			//针对1103v2事件重构的修改
 			class eventStackArray extends Array{};
-			eventStackArray.prototype.push = function(){
-				lib.announce.publish("Noname.Game.Event.Changed", _status.event);
-				return Array.prototype.push.apply(this, arguments);
+			for (const key of Reflect.ownKeys(Array.prototype)) {
+				Object.defineProperty(eventStackArray.prototype, key, {
+					configurable:true,
+					enumerable:false,
+					value:Array.prototype[key],
+				});
 			}
+			Object.defineProperty(eventStackArray.prototype, "push", {
+				configurable:true,
+				enumerable:false,
+				value:function(){
+					lib.announce.publish("Noname.Game.Event.Changed", _status.event);
+					return Array.prototype.push.apply(this, arguments);
+				}
+			});
 			Object.setPrototypeOf(_status.eventManager.eventStack, eventStackArray.prototype);
 		} else {
 			//祖宗之法

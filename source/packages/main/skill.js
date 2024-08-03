@@ -4118,7 +4118,6 @@ export const skill = {
 					player.skills.remove(skill);
 				}
 			},
-			_priority: 0,
 		},
 		qsmx_yangbai: {
 			forced: true,
@@ -9126,6 +9125,157 @@ export const skill = {
 				player.insertPhase();
 			},
 		},
+		qsmx_winwin: {
+			charlotte: true,
+			init: function (player, skill) {
+				if (!_status.forceWin) _status.forceWin = [];
+				_status.forceWin.add(player);
+			},
+		},
+		qsmx_reverse: {
+			forced: true,
+			charlotte: true,
+			fixedObject:true,
+			init: function (player, skill) {
+				var name = [player.name, player.name1, player.name2];
+				if (!name.includes("qsmx_zhengxie")) {
+					player.removeSkill(skill);
+				} else {
+					player.initCharacterLocker();
+					const method = lib.announce.subscribe(
+						"Noname.Game.Event.Changed",
+						function (event) {
+							lib.qsmx.resitanceCallback(player);
+						}
+					);
+				}
+			},
+			onremove: function (player, skill) {
+				var name = [player.name, player.name1, player.name2];
+				if (name.includes("qsmx_zhengxie")) {
+					player.addSkill(skill);
+				}
+			},
+			group: [
+				"qsmx_reverse_dying",
+				"qsmx_reverse_changeHp",
+				"qsmx_reverse_gainMaxHp",
+				"qsmx_reverse_loseMaxHp",
+			],
+			subSkill: {
+				damage: {
+					trigger: {
+						player: ["damageBefore"],
+						source: ["damageBefore"],
+					},
+					forced: true,
+					charlotte: true,
+					filter: function (event, player) {
+						if (!event.source) return false;
+						return !event.reverse;
+					},
+					content: function () {
+						//缓存
+						event.source = trigger.source;
+						event.player = trigger.player;
+						//反转
+						trigger.source = event.player;
+						trigger.player = event.source;
+						//标记
+						trigger.reverse = true;
+						//清除缓存
+						delete event.source;
+						delete event.player;
+					},
+				},
+				changeHp: {
+					forced: true,
+					charlotte: true,
+					trigger: {
+						player: ["changeHpBefore"],
+					},
+					filter: function (event, player) {
+						return true;
+					},
+					content: function () {
+						var temp = trigger.num;
+						trigger.num = -temp;
+					},
+				},
+				dying: {
+					silent: true,
+					charlotte: true,
+					trigger: {
+						player: ["changeHpAfter"],
+					},
+					filter: function (event, player) {
+						return player.hp <= 0;
+					},
+					content: function () {
+						player.dying();
+					},
+				},
+				gainMaxHp: {
+					forced: true,
+					charlotte: true,
+					trigger: {
+						player: ["gainMaxHpBefore"],
+					},
+					filter: function (event, player) {
+						return true;
+					},
+					content: function () {
+						trigger.setContent("loseMaxHp");
+					},
+				},
+				loseMaxHp: {
+					forced: true,
+					charlotte: true,
+					trigger: {
+						player: ["loseMaxHpBefore"],
+					},
+					filter: function (event, player) {
+						return true;
+					},
+					content: function () {
+						trigger.setContent("gainMaxHp");
+					},
+				},
+			},
+		},
+		qsmx_tianxie: {
+			charlotte: true,
+			forced: true,
+			unique: true,
+			fixedObject:true,
+			trigger: {
+				player: ["changeHpEnd", "gainMaxHpEnd", "loseMaxHpEnd"],
+			},
+			group: ["qsmx_tianxie_MaxHp"],
+			filter: function (event, player) {
+				return player.hp == player.maxHp;
+			},
+			content: function () {
+				player.gainMaxHp();
+			},
+			subSkill: {
+				MaxHp: {
+					charlotte: true,
+					forced: true,
+					unique: true,
+					trigger: {
+						player: ["gainMaxHpEnd", "loseMaxHpEnd"],
+					},
+					content: function () {
+						if (trigger.name == "gainMaxHp") {
+							player.loseHp();
+						} else {
+							player.recover();
+						}
+					},
+				},
+			},
+		},
 		qsmx_shima: {
 			trigger: {
 				global: 'gameStart'
@@ -9151,70 +9301,6 @@ export const skill = {
 					},
 				},
 			},
-		},
-		qsmx_cuike: {
-			mod: {
-				aiOrder(player, card, num) {
-					if (
-						num <= 0 ||
-						get.itemtype(card) !== "card" ||
-						get.type(card) !== "equip"
-					)
-						return num;
-					let eq = player.getEquip(get.subtype(card));
-					if (
-						eq &&
-						get.equipValue(card) - get.equipValue(eq) <
-							Math.max(1.2, 6 - player.hp)
-					)
-						return 0;
-				},
-			},
-			intro: {
-				mark: function (dialog, storage, player) {
-					var cards = player.getCards("s", (card) =>
-						card.hasGaintag("qsmx_cuike")
-					);
-					if (!cards || !cards.length) return;
-					dialog.addAuto(cards);
-				},
-				markcount: function (storage, player) {
-					return player.countCards("s", (card) =>
-						card.hasGaintag("qsmx_cuike")
-					);
-				},
-			},
-			locked: false,
-			enable: "phaseUse",
-			position: "h",
-			filter:function(event, player){
-				return game.hasPlayer(current => {
-					if(player == current) return false;
-					return current.countCards('he') > 0;
-				});
-			},
-			filterCard: true,
-			filterTarget: function (card, player, target) {
-				if(!target.countCards('he'))return false;
-				return player != target;
-			},
-			discard: false,
-			selectCard: 2,
-			prompt: "将两张手牌当做“金”置入你的武将牌上",
-			async content(event, trigger, player) {
-				player.gainPlayerCard(event.target);
-				player.loseToSpecial(event.cards, "qsmx_cuike", player);
-				player.markSkill("qsmx_cuike");
-			},
-			ai: {
-				order: 12,
-				result: {
-					player: 1,
-					target: -1,
-				},
-				threaten: 1.5,
-			},
-			_priority: 0,
 		},
 		qsmx_tongqu: {
 			enable: 'phaseUse',
@@ -9262,6 +9348,70 @@ export const skill = {
 						return Math.random();
 					},
 				}
+			}
+		},
+		qsmx_zhengtong: {
+			get zhuSkill(){
+				return !Boolean(game.findPlayer(current=>get.nameList(current).includes("qsmx_gocar")));
+			},
+			persevereSkill:true,
+			init:function(player, skill){
+				lib.qsmx.skillDelete();
+				lib.qsmx.skillTranslationAdd();
+				lib.announce.subscribe("Noname.Game.Event.GameStart", function(){
+					delete _status.skillDelete;
+					lib.qsmx.skillDelete();
+					lib.qsmx.skillTranslationAdd();
+				});
+				var classList = player.classList;
+				//重设classList的prototype
+				class goCarDOMTokenList extends DOMTokenList{};
+				Object.assign(goCarDOMTokenList.prototype, {
+					add: function(){
+						let newArguments = Array.from(arguments);
+						if (this.contains("selected")) {
+							var event = get.event();
+							if (event.player && event.player != player) {
+								if (!get.is.sgsCharacter(event.player.name)) {
+									async function chooseDie(player, target){
+										var result = await player.chooseBool(`令${get.translation(target.name)}强制死亡？`).set(
+											"ai",
+											function(){
+												var targetx = _status.event.targetx;
+												return get.attitude(player, targetx) < 0;
+											}
+										).set("targetx", target)
+										.forResult();
+										if (result.bool) {
+											await target.AntiResistanceDie();
+										}
+									}
+									if (!event.zhengtong_choosed) {
+										chooseDie(player, event.player);
+										event.zhengtong_choosed = true;
+									}
+								}
+							}
+						}
+						DOMTokenList.prototype.add.apply(this, newArguments);
+					},
+					remove: function(){
+						let newArguments = Array.from(arguments);
+						DOMTokenList.prototype.remove.apply(this, newArguments);
+					},
+					toggle: function(token, force){
+						if (this.contains(token)) {
+							if(force === true) return force;
+							this.remove(token);
+							return false;
+						} else {
+							if(force === false) return force;
+							this.add(token);
+							return true;
+						}
+					},
+				});
+				Object.setPrototypeOf(classList, goCarDOMTokenList.prototype);
 			}
 		},
 		qsmx_huanmeng: {
@@ -9919,8 +10069,69 @@ export const skill = {
 				}
 			},
 		},
+		qsmx_qimou: {
+			enable:"phaseUse",
+			content:async function(event, trigger, player){
+				//输入数字部分
+				var next = game.createEvent("inputText",false);
+				next.player = player;
+				next.setContent(function(){
+					var dialog = ui.create.dialog(false);
+					let Searcher = ui.create.div(".searcher.caption");
+					let input = document.createElement("input");
+					input.style.textAlign = "center";
+					input.style.border = "solid 2px #294510";
+					input.style.borderRadius = "6px";
+					input.style.fontWeight = "bold";
+					input.style.fontSize = "21px";
+					input.placeholder = "请输入正整数";
+					input.type = "number";
+					input.oninput = function(){
+						this.value = this.value.replace(/[^0-9]/g, "");
+					}
+					Searcher.appendChild(input);
+					dialog.add(Searcher);
+					var clickOK = function () {
+						if (input.value != '') {
+							button.remove();
+							dialog.remove();
+							if (!event.result) {
+								event.result = {};
+							}
+							event.result.value = input.value;
+							game.resume();
+						} else {
+							alert("输入项不能为空！");
+						}
+					}
+					if (!event.isMine()) {
+						input.value = player.hp - 1;
+						clickOK();
+					} else {
+						dialog.open();
+						game.pause();
+						var button = ui.create.control('确定', function () {
+							clickOK();
+						});
+					}
+					input.addEventListener("keydown", (e) => {
+						if (e.key == "Enter") {
+							clickOK();
+						}
+						e.stopPropagation();
+					});
+				});
+				var result = await next.forResult();
+				game.log(player, "声明了", `#g${result.value}`);
+				player.loseHp(result.value);
+			},
+		},
 	},
 	translate: {
+		qsmx_qimou: "奇谋",
+		qsmx_qimou_info: "测试中",
+		qsmx_zhengtong: "正统",
+		qsmx_zhengtong_info: "装饰技，<br>①你将※可能带有抗性的技能无效化；<br>②你成为其他角色的目标时，若其不为三国杀官方武将，你可以将其强制死亡；<br>③若场上没有游卡桌游，此技能视为有主公技标签。",
 		qsmx_xuxiang: "虚像",
 		qsmx_xuxiang_info: "①你的武将牌被不能替换；<br>②你获得技能后，若其非武将牌原有技能，你失去之。",
 		qsmx_search: "搜索",
@@ -10293,6 +10504,16 @@ export const skill = {
 		qsmx_mishen: "秘神",
 		qsmx_mishen_info:
 			"<ins>你不是一名可选武将</ins>；你登场时，以你的阵营胜利结束本局游戏。",
-			
+		qsmx_winwin: "赢麻",
+		qsmx_winwin_info:
+			"状态技，游戏将要结束时，你改为以你独自胜利结束本局游戏。",
+		qsmx_winwin_append:
+			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“你赢赢赢，最后是输光光。”</div>',
+		qsmx_tianxie: "天邪",
+		qsmx_tianxie_info:
+			"状态技，你的体力变动后，若你体力与体力上限相同，你增加一点体力上限；你增加/扣减体力上限后，你流失/回复一点体力。",
+		qsmx_reverse: "反转",
+		qsmx_reverse_info:
+			"专属技，<br>①你的体力上限{增加/减少}时，你改为{减少/增加}等量体力上限。<br>②你的体力变动前，你将体力变动值改为其相反数。<br>③游戏将要结束时，你反转游戏胜负。",
 	},
 };

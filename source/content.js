@@ -941,181 +941,10 @@ export async function content(config, pack) {
 		);
 		//想你了，牢狐
 		if (!game.getExtensionConfig("奇思妙想", "boss_to_normal")) {
-			if (lib.character['qsmx_junko']) {
-				lib.character['qsmx_junko'][4].addArray(["bossallow","boss"]);
+			if (lib.character["qsmx_junko"]) {
+				lib.character["qsmx_junko"][4].addArray(["bossallow","boss"]);
 			}
 		}
-		//某些奇怪的技能
-		Object.assign(lib.skill, {
-			qsmx_winwin: {
-				charlotte: true,
-				init: function (player, skill) {
-					if (!_status.forceWin) _status.forceWin = [];
-					_status.forceWin.add(player);
-				},
-			},
-			qsmx_reverse: {
-				forced: true,
-				charlotte: true,
-				fixedObject:true,
-				init: function (player, skill) {
-					var name = [player.name, player.name1, player.name2];
-					if (!name.includes("qsmx_zhengxie")) {
-						player.removeSkill(skill);
-					} else {
-						_status.GameResultReverse = true;
-						player.initCharacterLocker();
-						const method = lib.announce.subscribe(
-							"Noname.Game.Event.Changed",
-							function (event) {
-								lib.qsmx.resitanceCallback(player);
-							}
-						);
-					}
-				},
-				onremove: function (player, skill) {
-					var name = [player.name, player.name1, player.name2];
-					if (name.includes("qsmx_zhengxie")) {
-						player.addSkill(skill);
-					}
-				},
-				group: [
-					"qsmx_reverse_dying",
-					"qsmx_reverse_changeHp",
-					"qsmx_reverse_gainMaxHp",
-					"qsmx_reverse_loseMaxHp",
-				],
-				subSkill: {
-					damage: {
-						trigger: {
-							player: ["damageBefore"],
-							source: ["damageBefore"],
-						},
-						forced: true,
-						charlotte: true,
-						filter: function (event, player) {
-							if (!event.source) return false;
-							return !event.reverse;
-						},
-						content: function () {
-							//缓存
-							event.source = trigger.source;
-							event.player = trigger.player;
-							//反转
-							trigger.source = event.player;
-							trigger.player = event.source;
-							//标记
-							trigger.reverse = true;
-							//清除缓存
-							delete event.source;
-							delete event.player;
-						},
-					},
-					changeHp: {
-						forced: true,
-						charlotte: true,
-						trigger: {
-							player: ["changeHpBefore"],
-						},
-						filter: function (event, player) {
-							return true;
-						},
-						content: function () {
-							var temp = trigger.num;
-							trigger.num = -temp;
-						},
-					},
-					dying: {
-						silent: true,
-						charlotte: true,
-						trigger: {
-							player: ["changeHpAfter"],
-						},
-						filter: function (event, player) {
-							return player.hp <= 0;
-						},
-						content: function () {
-							player.dying();
-						},
-					},
-					gainMaxHp: {
-						forced: true,
-						charlotte: true,
-						trigger: {
-							player: ["gainMaxHpBefore"],
-						},
-						filter: function (event, player) {
-							return true;
-						},
-						content: function () {
-							trigger.setContent("loseMaxHp");
-						},
-					},
-					loseMaxHp: {
-						forced: true,
-						charlotte: true,
-						trigger: {
-							player: ["loseMaxHpBefore"],
-						},
-						filter: function (event, player) {
-							return true;
-						},
-						content: function () {
-							trigger.setContent("gainMaxHp");
-						},
-					},
-				},
-			},
-			qsmx_tianxie: {
-				charlotte: true,
-				forced: true,
-				unique: true,
-				fixedObject:true,
-				trigger: {
-					player: ["changeHpEnd", "gainMaxHpEnd", "loseMaxHpEnd"],
-				},
-				group: ["qsmx_tianxie_MaxHp"],
-				filter: function (event, player) {
-					return player.hp == player.maxHp;
-				},
-				content: function () {
-					player.gainMaxHp();
-				},
-				subSkill: {
-					MaxHp: {
-						charlotte: true,
-						forced: true,
-						unique: true,
-						trigger: {
-							player: ["gainMaxHpEnd", "loseMaxHpEnd"],
-						},
-						content: function () {
-							if (trigger.name == "gainMaxHp") {
-								player.loseHp();
-							} else {
-								player.recover();
-							}
-						},
-					},
-				},
-			},
-		});
-		Object.assign(lib.translate, {
-			qsmx_winwin: "赢麻",
-			qsmx_winwin_info:
-			"状态技，游戏将要结束时，你改为以你独自胜利结束本局游戏。",
-			qsmx_winwin_append:
-			'<div style="width:100%;text-align:left;font-size:13px;font-style:italic">“你赢赢赢，最后是输光光。”</div>',
-			qsmx_tianxie: "天邪",
-			qsmx_tianxie_info:
-				"状态技，你的体力变动后，若你体力与体力上限相同，你增加一点体力上限；你增加/扣减体力上限后，你流失/回复一点体力。",
-			qsmx_reverse: "反转",
-			qsmx_reverse_info:
-				"专属技，<br>①你的体力上限{增加/减少}时，你改为{减少/增加}等量体力上限。<br>②你的体力变动前，你将体力变动值改为其相反数。<br>③游戏将要结束时，你反转游戏胜负。",
-		});
-		//极略适配（也许）
-		lib.character["qsmx_zhengxie"].skills.addArray(["qsmx_reverse", "qsmx_tianxie"]);
-		lib.character["qsmx_hw_sunquan"].skills.add("qsmx_winwin");
 	});
 	//lib.element.player
 	Object.assign(lib.element.player, {
@@ -1316,20 +1145,13 @@ export async function content(config, pack) {
 		 * @param { boolean } turnedover
 		 * @param { boolean } linked
 		 */
-		initClassListLocker: function (turnedover, linked) {
+		initClassListLocker: function () {
 			this._classList = this.classList;
 			Object.defineProperty(this, "classList", {
 				get: function () {
 					var classList = this._classList;
-					if (turnedover) {
-						classList.add("turnedover");
-					} else {
-						classList.remove("turnedover");
-					}
-					if (linked) {
-						classList.add("linked2");
-					} else {
-						classList.remove("linked2");
+					if (classList.contains("selected")) {
+						console.log(classList);
 					}
 					return this._classList;
 				},
@@ -2266,6 +2088,37 @@ export async function content(config, pack) {
 		"qsmx_jiaxu",
 		"qsmx_mimidog",
 	]);
+	//get
+	/**
+	 * 返回一名武将是否是三国杀官方的武将
+	 * @param { string } character 
+	 * @returns { boolean }
+	 */
+	get.is.sgsCharacter = function(character){
+		if (!_status.sgsCharacterList) {
+			_status.sgsCharacterList = [];
+			var sgsCharacterPackList = lib.config.all.sgscharacters;
+			for (const key of sgsCharacterPackList) {
+				//对于垃圾桶内的武将的特殊处理
+				if (key == "diy") {
+					_status.sgsCharacterList.addArray(lib.characterSort.diy.diy_trashbin);
+				} else {
+					_status.sgsCharacterList.addArray(Object.keys(lib.characterPack[key]));
+				}
+			}
+		}
+		return _status.sgsCharacterList.includes(character);
+	};
+	//动态翻译
+	Object.assign(lib.dynamicTranslate, {
+		qsmx_zhengtong: function(){
+			if (lib.skill["qsmx_zhengtong"]["zhuSkill"]) {
+				return `主公技，` + lib.translate["qsmx_zhengtong_info"];
+			} else {
+				return lib.translate["qsmx_zhengtong_info"];
+			}
+		},
+	});
 	//对于哆来咪的加强
 	lib.arenaReady.push(()=>{
 		if (!_status.dunshi_list) lib.skill.dunshi.initList();

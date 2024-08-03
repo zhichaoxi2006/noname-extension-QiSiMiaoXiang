@@ -74,7 +74,7 @@ export const character = async function () {
 				"male",
 				"wu",
 				"4/4",
-				["rezhiheng", "rejiuyuan", "qsmx_huiwan"],
+				["rezhiheng", "rejiuyuan", "qsmx_huiwan", "qsmx_winwin"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_hw_sunquan.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_hw_sunquan.mp3",
@@ -234,7 +234,7 @@ export const character = async function () {
 				"female",
 				"key",
 				"1/2",
-				[],
+				["qsmx_winwin","qsmx_tianxie"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_zhengxie.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_zhengxie.mp3",
@@ -442,8 +442,11 @@ export const character = async function () {
 				"none",
 				"key",
 				"4/4",
-				['qsmx_shima', 'qsmx_cuike','qsmx_tongqu'],
-				["ext:奇思妙想/resource/image/character/qsmx_gocar.jpg", "name:null|null"],
+				['qsmx_shima','qsmx_tongqu', "qsmx_zhengtong"],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_gocar.jpg", 
+					"name:null|null", 
+				],
 			],
 			qsmx_doremy_sweet: [
 				"female",

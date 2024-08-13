@@ -1,6 +1,4 @@
 import { lib, game, ui, get, ai, _status, Game } from "../../../noname.js";
-import { GameEventManager } from "../../../noname/library/element/gameEvent.js";
-import compiler from "../../../noname/library/element/GameEvent/compilers/dist/ContentCompiler.js";
 import { getRepoTags, request, getRepoFilesList } from "./update.js";
 export async function precontent(config, pack) {
 	//MathJax
@@ -112,6 +110,36 @@ export async function precontent(config, pack) {
 			over: game.over,
 			excludeSkills: ["global", "globalmap", "autoswap"],
 			ResistanceSkills: [],
+			/**
+			 * 让人看起来像是死了
+			 * @param { Player } player 
+			 */
+			changeToDie: function (player) {
+				var dead = player.isDead();
+				game.broadcastAll(function (player) {
+					player.classList.add("dead");
+					player.removeLink();
+					player.classList.remove("turnedover");
+					player.classList.remove("out");
+					player.node.count.innerHTML = "0";
+					player.node.hp.hide();
+					player.node.equips.hide();
+					player.node.count.hide();
+					player.previous.next = player.next;
+					player.next.previous = player.previous;
+					game.players.remove(player);
+					game.dead.push(player);
+					_status.dying.remove(player);
+				}, player);
+				game.addVideo("diex", player);
+				if (!dead) {
+					player.$die();
+				}
+				if (player.hp != 0) {
+					player.hp = 0;
+					player.update();
+				}
+			},
 			addSkillInfo: function () {
 				var skills = Object.keys(lib.skill);
 				for (let index = 0; index < skills.length; index++) {
@@ -282,6 +310,7 @@ export async function precontent(config, pack) {
 					if (bool) {
 						var nullObject = {};
 						nullObject["deleted"] = true;
+						nullObject["fixedObject"] = true;
 						nullObject["originSkill"] = skill;
 						//必要的妥协
 						Reflect.ownKeys(skill).forEach(function(key){
@@ -342,6 +371,7 @@ export async function precontent(config, pack) {
 					if (bool) {
 						var nullObject = {};
 						nullObject["deleted"] = true;
+						nullObject["fixedObject"] = true;
 						nullObject["originSkill"] = skill;
 						//必要的妥协
 						Object.keys(skill).forEach(function(key){
@@ -462,7 +492,7 @@ export async function precontent(config, pack) {
 				var list = [];
 				var character = Reflect.ownKeys(lib.character);
 				for (const key of character) {
-					if(key.startsWith('qsmx'))continue;
+					//if(key.startsWith('qsmx'))continue;
 					if (lib.qsmx.getCharacterSkillStringLength(key, true) >= num) {
 						list.push(get.plainText(get.translation(key)));
 					}

@@ -2,7 +2,12 @@ import { lib, game, ui, get, ai, _status } from "../../../noname.js";
 export const config = {
 	skill_delete: {
 		name: "技能灭杀",
-		init: false,
+		init: 0,
+		item: {
+			0:"关闭",
+			1:"基础",
+			2:"完全",
+		},
 		intro: "开启并重启游戏后，所有※抗性标签疑似有点太多和※含有加密代码的技能将会被替换为空技能。（判定规则在lib.qsmx中存放）",
 		_name: "skill_delete",
 	},

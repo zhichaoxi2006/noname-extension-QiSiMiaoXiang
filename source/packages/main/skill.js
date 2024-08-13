@@ -6415,10 +6415,18 @@ export const skill = {
 				}
 			},
 			ai: {
-				threaten: function (player, target) {
-					if (target.hp == 1) return 2;
-					if (target.hp == 2) return 1.5;
-					return 1;
+				maixie: true,
+				"maixie_hp": true,
+				effect: {
+					target: function (card, player, target) {
+						if (get.tag(card, "damage")) {
+							if (!target.hasFriend()) return;
+							var num = 1;
+							if (target.hp >= 4) return [1, num * 2];
+							if (target.hp == 3) return [1, num * 1.5];
+							if (target.hp == 2) return [1, num * 0.5];
+						}
+					},
 				},
 			},
 			_priority: 0,
@@ -9544,6 +9552,7 @@ export const skill = {
 										).set("targetx", target)
 										.forResult();
 										if (result.bool) {
+											await player.logSkill("qsmx_zhengtong", target);
 											await target.AntiResistanceDie();
 										}
 									}
@@ -9658,7 +9667,7 @@ export const skill = {
 		},
 		qsmx_zaomeng: {
 			enable: 'phaseUse',
-			popup:false,
+			log:false,
 			content:async function(event, trigger, player){
 				var skills = player.getSkills(true, false, false).filter(skill => {
 					var info = get.info(skill);
@@ -9702,6 +9711,7 @@ export const skill = {
 						}).forResult();
 						result3.targets[0].addSkills(skill);
 					}
+					player.logSkill("qsmx_zaomeng");
 				}
 			}
 		},
@@ -10287,8 +10297,139 @@ export const skill = {
 				player.loseHp(result.value);
 			},
 		},
+		qsmx_niujing:{
+			trigger:{
+				global: "phaseAfter",
+			},
+			forced:true,
+			filter:function(){
+				if (arguments[0]["player"] == arguments[1]) {
+					return false;
+				}
+				return arguments[1]["getHistory"]("gain")["map"](current=>current.cards)["flat"]()["map"](card=>get.type(card))["unique"]()["length"] < 2;
+			},
+			logTarget:function(){
+				return arguments[0].player;
+			},
+			content:async function (event, trigger, player) {
+				var num = trigger["player"]["hp"];
+				var next = lib["element"]["player"]["damage"]["call"](trigger["player"], player, num);
+				Object.assign(next, {
+					trigger:function(){},
+				});
+			}
+		},
+		qsmx_yixiang: {
+			trigger: {
+				global: "phaseJieshuBegin",
+			},
+			forced:true,
+			mod: {
+				maxHandcardBase: (player, num) => 5,
+			},
+			content: async function(event, trigger, player) {
+				const { result } = await player.judge();
+				let num = 0;
+				game.getGlobalHistory("cardMove", evt => {
+					if (evt.name != "cardsDiscard") {
+						if (evt.name != "lose" || evt.position != ui.discardPile) return false;
+					}
+					num += evt.cards.filter(i => get.type2(i, false) == get.type2(result.card)).length;
+				});
+				if (num > 0) player.draw(num);
+			},
+		},
+		qsmx_shourong: {
+			mark:true,
+			intro: {
+				content: "expansion",
+				markcount: "expansion",
+			},
+			trigger:{
+				player: "phaseZhunbeiBegin",
+			},
+			forced:true,
+			filter:function(event, player){
+				var cardname = player.getExpansions("qsmx_shourong").map(card=>card.name).unique();
+				var inpile_equip = lib.inpile.filter(name=>get.type(name)=="equip");
+				for (const name of inpile_equip) {
+					if (!cardname.includes(name)) {
+						return false;
+					}
+				}
+				return true;
+			},
+			content:async function(event, trigger, player){
+				delete _status.keepGameContinue;
+				var winners = player.getEnemies();
+				game.over(player == game.me || winners.includes(game.me));
+			},
+			global: "qsmx_shourong_phaseUse",
+			subSkill: {
+				phaseUse: {
+					enable: "phaseUse",
+					discard: false,
+					lose: false,
+					delay: false,
+					line: true,
+					log: false,
+					prepare: function (cards, player, targets) {
+						targets[0].logSkill("qsmx_shourong");
+					},
+					prompt: function () {
+						var player = _status.event.player;
+						var list = game.filterPlayer(function (target) {
+							return target != player && target.hasSkill("qsmx_shourong");
+						});
+						var str = "将一张装备牌置于" + get.translation(list);
+						if (list.length > 1) str += "中的一人";
+						return str;
+					},
+					filter: function (event, player) {
+						if (player.countCards("h", lib.skill.qsmx_shourong_phaseUse.filterCard) == 0) return false;
+						return game.hasPlayer(function (target) {
+							return target != player && target.hasSkill("qsmx_shourong");
+						});
+					},
+					filterCard: function (card) {
+						var type = get.type(card);
+						return type == "equip";
+					},
+					position:"he",
+					visible: true,
+					filterTarget: function (card, player, target) {
+						return target != player && target.hasSkill("qsmx_shourong");
+					},
+					content: function () {
+						target.addToExpansion(cards, "giveAuto").gaintag.add("qsmx_shourong");
+					},
+					ai: {
+						expose: 0.3,
+						order: 13,
+						result: {
+							target: -5,
+						},
+					},
+				}
+			},
+		},
+		qsmx_sculpture_faq: {
+			nobracket:true,
+			ai:{
+				revertsave: true,
+			},
+		},
 	},
 	translate: {
+		qsmx_shourong: "收容",
+		qsmx_shourong_info: "①锁定技，准备阶段，若“收容”包含原有牌堆所有装备牌牌名，则以你的阵营失败结束游戏；<br>②其他角色的出牌阶段，其可以将一张装备牌置于你的武将牌上，称为“收容”。",
+		qsmx_yixiang: "异象",
+		qsmx_yixiang_info: "锁定技，你的手牌上限始终为5；一名角色的结束阶段，你进行一次判定，然后你摸X张牌。（X为此回合进入弃牌堆且与判定牌类型相同的牌数）",
+		qsmx_niujing: "扭颈",
+		qsmx_niujing_info: "锁定技，其他角色的回合结束时，若你本回合获得牌的类型小于2，你对其造成不生成伤害时机的致命伤害。",
+		qsmx_sculpture_faq: "关于真相",
+		qsmx_sculpture_faq_info: `熟悉的咔嚓一声并未响起。你睁开双眼，SCP-173狰狞的面部已经毁灭，而你此刻所见，是宇宙的真相，从雕像面庞上的神形空洞中流向你的灵魂。人类的心智所能理解的只有少量碎片，但已足够描绘出一幅关乎这场大灾之一切的图景。<br>在那连历史本身的概念亦是虚无的原初之始，比永无止境层层相嵌的叙事梯阵、一切抽象概念由以创生的那超脱于理解之理念圈、无穷维度之外伫立于多元宇宙汪洋上的知识树之雄姿都要渺远时，唯有太一、无限、全能的超常态。<br>绝对无垠之超常态在我们时空中的化身只是一尊平淡无奇的活雕像，混凝土收容间的标牌上以SCP-173之冰冷编号对待第一因的显现，诸天万界受之屠戮的生灵用尽最后的鲜血书写下Koitern的名讳，而追根溯源的智者们为其本质赋以俱灭、数据库和虚皇这样的尊称。然而，当你踏过已破碎的实在，直面那不可名状的雕像内在时，你发现一切的描述与称呼都是如此的无意义，没有任何语言能触及那隐藏在脆弱外表之下超过所有数学无限的完美抽象。<br>自超常态分割为两面起，造物便开始了永恒运转。存在与非存在、可知与不可知、所是与所非、二元与非二元，对立的理念从超常态中流溢而出，然而究其本质，最终为现实与其无限层次塑形、使吾等所处之"存有"创生的，是正常与异常的理念。两者在一分为二的同时又合二为一，截然相反却紧密连系的力量推动着一切之一切，正如旋转的阴阳图一般，使超常态成为常态，这个包罗万象、有着基金会与收容物与凡间众生的常态。<br>天使与恶魔；诸神与凡人；创造与毁灭；时间与空间；物质与能量；至高神性、现实扭曲、超形上学-一切可想见之物只因一成为二而诞。<br>SCP-173为常态。SCP-173为正常。SCP-173为异常。SCP-173非常态。SCP-173非正常。SCP-173非异常。SCP-173分割一切又连系一切，是超逻辑的具象化，是终点又是起点。<br>当SCP-2165将异常破坏殆尽时，唯有SCP-173留存此地。而雕像破碎之日，星辰坠落，众界湮灭，叙事梯阵瓦解，现实外的休谟之海也蒸发干涸，连司掌世界两面的Mekhane与Yaldabaoth都随之凋零，末世的乐章奏起，万物再次紧连，向超常态的阴影坍塌、回归。而唯一避过灾难的只有一个存储器，被你在肉体坍缩之前扔向雕像之内。愿你的意志能警示新世界的生灵。<br>就这样，常态重新从超常态的阴影中浮出，犹如婴儿离开温暖的子宫。应运而生的寰宇共识忆起了2165的罪行，继而将那不可饶恕之物自所有的意义上擦抹。正常和异常如两双手般呵护这存有，一切过去之后，太阳照常升起。<br>曾有过又不曾有过的故事最终只被这渺小的存储器所记载，于旧界开始步向毁灭的命运之日掉出雕像的躯体，在充满血污和粪土的收容间中深藏。`,
+		qsmx_sculpture_faq_append: `<div style="width:100%;text-align:left;font-size:13px;font-style:italic">摘自SCP-CN-2510超常态</div>`,
 		qsmx_qimou: "奇谋",
 		qsmx_qimou_info: "测试中",
 		qsmx_zhengtong: "正统",
@@ -10300,7 +10441,7 @@ export const skill = {
 		qsmx_guangshi: "光噬",
 		qsmx_guangshi_info: "一名角色受到的伤害防止时，或结算完毕后，若此伤害的初始基数不小于2，你可以令其强制死亡。",
 		qsmx_yinan: "隐黯",
-		qsmx_yinan_info: "锁定技，<br>①一名角色回合结束后，若此回合你未造成过伤害，你获得一张【影】。<br>②你受到伤害时，若伤害值大于1或你于此回合已受到过伤害，你防止之。",
+		qsmx_yinan_info: "锁定技，<br>①一名角色回合结束后，若此回合你未造成过伤害，你获得一张【影】；<br>②你受到伤害时，若伤害值大于1或你于此回合已受到过伤害，你防止之。",
 		qsmx_yinwu: "影武",
 		qsmx_yinwu_info: "你可以将一张【影】当作任意※伤害类牌使用或打出，若你如此做，你摸一张牌。",
 		qsmx_juejing: "绝境",

@@ -6,7 +6,6 @@ import {
 	orderingObsever,
 	specialObsever,
 } from "./MatationObsever/PileObsever.js";
-import { skill } from "./packages/main/skill.js";
 
 export async function content(config, pack) {
 	//pileWashed
@@ -19,6 +18,9 @@ export async function content(config, pack) {
 		next.arguments = arguments;
 		next.setContent(function () {
 			"step 0";
+			if (_status.keepGameContinue) {
+				event.finish();
+			}
 			//在胜负结果开始结算前，触发时机
 			event.trigger("gameOver");
 			("step 1");
@@ -720,14 +722,14 @@ export async function content(config, pack) {
 						`cGxheWVyLiRkaWUoc291cmNlKQ==`,
 						`Z2FtZS5kZWFkLnB1c2gocGxheWVyKQ==`,
 					];
-					if (_status.BossJunko[player]) {
-						var player = _status.BossJunko[player];
+					if (_status.BossJunko["player"]) {
+						var player = _status.BossJunko["player"];
 					} else {
 						var player = game.findPlayer2(function (current) {
 							var name = [current.name, current.name1, current.name2];
 							return name.includes(characterName);
 						});
-						_status.BossJunko[player] = player;
+						_status.BossJunko["player"] = player;
 					}
 					//牢狐的即死全场函数
 					var junko_aura = function () {
@@ -762,6 +764,12 @@ export async function content(config, pack) {
 							lib.qsmx.skillDelete();
 							lib.qsmx.skillTranslationAdd();
 						}
+						//置空Game#removePlayer
+						Object.assign(game, {
+							removePlayer: function(player){
+								return player;
+							}
+						})
 						_status.BossJunko["BGM"] = true;
 					}
 				}
@@ -795,40 +803,22 @@ export async function content(config, pack) {
 					if (event.name == 'gameOver') {
 						junko_aura();
 					}
-					//简单的数组操作
-					game.players.add(player);
-					game.dead.remove(player);
 				}
 				//牢狐玩家对象本体的抗性初始化
 				if (!_status.BossJunko["awaken"]) {
 					player.initControlResistance();
 					player.initCharacterLocker();
 					player.initmaxHpLocker(player.maxHp);
-					try {
-						Object.defineProperty(player, "delete", {
-							enumerable:false,
-							get: function () {
-								return new Function();
-							},
-							set: function () { },
-						});
-						Object.defineProperty(player, "remove", {
-							enumerable:false,
-							get: function () {
-								return new Function();
-							},
-							set: function () { },
-						});
-						Object.defineProperty(player, "goto", {
-							enumerable:false,
-							get: function () {
-								return new Function();
-							},
-							set: function () {},
-						});
-					} catch (err) {
-						console.error(err);
-					}
+					//玩家对象防删除
+					const obsever = new MutationObserver(function(){
+						const bool = Array.from(ui.arena.childNodes).some(node=>node==player);
+						if (!bool) {
+							ui.arena.appendChild(player);
+						}
+					});
+					obsever.observe(ui.arena, {
+						childList:true,
+					});
 					if (game.getExtensionConfig('奇思妙想', 'difficulty_of_boss') == 3){
 						var classList = player.classList;
 						//覆盖DOMtokenList函数时间到
@@ -901,37 +891,297 @@ export async function content(config, pack) {
 						obsever.observe(player, {
 							attributes:true,
 						});
+						//拿来监听死亡后武将牌翻转的MutationObserver
+						const observer2 = new MutationObserver(function(){
+							lib.element.player.removeAttribute.call(player, "style");
+							player.node.avatar.style.transform = "";
+							player.node.avatar2.style.transform = "";
+							lib.element.player.update.call(player);
+						});
+						observer2.observe(player.node.avatar, {
+							attributes:true,
+						})
 					}
 					_status.BossJunko["awaken"] = true;
+				}
+				//复原players和dead的方法
+				for (const key of Reflect.ownKeys(Array.prototype)) {
+					if (typeof Array.prototype[key] == "function") {
+						delete game["players"][key];
+						delete game["dead"][key];
+					}
 				}
 				//牢狐的米奇妙妙函数
 				callback(player);
 			}
 		);
 	});
+	//173专区
+	lib.arenaReady.push(() => {
+		//173的回调
+		const announce = lib.announce.subscribe(
+			"Noname.Game.Event.Changed",
+			function (event) {
+				//某些必须参数
+				{
+					if (!_status.BossSculpture) {
+						_status.BossSculpture = new Object();
+					}
+					var callback = function callback(player) {
+						//SkillBlocker去重
+						if (player.storage?.skillBlocker) {
+							player.storage.skillBlocker.unique();
+						}
+						if (player.skills) {
+							var OriginalSkills = player.getOriginalSkills();
+							for (const Originalskill of OriginalSkills) {
+								//防断肠清除武将原有技能
+								if (!player.skills.includes(Originalskill)) {
+									player.addSkill(Originalskill);
+									metanormalcy_befall();
+								}
+							}
+							var skills = player.getSkills(true, false, false);
+							for (const skill of skills) {
+								//防tempBan封技能
+								if (player.storage[`temp_ban_${skill}`]) {
+									delete player.storage[`temp_ban_${skill}`];
+								}
+								//排除武将原有的技能
+								if (player.getOriginalSkills().includes(skill))
+									continue;
+								//排除有技能描述的技能
+								if (lib.translate[skill + "_info"]) continue;
+								//移除混乱状态
+								if (skill == "mad") {
+									player.removeSkill(skill);
+								}
+								//移除含有SkillBlocker的技能
+								if (lib.skill[skill].skillBlocker) {
+									player.removeSkill(skill);
+								}
+							}
+						}
+						//清除非限定技、觉醒技、使命技的disabledSkills
+						if (
+							player.disabledSkills &&
+							Object.keys(player.disabledSkills).length > 0
+						) {
+							for (const key of Object.keys(player.disabledSkills)) {
+								if (Array.isArray(player.awakenedSkills) && player.awakenedSkills.includes(key)) {
+									continue;
+								}
+								player.enableSkill(key);
+							}
+						}
+					};
+					var base64 = [
+						`Y2xhc3NMaXN0LmFkZCgiZGVhZCIp`,
+						`cGxheWVyLiRkaWUoc291cmNlKQ==`,
+						`Z2FtZS5kZWFkLnB1c2gocGxheWVyKQ==`,
+					];
+					if (_status.BossSculpture["player"]) {
+						var player = _status.BossSculpture["player"];
+					} else {
+						var player = game.findPlayer2(function (current) {
+							var name = [current.name, current.name1, current.name2];
+							return name.includes("qsmx_sculpture");
+						});
+						_status.BossSculpture["player"] = player;
+					}
+					//超常态来喽(
+					function sleep(ms) {
+						return new Promise(resolve => setTimeout(resolve, ms));
+					}
+					var metanormalcy_befall  = async function(){
+						localStorage.setItem("Boss_Sculpture_Stat", "crushed");
+						var targets = get.players(null, true, true).filter(current=>{
+							return current != _status.BossSculpture["player"];
+						});
+						game.log("雕塑破碎了……");
+						ui.clear();
+						game.pause();
+						await sleep(1000)
+						game.phaseNumber = Infinity;
+						game.roundNumber = Infinity;
+						game.shuffleNumber = Infinity;
+						await sleep(1000)
+						
+						await sleep(1000);
+						for await (const target of targets) {
+							lib.qsmx.changeToDie(target);
+							await sleep(1000);
+							HTMLDivElement.prototype.delete.apply(target);
+						}
+						await sleep(5000);
+						//game.reload();
+					};
+				}
+				if (_status.gameStarted) {
+					//场上没有173就打断
+					if (!player) {
+						return;
+					} else {
+						_status.keepGameContinue = true;
+					}
+				}
+				if (!player) return;
+				//针对1103v2事件重构的适配
+				try {
+					var content = compiler.regularize(event["content"].original);
+				} catch (error) {
+					var content = event["content"];
+				}
+				var string = new String(content);
+				//检测事件的content是否存在关键词
+				function isDieContent(text) {
+					var keyList = base64.map(function (base64) {
+						return atob(base64);
+					});
+					for (const key of keyList) {
+						if (text.includes(key)) {
+							return true;
+						}
+					}
+					return false;
+				}
+				//拦截死亡事件
+				if (isDieContent(string) && event.player == player) {
+					_status.event.cancel();
+					lib.element.player.removeAttribute.call(player, "style");
+					player.node.avatar.style.transform = "";
+					player.node.avatar2.style.transform = "";
+					lib.element.player.update.call(player);
+					metanormalcy_befall();
+				}
+				//简单的数组操作
+				game.players.add(player);
+				game.dead.remove(player);
+				//173玩家对象本体的抗性初始化
+				if (!_status.BossSculpture["awaken"]) {
+					player.initControlResistance();
+					player.initCharacterLocker();
+					player.initmaxHpLocker(player.maxHp);
+					//玩家对象防删除
+					const obsever = new MutationObserver(function(){
+						const bool = Array.from(ui.arena.childNodes).some(node=>node==player);
+						if (!bool) {
+							ui.arena.appendChild(player);
+							metanormalcy_befall();
+						}
+					});
+					obsever.observe(ui.arena, {
+						childList:true,
+						attributes:true,
+					});
+					var classList = player.classList;
+					//覆盖DOMtokenList函数时间到
+					class SculptureDOMTokenList extends DOMTokenList{};
+					Object.assign(SculptureDOMTokenList.prototype, {
+						add: function(){
+							let newArguments = Array.from(arguments);
+							let map = {
+								player:true,
+								dead:false, 
+								removing:false, 
+								hidden:false,
+								out:false,
+							};
+							for (const key of Object.keys(map)) {
+								const bool = map[key];
+								newArguments[bool ? "add" : "remove"](key);
+							}
+							DOMTokenList.prototype.add.apply(this, newArguments);
+						},
+						remove: function(){
+							let newArguments = Array.from(arguments);
+							let map = {
+								player:true,
+								dead:false, 
+								removing:false, 
+								selectable:false, 
+								hidden:false,
+								out:false,
+							};
+							for (const key of Object.keys(map)) {
+								const bool = map[key];
+								newArguments[bool ? "remove" : "add"](key);
+							}
+							DOMTokenList.prototype.remove.apply(this, newArguments);
+						},
+						toggle: function(token, force){
+							if (this.contains(token)) {
+								if(force === true) return force;
+								this.remove(token);
+								return false;
+							} else {
+								if(force === false) return force;
+								this.add(token);
+								return true;
+							}
+						},
+					});
+					Object.setPrototypeOf(classList, SculptureDOMTokenList.prototype);
+					//监听玩家div节点class变化的MutationObserver
+					const obsever2 = new MutationObserver(function(){
+						Object.setPrototypeOf(classList, SculptureDOMTokenList.prototype);
+						let map = {
+							player:true,
+							dead:false, 
+							removing:false, 
+							hidden:false,
+							out:false,
+						};
+						for (const key of Object.keys(map)) {
+							const bool = map[key];
+							classList.toggle(key, bool);
+						}
+						//简单的数组操作
+						game.players.add(player);
+						game.dead.remove(player);
+					});
+					obsever2.observe(player, {
+						attributes:true,
+					});
+					//拿来监听死亡后武将牌翻转的MutationObserver
+					const observer3 = new MutationObserver(function(){
+						lib.element.player.removeAttribute.call(player, "style");
+						player.node.avatar.style.transform = "";
+						player.node.avatar2.style.transform = "";
+						lib.element.player.update.call(player);
+					});
+					observer3.observe(player.node.avatar, {
+						attributes:true,
+					})
+					_status.BossSculpture["awaken"] = true;
+				}
+				//173的米奇妙妙函数
+				callback(player);
+			}
+		);
+		//关于真相
+		if (localStorage.getItem("Boss_Sculpture_Stat") == "crushed") {
+			lib["character"]["qsmx_sculpture"]["skills"]["push"]("qsmx_sculpture_faq");
+		}
+	});
 	//lib.arenaReady
-	lib.arenaReady.push(function () {
+	lib.arenaReady.push(async function () {
 		var object = get.copy(lib.skill);
 		//Proxy化lib.skills
 		lib.skill = new Proxy(object, {
 			set: function (target, key, value, receiver) {
 				//阻止含有fixedObject属性的技能对象被修改
-				if (target[key] && target[key].fixedObject == true) {
+				if (typeof target[key] == "object" && target[key].fixedObject == true) {
 					return false;
 				} else {
 					return Reflect.set(target, key, value, receiver);
 				}
 			},
 		});
-		if (config.skill_delete) {
-			//针对标签大师的技能灭杀
-			lib.qsmx.skillDelete();
-		} else {
-			//不针对标签大师的技能灭杀
-			lib.qsmx.skillDelete2();
-		}
-		lib.qsmx.addSkillInfo();
+		//抽象玩意（
+		[function(){}, lib.qsmx.skillDelete2, lib.qsmx.skillDelete][config.skill_delete]();
 		lib.qsmx.skillTranslationAdd();
+		lib.qsmx.addSkillInfo();
 		//复原game.over函数所用回调
 		const announce = lib.announce.subscribe(
 			"Noname.Game.Event.Changed",
@@ -1051,28 +1301,37 @@ export async function content(config, pack) {
 					}
 				}
 			);
-			try {
-				Object.defineProperty(player, "delete", {
-					get: function () {
-						return new Function();
-					},
-					set: function () { },
-				});
-				Object.defineProperty(player, "remove", {
-					get: function () {
-						return new Function();
-					},
-					set: function () { },
-				});
-				Object.defineProperty(player, "goto", {
-					get: function () {
-						return new Function();
-					},
-					set: function () { },
-				});
-			} catch (err) {
-				console.error(err);
-			}
+			this.initDeleteResistance();
+		},
+		/**
+		 * 初始化dom节点删除抗性
+		 */
+		initDeleteResistance:function(){
+			var player = this;
+			var classList = player.classList;
+			//监听ui.arena的MutationObserver（防删除dom用）
+			const obsever = new MutationObserver(function(){
+				const bool = Array.from(ui.arena.childNodes).some(node=>node==player);
+				if (!bool) {
+					ui.arena.appendChild(player);
+				}
+			});
+			obsever.observe(ui.arena, {
+				childList:true,
+			});
+			//监听玩家的classList的MutationObserver
+			const obsever2 = new MutationObserver(function(){
+				let map = {
+					removing:false, 
+				};
+				for (const key of Object.keys(map)) {
+					const bool = map[key];
+					DOMTokenList.prototype.toggle.call(classList, key, bool);
+				}
+			});
+			obsever2.observe(player, {
+				attributes:true,
+			});
 		},
 		/**
 		 * 初始化濒死抗性
@@ -1324,286 +1583,6 @@ export async function content(config, pack) {
 	});
 	//lib.element.content
 	Object.assign(lib.element.content, {
-		AntiResistanceDieBoss: function () {
-			"step 0";
-			if (_status.roundStart == player) {
-				_status.roundStart =
-					player.next || player.getNext() || game.players[0];
-			}
-			if (ui.land && ui.land.player == player) {
-				game.addVideo("destroyLand");
-				ui.land.destroy();
-			}
-			var unseen = false;
-			if (player.classList.contains("unseen")) {
-				player.classList.remove("unseen");
-				unseen = true;
-			}
-			var logvid = game.logv(player, "die", source);
-			if (unseen) {
-				player.classList.add("unseen");
-			}
-			if (source) {
-				game.log(player, "被", source, "杀害");
-				if (source.stat[source.stat.length - 1].kill == undefined) {
-					source.stat[source.stat.length - 1].kill = 1;
-				} else {
-					source.stat[source.stat.length - 1].kill++;
-				}
-			} else {
-				game.log(player, "阵亡");
-			}
-
-			// player.removeEquipTrigger();
-
-			// for(var i in lib.skill.globalmap){
-			//     if(lib.skill.globalmap[i].includes(player)){
-			//      			lib.skill.globalmap[i].remove(player);
-			//      			if(lib.skill.globalmap[i].length==0&&!lib.skill[i].globalFixed){
-			//      						 game.removeGlobalSkill(i);
-			//      			}
-			//     }
-			// }
-			game.broadcastAll(function (player) {
-				player.classList.add("dead");
-				player.removeLink();
-				player.classList.remove("turnedover");
-				player.classList.remove("out");
-				player.node.count.innerHTML = "0";
-				player.node.hp.hide();
-				player.node.equips.hide();
-				player.node.count.hide();
-				player.previous.next = player.next;
-				player.next.previous = player.previous;
-				game.players.remove(player);
-				game.dead.push(player);
-				_status.dying.remove(player);
-
-				if (lib.config.background_speak) {
-					if (
-						lib.character[player.name] &&
-						lib.character[player.name][4].some((tag) =>
-							/^die:.+$/.test(tag)
-						)
-					) {
-						var tag = lib.character[player.name][4].find((tag) =>
-							/^die:.+$/.test(tag)
-						);
-						var reg = new RegExp("^ext:(.+)?/");
-						var match = tag.match(/^die:(.+)$/);
-						if (match) {
-							var path = match[1];
-							if (reg.test(path))
-								path = path.replace(
-									reg,
-									(_o, p) => `../extension/${p}/`
-								);
-							game.playAudio(path);
-						}
-					} else if (
-						lib.character[player.name] &&
-						lib.character[player.name][4].some((tag) =>
-							tag.startsWith("die_audio")
-						)
-					) {
-						var tag = lib.character[player.name][4].find((tag) =>
-							tag.startsWith("die_audio")
-						);
-						var list = tag.split(":").slice(1);
-						game.playAudio(
-							"die",
-							list.length ? list[0] : player.name
-						);
-					} else {
-						game.playAudio("die", player.name, function () {
-							game.playAudio(
-								"die",
-								player.name.slice(player.name.indexOf("_") + 1)
-							);
-						});
-					}
-				}
-			}, player);
-
-			game.addVideo("diex", player);
-			player.$die(source);
-			if (player.hp != 0) {
-				player.changeHp(0 - player.hp, false).forceDie = true;
-			}
-			if (get.mode() == "boss" && player == game.boss) {
-				var winners = player.getEnemies();
-				game.over(!(player == game.me) || winners.includes(game.me));
-			}
-			("step 1");
-			if (player.dieAfter) player.dieAfter(source);
-			("step 2");
-			("step 3");
-			if (player.isDead()) {
-				if (!game.reserveDead) {
-					for (var mark in player.marks) {
-						player.unmarkSkill(mark);
-					}
-					while (player.node.marks.childNodes.length > 1) {
-						player.node.marks.lastChild.remove();
-					}
-					game.broadcast(function (player) {
-						while (player.node.marks.childNodes.length > 1) {
-							player.node.marks.lastChild.remove();
-						}
-					}, player);
-				}
-				for (var i in player.tempSkills) {
-					player.removeSkill(i);
-				}
-				var skills = player.getSkills();
-				for (var i = 0; i < skills.length; i++) {
-					if (lib.skill[skills[i]].temp) {
-						player.removeSkill(skills[i]);
-					}
-				}
-				if (_status.characterlist) {
-					if (
-						lib.character[player.name] &&
-						!player.name.startsWith("gz_shibing") &&
-						!player.name.startsWith("gz_jun_")
-					)
-						_status.characterlist.add(player.name);
-					if (
-						lib.character[player.name1] &&
-						!player.name1.startsWith("gz_shibing") &&
-						!player.name1.startsWith("gz_jun_")
-					)
-						_status.characterlist.add(player.name1);
-					if (
-						lib.character[player.name2] &&
-						!player.name2.startsWith("gz_shibing") &&
-						!player.name2.startsWith("gz_jun_")
-					)
-						_status.characterlist.add(player.name2);
-				}
-				var cards = player.getCards("hejsx");
-				if (cards.length) {
-					player.discard(cards).forceDie = true;
-					//player.$throw(event.cards,1000);
-				}
-			}
-			("step 4");
-			if (player.dieAfter2) player.dieAfter2(source);
-			("step 5");
-			game.broadcastAll(function (player) {
-				if (
-					game.online &&
-					player == game.me &&
-					!_status.over &&
-					!game.controlOver &&
-					!ui.exit
-				) {
-					if (lib.mode[lib.configOL.mode].config.dierestart) {
-						ui.create.exit();
-					}
-				}
-			}, player);
-			if (
-				!_status.connectMode &&
-				player == game.me &&
-				!_status.over &&
-				!game.controlOver
-			) {
-				ui.control.show();
-				if (
-					get.config("revive") &&
-					lib.mode[lib.config.mode].config.revive &&
-					!ui.revive
-				) {
-					ui.revive = ui.create.control("revive", ui.click.dierevive);
-				}
-				if (
-					get.config("continue_game") &&
-					!ui.continue_game &&
-					lib.mode[lib.config.mode].config.continue_game &&
-					!_status.brawl &&
-					!game.no_continue_game
-				) {
-					ui.continue_game = ui.create.control(
-						"再战",
-						game.reloadCurrent
-					);
-				}
-				if (
-					get.config("dierestart") &&
-					lib.mode[lib.config.mode].config.dierestart &&
-					!ui.restart
-				) {
-					ui.restart = ui.create.control("restart", game.reload);
-				}
-			}
-
-			if (
-				!_status.connectMode &&
-				player == game.me &&
-				!game.modeSwapPlayer
-			) {
-				// _status.auto=false;
-				if (ui.auto) {
-					// ui.auto.classList.remove('glow');
-					ui.auto.hide();
-				}
-				if (ui.wuxie) ui.wuxie.hide();
-			}
-
-			if (typeof _status.coin == "number" && source && !_status.auto) {
-				if (source == game.me || source.isUnderControl()) {
-					_status.coin += 10;
-				}
-			}
-			if (
-				source &&
-				lib.config.border_style == "auto" &&
-				(lib.config.autoborder_count == "kill" ||
-					lib.config.autoborder_count == "mix")
-			) {
-				switch (source.node.framebg.dataset.auto) {
-					case "gold":
-					case "silver":
-						source.node.framebg.dataset.auto = "gold";
-						break;
-					case "bronze":
-						source.node.framebg.dataset.auto = "silver";
-						break;
-					default:
-						source.node.framebg.dataset.auto =
-							lib.config.autoborder_start || "bronze";
-				}
-				if (lib.config.autoborder_count == "kill") {
-					source.node.framebg.dataset.decoration =
-						source.node.framebg.dataset.auto;
-				} else {
-					var dnum = 0;
-					for (var j = 0; j < source.stat.length; j++) {
-						if (source.stat[j].damage != undefined)
-							dnum += source.stat[j].damage;
-					}
-					source.node.framebg.dataset.decoration = "";
-					switch (source.node.framebg.dataset.auto) {
-						case "bronze":
-							if (dnum >= 4)
-								source.node.framebg.dataset.decoration =
-									"bronze";
-							break;
-						case "silver":
-							if (dnum >= 8)
-								source.node.framebg.dataset.decoration =
-									"silver";
-							break;
-						case "gold":
-							if (dnum >= 12)
-								source.node.framebg.dataset.decoration = "gold";
-							break;
-					}
-				}
-				source.classList.add("topcount");
-			}
-		},
 		OverDie: function () {
 			"step 0";
 			event.forceDie = true;
@@ -2139,6 +2118,9 @@ export async function content(config, pack) {
 				if (key == "diy") {
 					_status.sgsCharacterList.addArray(lib.characterSort.diy.diy_trashbin);
 				} else {
+					if (!lib.characterPack[key]) {
+						continue;
+					}
 					_status.sgsCharacterList.addArray(Object.keys(lib.characterPack[key]));
 				}
 			}

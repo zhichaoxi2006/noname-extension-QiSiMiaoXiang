@@ -3,6 +3,22 @@ import { basic } from "../../basic.js";
 export const character = async function () {
 	var pack = {
 		character: {
+			qsmx_sculpture: [
+				"none",
+				"shen",
+				173,
+				[
+					"qsmx_niujing", 
+					"qsmx_yixiang",
+					"qsmx_shourong",
+				],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_sculpture.jpg",
+					"name:null|null",
+					"boss",
+					"bossallow",
+				],
+			],
 			qsmx_yorigami_yhion_and_yorigami_jyoon: [
 				"female",
 				"shen",
@@ -234,7 +250,7 @@ export const character = async function () {
 				"female",
 				"key",
 				"1/2",
-				["qsmx_winwin","qsmx_tianxie"],
+				["qsmx_reverse","qsmx_tianxie"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_zhengxie.jpg",
 					"die:ext:奇思妙想/resource/audio/die/qsmx_zhengxie.mp3",
@@ -484,7 +500,7 @@ export const character = async function () {
 				"4/4",
 				[
 					"qsmx_search",
-					"qsmx_xuxiang"
+					"qsmx_xuxiang",
 				],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_visual_studio_code.jpg",
@@ -527,6 +543,7 @@ export const character = async function () {
 					"qsmx_hw_sunquan",
 				],
 				qmsx_diy: [
+					"qsmx_zhaoyun",
 					"qsmx_shen_xunyu",
 					"qsmx_shen_zhangfei",
 					"qsmx_liubei",
@@ -560,7 +577,7 @@ export const character = async function () {
 					"qsmx_cenhun",
 				],
 				qsmx_touhou: ["qsmx_matara_okina", "qsmx_zhengxie", "qsmx_junko", "qsmx_doremy_sweet"],
-				qsmx_meme: ['qsmx_kobe_bryant', "qsmx_zhangxianzhong", "qsmx_gocar", "qsmx_visual_studio_code"]
+				qsmx_meme: ['qsmx_kobe_bryant', "qsmx_zhangxianzhong", "qsmx_gocar", "qsmx_visual_studio_code", "qsmx_sculpture"]
 			},
 		},
 		translate: {
@@ -571,6 +588,8 @@ export const character = async function () {
 			qmsx_diy: "DIY武将",
 			qsmx_touhou: "东方武将",
 			//武将名
+			qsmx_sculpture: "雕像·最初之作",
+			qsmx_sculpture_ab: "SCP-173",
 			qsmx_visual_studio_code: "Visual Studio Code",
 			qsmx_visual_studio_code_ab: "VSCode",
 			qsmx_zhaoyun: "妙赵云",

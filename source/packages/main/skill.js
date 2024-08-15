@@ -1500,76 +1500,55 @@ export const skill = {
 			filterCard(card, player) {
 				return get.name(card) == "qsmx_paper";
 			},
+			log:false,
 			lose: false,
 			discard: false,
 			position: "hes",
-			content: function () {
-				"step 0";
-				var list = [];
-				event.suitx = [];
-				event.suitx = event.suitx.concat(lib.suit);
-				for (var x = 0; x < 4; x++) {
-					for (var i = 1; i < 14; i++) {
-						list.add(i);
+			async content(event, trigger, player) {
+				let suit = lib.suit.slice();
+				let cards = [];
+				let number = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+				for (const key in lib.cardPack) {
+					if (Object.prototype.hasOwnProperty.call(lib.cardPack, key)) {
+						const list = lib.cardPack[key];
+						cards.addArray(list);
 					}
 				}
-				list.push("cancel2");
-				event.suitx.push("cancel2");
-				player
-					.chooseControl(list)
-					.set("choice", event.numberchoice).prompt =
-					"【印刷】:请选择牌的点数";
-				("step 1");
-				if (result.control !== "cancel2") {
-					event.cardNumber = result.control;
-				} else {
-					event.finish();
-				}
-				("step 2");
-				player
-					.chooseControl(event.suitx)
-					.set("choice", event.suitchoice).prompt =
-					"【印刷】：请选择牌的花色";
-				("step 3");
-				if (result.control !== "cancel2") {
-					event.cardSuit = result.control;
-				} else {
-					event.finish();
-				}
-				("step 4");
-				var everycards = [];
-				var object = lib.cardPack;
-				for (const key in object) {
-					if (Object.hasOwnProperty.call(object, key)) {
-						const element = object[key];
-						everycards.addArray(element);
+				let next = player.chooseButton([
+					[
+						suit.map(c=>[c, get.translation(c)]),
+						"tdnodes",
+					],
+					[
+						number,
+						"tdnodes"
+					],
+					[
+						cards,
+						"vcard"
+					]
+				], 3);
+				next.set("complexSelect", true);
+				next.set("filterButton", function(button){
+					if (button.classList.contains("card") && ui.selected.buttons.some(c=>c.classList.contains("card"))) {
+						return false;
 					}
-				}
-				var list = [];
-				for (var i = 0; i < everycards.length; i++) {
-					var name = everycards[i];
-					var type = get.type(name);
-					list.push([type, "", name]);
-					if (
-						lib.card[name].nature !== undefined &&
-						lib.card[name].nature.length > 0
-					) {
-						for (var j of lib.card[name].nature)
-							list.push([type, "", name, j]);
+					if (typeof button.link == "number" && ui.selected.buttons.some(c=>typeof c.link == "number")) {
+						return false;
 					}
-				}
-				var dialog = ui.create.dialog("印刷", [list, "vcard"]);
-				player.chooseButton(dialog);
-				("step 5");
+					if (suit.includes(button.link) && ui.selected.buttons.some(c=>suit.includes(c.link))) {
+						return false;
+					}
+					return true;
+				});
+				let result = await next.forResult();
 				if (result.bool) {
-					var card = {
-						name: result.links[0][2],
-						suit: event.cardSuit,
-						number: event.cardNumber,
-						nature: result.links[0][3],
-					};
-					player.discard(event.cards);
-					player.gain(game.createCard(card));
+					let suitx = result.links.find(c=>suit.includes(c));
+					let numberx = result.links.find(c=>typeof c == "number");
+					let cardx = result.links.find(c=>Array.isArray(c));
+					player.logSkill("qsmx_yishua");
+					await player.discard(event.cards);
+					await player.gain(game.createCard(cardx[2], suitx, numberx));
 				}
 			},
 			ai: {
@@ -1577,7 +1556,6 @@ export const skill = {
 					return 1.6;
 				},
 			},
-			_priority: 0,
 		},
 		qsmx_craft: {
 			enable: "phaseUse",

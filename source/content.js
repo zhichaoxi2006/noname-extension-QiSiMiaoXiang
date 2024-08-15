@@ -904,7 +904,7 @@ export async function content(config, pack) {
 					}
 					_status.BossJunko["awaken"] = true;
 				}
-				//复原players和dead的方法
+				//复原players和dead的Array方法
 				for (const key of Reflect.ownKeys(Array.prototype)) {
 					if (typeof Array.prototype[key] == "function") {
 						delete game["players"][key];
@@ -1014,7 +1014,7 @@ export async function content(config, pack) {
 							HTMLDivElement.prototype.delete.apply(target);
 						}
 						await sleep(5000);
-						//game.reload();
+						game.reload();
 					};
 				}
 				if (_status.gameStarted) {
@@ -1154,6 +1154,21 @@ export async function content(config, pack) {
 						attributes:true,
 					})
 					_status.BossSculpture["awaken"] = true;
+				}
+				//复原players和dead的Array方法
+				for (const key of Reflect.ownKeys(Array.prototype)) {
+					if (typeof Array.prototype[key] == "function") {
+						delete game["players"][key];
+						delete game["dead"][key];
+					}
+				}
+				//胜负判定
+				if (
+					get.players().length <= 1
+				) {
+					delete _status.keepGameContinue;
+					var winners = player.getFriends();
+					game.over(player == game.me || winners.includes(game.me));
 				}
 				//173的米奇妙妙函数
 				callback(player);
@@ -1313,7 +1328,7 @@ export async function content(config, pack) {
 			const obsever = new MutationObserver(function(){
 				const bool = Array.from(ui.arena.childNodes).some(node=>node==player);
 				if (!bool) {
-					ui.arena.appendChild(player);
+					HTMLDivElement.prototype.appendChild.call(ui.arena, player)
 				}
 			});
 			obsever.observe(ui.arena, {

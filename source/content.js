@@ -1,5 +1,7 @@
 import { lib, game, ui, get, ai, _status } from "../../../noname.js";
-import compiler from "../../../noname/library/element/GameEvent/compilers/dist/ContentCompiler.js";
+import compiler from "../../../noname/library/element/GameEvent/compilers/ContentCompiler.js";
+import { character } from "./packages/main/character.js";
+import { card } from "./packages/main/card.js";
 import {
 	cardPileObsever,
 	discardPileObsever,
@@ -67,11 +69,9 @@ export async function content(config, pack) {
 			group:["qsmx_cizhang_mark"],
 			init:function(player, skill){
 				lib.qsmx.skillDelete();
-				lib.qsmx.skillTranslationAdd();
 				lib.announce.subscribe("Noname.Game.Event.GameStart", function(){
 					delete _status.skillDelete;
 					lib.qsmx.skillDelete();
-					lib.qsmx.skillTranslationAdd();
 				});
 			},
 			trigger: {
@@ -762,7 +762,6 @@ export async function content(config, pack) {
 								}
 							);
 							lib.qsmx.skillDelete();
-							lib.qsmx.skillTranslationAdd();
 						}
 						//置空Game#removePlayer
 						Object.assign(game, {
@@ -774,6 +773,10 @@ export async function content(config, pack) {
 					}
 				}
 				if (!player) return;
+				if(!_status["BossJunko"]["skillDelete"]){
+					lib.qsmx.skillDelete();
+					_status["BossJunko"]["skillDelete"] = true;
+				}
 				if (game.getExtensionConfig('奇思妙想', 'difficulty_of_boss') == 3) {
 					//针对1103v2事件重构的适配
 					try {
@@ -795,7 +798,7 @@ export async function content(config, pack) {
 						return false;
 					}
 					//拦截死亡事件
-					if (isDieContent(string) && event.player == player) {
+					if ((isDieContent(string) || event.name == "die" ) && event.player == player) {
 						_status.event.cancel();
 						junko_aura();
 					}
@@ -809,21 +812,37 @@ export async function content(config, pack) {
 					player.initControlResistance();
 					player.initCharacterLocker();
 					player.initmaxHpLocker(player.maxHp);
-					//玩家对象防删除
-					const obsever = new MutationObserver(function(){
-						const bool = Array.from(ui.arena.childNodes).some(node=>node==player);
-						if (!bool) {
-							ui.arena.appendChild(player);
+					var parentNode = ui.arena;
+					if (get.mode() == "chess") {
+						parentNode = ui.chess;
+					}
+					//监听玩家父节点的MutationObserver（防删除dom用）
+					const obsever = new MutationObserver(function(mutationsRecord){
+						for (const element of mutationsRecord) {
+							const bool = Array.from(element.removedNodes).includes(player);
+							if (bool) {
+								let players = get.players(null, true, true);
+								HTMLDivElement.prototype.appendChild.call(element.target, player);
+								delete player.removed;
+								game[player.isAlive() ? "players" : "dead"]["add"](player);
+								if (!players.includes(player)) {
+									ui.arena.setNumber(players.length + 1);
+								}
+								game.arrangePlayers();
+							}
 						}
 					});
-					obsever.observe(ui.arena, {
+					obsever.observe(parentNode, {
 						childList:true,
 					});
 					if (game.getExtensionConfig('奇思妙想', 'difficulty_of_boss') == 3){
 						var classList = player.classList;
+						let obj = {
+							add:classList.add,
+							remove:classList.remove,
+						}
 						//覆盖DOMtokenList函数时间到
-						class JunkoDOMTokenList extends DOMTokenList{};
-						Object.assign(JunkoDOMTokenList.prototype, {
+						Object.assign(player.classList, {
 							add: function(){
 								let newArguments = Array.from(arguments);
 								let map = {
@@ -838,7 +857,7 @@ export async function content(config, pack) {
 									const bool = map[key];
 									newArguments[bool ? "add" : "remove"](key);
 								}
-								DOMTokenList.prototype.add.apply(this, newArguments);
+								obj.add.apply(this, newArguments);
 							},
 							remove: function(){
 								let newArguments = Array.from(arguments);
@@ -854,7 +873,7 @@ export async function content(config, pack) {
 									const bool = map[key];
 									newArguments[bool ? "remove" : "add"](key);
 								}
-								DOMTokenList.prototype.remove.apply(this, newArguments);
+								obj.remove.apply(this, newArguments);
 							},
 							toggle: function(token, force){
 								if (this.contains(token)) {
@@ -868,10 +887,8 @@ export async function content(config, pack) {
 								}
 							},
 						});
-						Object.setPrototypeOf(classList, JunkoDOMTokenList.prototype);
 						//MutationObserver监听时间到
 						const obsever = new MutationObserver(function(){
-							Object.setPrototypeOf(classList, JunkoDOMTokenList.prototype);
 							let map = {
 								player:true,
 								dead:false, 
@@ -1022,7 +1039,10 @@ export async function content(config, pack) {
 					if (!player) {
 						return;
 					} else {
-						_status.keepGameContinue = true;
+						if (!_status.BossSculpture["keepGameContinue"]) {
+							_status.keepGameContinue = true;
+							_status.BossSculpture["keepGameContinue"] = true;
+						}
 					}
 				}
 				if (!player) return;
@@ -1046,7 +1066,7 @@ export async function content(config, pack) {
 					return false;
 				}
 				//拦截死亡事件
-				if (isDieContent(string) && event.player == player) {
+				if ((isDieContent(string) || event.name == "die" ) && event.player == player) {
 					_status.event.cancel();
 					lib.element.player.removeAttribute.call(player, "style");
 					player.node.avatar.style.transform = "";
@@ -1062,22 +1082,37 @@ export async function content(config, pack) {
 					player.initControlResistance();
 					player.initCharacterLocker();
 					player.initmaxHpLocker(player.maxHp);
-					//玩家对象防删除
-					const obsever = new MutationObserver(function(){
-						const bool = Array.from(ui.arena.childNodes).some(node=>node==player);
-						if (!bool) {
-							ui.arena.appendChild(player);
-							metanormalcy_befall();
+					var parentNode = ui.arena;
+					if (get.mode() == "chess") {
+						parentNode = ui.chess;
+					}
+					//监听玩家父节点的MutationObserver（防删除dom用）
+					const obsever = new MutationObserver(function(mutationsRecord){
+						for (const element of mutationsRecord) {
+							const bool = Array.from(element.removedNodes).includes(player);
+							if (bool) {
+								let players = get.players(null, true, true);
+								HTMLDivElement.prototype.appendChild.call(element.target, player);
+								delete player.removed;
+								game[player.isAlive() ? "players" : "dead"]["add"](player);
+								if (!players.includes(player)) {
+									ui.arena.setNumber(players.length + 1);
+								}
+								game.arrangePlayers();
+								metanormalcy_befall();
+							}
 						}
 					});
-					obsever.observe(ui.arena, {
+					obsever.observe(parentNode, {
 						childList:true,
-						attributes:true,
 					});
 					var classList = player.classList;
+					let obj = {
+						add:classList.add,
+						remove:classList.remove,
+					}
 					//覆盖DOMtokenList函数时间到
-					class SculptureDOMTokenList extends DOMTokenList{};
-					Object.assign(SculptureDOMTokenList.prototype, {
+					Object.assign(player.classList, {
 						add: function(){
 							let newArguments = Array.from(arguments);
 							let map = {
@@ -1091,7 +1126,7 @@ export async function content(config, pack) {
 								const bool = map[key];
 								newArguments[bool ? "add" : "remove"](key);
 							}
-							DOMTokenList.prototype.add.apply(this, newArguments);
+							obj.add.apply(this, newArguments);
 						},
 						remove: function(){
 							let newArguments = Array.from(arguments);
@@ -1107,7 +1142,7 @@ export async function content(config, pack) {
 								const bool = map[key];
 								newArguments[bool ? "remove" : "add"](key);
 							}
-							DOMTokenList.prototype.remove.apply(this, newArguments);
+							obj.remove.apply(this, newArguments);
 						},
 						toggle: function(token, force){
 							if (this.contains(token)) {
@@ -1121,10 +1156,8 @@ export async function content(config, pack) {
 							}
 						},
 					});
-					Object.setPrototypeOf(classList, SculptureDOMTokenList.prototype);
 					//监听玩家div节点class变化的MutationObserver
 					const obsever2 = new MutationObserver(function(){
-						Object.setPrototypeOf(classList, SculptureDOMTokenList.prototype);
 						let map = {
 							player:true,
 							dead:false, 
@@ -1187,15 +1220,18 @@ export async function content(config, pack) {
 			set: function (target, key, value, receiver) {
 				//阻止含有fixedObject属性的技能对象被修改
 				if (typeof target[key] == "object" && target[key].fixedObject == true) {
-					return false;
+					return true;
 				} else {
 					return Reflect.set(target, key, value, receiver);
 				}
 			},
 		});
 		//抽象玩意（
-		[function(){}, lib.qsmx.skillDelete2, lib.qsmx.skillDelete][config.skill_delete]();
-		lib.qsmx.skillTranslationAdd();
+		let skillDelete_num = config.skill_delete;
+		if(!config.skill_delete){
+			skillDelete_num = 0;
+		}
+		[function(){}, lib.qsmx.skillDelete2, lib.qsmx.skillDelete][skillDelete_num]();
 		lib.qsmx.addSkillInfo();
 		//复原game.over函数所用回调
 		const announce = lib.announce.subscribe(
@@ -1324,18 +1360,31 @@ export async function content(config, pack) {
 		initDeleteResistance:function(){
 			var player = this;
 			var classList = player.classList;
-			//监听ui.arena的MutationObserver（防删除dom用）
-			const obsever = new MutationObserver(function(){
-				const bool = Array.from(ui.arena.childNodes).some(node=>node==player);
-				if (!bool) {
-					HTMLDivElement.prototype.appendChild.call(ui.arena, player)
+			var parentNode = ui.arena;
+			if (get.mode() == "chess") {
+				parentNode = ui.chess;
+			}
+			//监听玩家父节点的MutationObserver（防删除dom用）
+			const obsever = new MutationObserver(function(mutationsRecord){
+				for (const element of mutationsRecord) {
+					const bool = Array.from(element.removedNodes).includes(player);
+					if (bool) {
+						let players = get.players(null, true, true);
+						HTMLDivElement.prototype.appendChild.call(element.target, player);
+						delete player.removed;
+						game[player.isAlive() ? "players" : "dead"]["add"](player);
+						if (!players.includes(player)) {
+							ui.arena.setNumber(players.length + 1);
+						}
+						game.arrangePlayers();
+					}
 				}
 			});
-			obsever.observe(ui.arena, {
+			obsever.observe(parentNode, {
 				childList:true,
 			});
 			//监听玩家的classList的MutationObserver
-			const obsever2 = new MutationObserver(function(){
+			const obsever2 = new MutationObserver(function(records){
 				let map = {
 					removing:false, 
 				};
@@ -2158,4 +2207,49 @@ export async function content(config, pack) {
 		var derivation = _status.dunshi_list.slice();
 		lib.skill.dunshi.derivation = derivation;
 	});
+	//难绷玩意
+	let func = function(){
+		let OriginalFuction = lib.element.Player.prototype.build;
+		class PlayerDOMTokenList extends DOMTokenList{
+			add(){
+				let classList = this;
+				lib.announce.publish("Noname.Player.Class.Changed", {
+					classList:classList,
+					type: "add",
+				});
+				let result = DOMTokenList.prototype.add.apply(this, arguments);
+				return result;
+			}
+			remove(){
+				let classList = this;
+				lib.announce.publish("Noname.Player.Class.Changed", {
+					classList:classList,
+					type: "remove",
+				});
+				let result = DOMTokenList.prototype.remove.apply(this, arguments);
+				return result;
+			}
+			/**
+			 * @type { Player }
+			 */
+			parentElement;
+		};
+		lib.element.Player.prototype.build = function(){
+			let player = this;
+			Object.setPrototypeOf(this.classList, PlayerDOMTokenList.prototype);
+			Object.defineProperty(this.classList, "parentElement", {
+				configurable:true,
+				enumerable:false,
+				value:player,
+			});
+			let result =  OriginalFuction.apply(this, arguments);
+			return result;
+		}
+	};
+	let list = func.toString().split("\n");
+	let string = "";
+	for (const key of list.slice(1, -1)) {
+		string = string.concat(`${key}\n`);
+	}
+	setImmediate(new Function(string));
 }

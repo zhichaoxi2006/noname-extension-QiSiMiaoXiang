@@ -345,6 +345,7 @@ export async function precontent(config, pack) {
 				});
 				_status.skillDelete = true;
 				console.timeEnd('技能灭杀');
+				lib.qsmx.skillTranslationAdd();
 			},
 			/**
 			 * 清理带抗性的技能(D)
@@ -405,6 +406,7 @@ export async function precontent(config, pack) {
 					}
 				});
 				console.timeEnd('技能灭杀');
+				lib.qsmx.skillTranslationAdd();
 			},
 			/**
 			 * 复原被skillDelete清理的技能对象
@@ -425,28 +427,23 @@ export async function precontent(config, pack) {
 			/**
 			 * 修改被skillDelete清理的技能的技能描述
 			 */
-			skillTranslationAdd: async function () {
+			skillTranslationAdd:function () {
+				if(_status.skillTranslationAdded){
+					return;
+				}
 				var list = Reflect.ownKeys(lib.skill);
-				list.forEach(function (key) {
+				for (const key of list) {
 					const skill = lib.skill[key];
 					if (!skill || !skill.originSkill) {
-						return;
+						continue;
 					}
+					if (!lib.translate[`${key}_info`]) continue;
 					try {
-						if (!lib.translate[
-							`${key}_info`
-						] || lib.translate[
-							`${key}_info`
-						].startsWith(`<ins>检测到此技能可能存在抗性，此技能已被无效化。</ins><br>`))return;
-						lib.translate[
-							`${key}_info`
-						] = `<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>${
-							lib.translate[key + "_info"]
-						}`;
+						lib.translate[`${key}_info`] = `<ins>检测到此技能存在抗性，此技能已被无效化。</ins><br>${lib.translate[key + "_info"]}`;
 					} catch (error) {
-						console.error(error);
 					}
-				});
+				}
+				_status.skillTranslationAdded = true;
 			},
 			/**
 			 * 生成任意长度的随机字符串
@@ -498,6 +495,16 @@ export async function precontent(config, pack) {
 					}
 				}
 				return list;
+			},
+			testSkillInfo(){
+				for (const key in lib.skill) {
+					let info = lib["skill"][key];
+					let translate = lib["translate"][`${key}_info`];
+					if (!info || !info.charlotte || !translate) {
+						continue;
+					}
+					console.log(key, get.translation(key));
+				}
 			},
 			resitanceCallback: function (player) {
 				//SkillBlocker去重
@@ -557,15 +564,12 @@ export async function precontent(config, pack) {
 	try {
 		if (_status.eventManager) {
 			//针对1103v2事件重构的修改
-			class eventStackArray extends Array{};
-			Object.defineProperty(eventStackArray.prototype, "push", {
-				configurable:true,
-				enumerable:false,
-				value:function(){
+			class eventStackArray extends Array{
+				push(){
 					lib.announce.publish("Noname.Game.Event.Changed", _status.event);
 					return Array.prototype.push.apply(this, arguments);
 				}
-			});
+			};
 			Object.setPrototypeOf(_status.eventManager.eventStack, eventStackArray.prototype);
 		} else {
 			//祖宗之法

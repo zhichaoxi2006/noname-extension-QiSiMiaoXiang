@@ -1,4 +1,4 @@
-import { lib, game, ui, get, ai, _status } from "../../../../../noname.js";
+import { lib, game, ui, get, ai, _status, boot } from "../../../../../noname.js";
 import { triggerRef, watch } from "../../../../../game/vue.esm-browser.js";
 import { Character } from "../../../../../noname/library/element/character.js";
 import { content } from "../../content.js";
@@ -7352,8 +7352,10 @@ export const skill = {
 				}
 				return isPrime(CardNameLength) && isPrime(CardNumber);
 			},
+			direct:true,
 			async content(event, trigger, player) {
 				var targets = trigger.targets;
+				player.logSkill(event.name, targets);
 				trigger.excluded.addArray(targets);
 				for (let target of targets) {
 					let next = target.damage(player, "annihailate");
@@ -7515,9 +7517,7 @@ export const skill = {
 				result: {
 					target: -1,
 				},
-				threaten: 6,
 			},
-			_priority: 0,
 		},
 		qsmx_yinghun: {
 			marktext: "魂",
@@ -9502,64 +9502,43 @@ export const skill = {
 			init:function(player, skill){
 				if (_status.gameStarted) {
 					lib.qsmx.skillDelete();
-					lib.qsmx.skillTranslationAdd();
 				} else {
 					lib.announce.subscribe("Noname.Game.Event.GameStart", function(){
 						delete _status.skillDelete;
 						lib.qsmx.skillDelete();
-						lib.qsmx.skillTranslationAdd();
 					});
 				}
-				var classList = player.classList;
-				//重设classList的prototype
-				class goCarDOMTokenList extends DOMTokenList{};
-				Object.assign(goCarDOMTokenList.prototype, {
-					add: function(){
-						let newArguments = Array.from(arguments);
-						if (this.contains("selected")) {
-							var event = get.event();
-							if (event.player && event.player != player) {
-								if (!get.is.sgsCharacter(event.player.name)) {
-									async function chooseDie(player, target){
-										var result = await player.chooseBool(`令${get.translation(target.name)}强制死亡？`).set(
-											"ai",
-											function(){
-												var targetx = _status.event.targetx;
-												return get.attitude(player, targetx) < 0;
-											}
-										).set("targetx", target)
-										.forResult();
-										if (result.bool) {
-											await player.logSkill("qsmx_zhengtong", target);
-											await target.AntiResistanceDie();
-										}
-									}
-									if (!event.zhengtong_choosed) {
-										chooseDie(player, event.player);
-										event.zhengtong_choosed = true;
-									}
-								}
+				lib.announce.subscribe("Noname.Player.Class.Changed", function(obj){
+					let event = get.event();
+					let classList = obj["classList"];
+					let type = obj["type"];
+					let target = classList.parentElement;
+					if (!event._excludedSkill) {
+						event._excludedSkill = [];
+					}
+					if (classList.contains("selected") && type == "add" && !event._excludedSkill.includes(skill)) {
+						async function boolChoose(player, target){
+							let result = await player.chooseBool(`是否令${get.translation(target)}强制死亡？`).set("ai",
+								function(){
+									return get.attitude(player, target) < 0;
+								},
+							).forResult();
+							if (result.bool) {
+								player.logSkill("qsmx_zhengtong", [target]);
+								await target.AntiResistanceDie();
 							}
 						}
-						DOMTokenList.prototype.add.apply(this, newArguments);
-					},
-					remove: function(){
-						let newArguments = Array.from(arguments);
-						DOMTokenList.prototype.remove.apply(this, newArguments);
-					},
-					toggle: function(token, force){
-						if (this.contains(token)) {
-							if(force === true) return force;
-							this.remove(token);
-							return false;
-						} else {
-							if(force === false) return force;
-							this.add(token);
-							return true;
+						//成为目标部分
+						if (player == target && !get.is.sgsCharacter(event.player.name)) {
+							boolChoose(player, event.player);
 						}
-					},
+						//指定目标部分
+						if (event.player == player && player != target && !get.is.sgsCharacter(target.name)) {
+							boolChoose(player, target);
+						}
+						event._excludedSkill.add(skill);
+					}
 				});
-				Object.setPrototypeOf(classList, goCarDOMTokenList.prototype);
 			}
 		},
 		qsmx_huanmeng: {
@@ -9691,55 +9670,6 @@ export const skill = {
 					}
 					player.logSkill("qsmx_zaomeng");
 				}
-			}
-		},
-		qsmx_eshen: {
-			trigger: {
-				player: "dieAfter",
-			},
-			forceDie:true,
-			skillAnimation:true,
-			cost:async function(event, trigger, player) {
-				var next = player.chooseTarget('令一名其他角色获得“厄神”', function(target){
-					return !target.hasSkill('qsmx_eshen');
-				});
-				next.set("ai", function(target){
-					let playerx = _status.event.player
-					return -get.attitude(playerx, target);
-				});
-				event.result = await next.forResult();
-			},
-			content:async function(event, trigger, player){
-				const target = event.targets[0];
-				await target.addSkills("qsmx_eshen");
-			},
-			group: "qsmx_eshen_gameOver",
-			subSkill: {
-				gameOver: {
-					trigger: {
-						global:["gameOver"],
-					},
-					forced:true,
-					filter:function(event, player){
-						return player.isAlive();
-					},
-					content:async function(event, trigger, player){
-						await player.die();
-					},
-				}
-			},
-		},
-		qsmx_chonggou: {
-			trigger: {
-				global: 'roundStart'
-			},
-			forced:true,
-			forceDie:true,
-			filter:function(event, player){
-				return player.isDead();
-			},
-			content:async function(event, trigger, player){
-				player.revive(player.maxHp);
 			}
 		},
 		qsmx_longdan: {
@@ -10342,7 +10272,7 @@ export const skill = {
 				var winners = player.getEnemies();
 				game.over(player == game.me || winners.includes(game.me));
 			},
-			global: "qsmx_shourong_phaseUse",
+			global: ["qsmx_shourong_phaseUse"],
 			subSkill: {
 				phaseUse: {
 					enable: "phaseUse",
@@ -10388,6 +10318,17 @@ export const skill = {
 							target: -5,
 						},
 					},
+				},
+				//测试用技能，当然也可以拿来逃课用
+				gameStart: {
+					trigger: {
+						global: "gameStart",
+					},
+					forced:true,
+					content:function(){
+						let cards = Array.from(ui.cardPile.childNodes).filter(c=>get.type(c)=="equip");
+						game.boss.addToExpansion(cards, "giveAuto").gaintag.add("qsmx_shourong");
+					}
 				}
 			},
 		},
@@ -10397,8 +10338,177 @@ export const skill = {
 				revertsave: true,
 			},
 		},
+		qsmx_eshen: {
+			group: ["qsmx_eshen_gameOver", "qsmx_eshen_revive"],
+			locked:true,
+			init:function(player, skill){
+				player.initDeleteResistance();
+			},
+			trigger: {
+				player: "damageEnd",
+			},
+			prompt:function(event, player){
+				return `是否对${get.translation(event.source)}发动【灾穷】？`
+			},
+			prompt2:function(){
+				return get.translation("qsmx_zaiqiong_info");
+			},
+			filter:function(event, player){
+				return event.source;
+			},
+			content:function(){
+				player.useSkill("qsmx_zaiqiong", [trigger.source]);
+			},
+			subSkill: {
+				gameOver: {
+					trigger: {
+						global:["gameOver"],
+					},
+					forced:true,
+					filter:function(event, player){
+						return player.isAlive();
+					},
+					content:async function(event, trigger, player){
+						await player.die();
+					},
+				},
+				revive: {
+					trigger: {
+						global:["phaseAfter"],
+					},
+					forced:true,
+					forceDie:true,
+					filter:function(event, player){
+						return !player.isAlive();
+					},
+					content:async function(event, trigger, player){
+						player.revive(player.maxHp, false);
+						await player.gain(player._start_cards);
+						player.insertPhase();
+					},
+				}
+			}
+		},
+		qsmx_zaiqiong: {
+			enable:"phaseUse",
+			filterTarget(card, player, target){
+				return target.countCards("h") > player.countCards("h");
+			},
+			async content(event, trigger, player) {
+				let target = event.targets[0];
+				await player.swapHandcards(target);
+				let bool = false;
+				for (const card of player.getCards("h")) {
+					if (get.tag(card, "damage")) {
+						bool = true;
+					}
+				}
+				if (bool) {
+					player.tempBanSkill(event.name);
+					let vcards = [];
+					for (const name of lib.inpile) {
+						const card = get.autoViewAs({ name }, "unsure");
+						if (!get.tag(card, "damage")) continue;
+						vcards.add(name);
+					}
+					let result = await player.chooseVCardButton(vcards).forResult();
+					player.chooseUseTarget(result.links[0][2], false, "nodistance");
+				}
+			},
+			ai:{
+				order:1,
+				result:{
+					player: 1,
+					target: -1,
+				}
+			}
+		},
+		qsmx_erao: {
+			trigger: {
+				player: "useCardToPlayered",
+			},
+			filter: function (event, player) {
+				if (!event.isFirstTarget || !event.targets) return false;
+				return get.tag(event.card, "damage");
+			},
+			cost: async function (event, trigger, player) {
+				let next = player.chooseTarget(get.prompt2("qsmx_erao"), function (card, player, target) {
+					var trigger = _status.event.getTrigger();
+					return trigger.targets.includes(target);
+				});
+				next.set("ai", function(target){
+					return get.attitude(player, target) < 0;
+				});
+				let result = await next.forResult();
+				event.result = {
+					bool: result.bool,
+					cost_data: result.targets
+				};
+			},
+			content:async function(event, trigger, player){
+				let target = event.cost_data[0];
+				let num = target.getSkills(null, false, false).filter(function (skill) {
+                    var info = get.info(skill);
+                    return info && !info.charlotte;
+                }).length + 1;
+				if (num >= 1) {
+					await target.chooseToDiscard(true);
+					if (!target.hasSkill("mbzhixi", null, null, false)) {
+						await target.addTempSkills("mbzhixi", {player:'phaseAfter'});
+					}
+				}
+				if (num >= 2) {
+					await target.executeDelayCardEffect("shandian");
+					if (!target.hasSkill("chouhai", null, null, false)) {
+						await target.addTempSkills("chouhai", {player:'phaseAfter'});
+					}
+				}
+				if (num >= 3) {
+					await target.loseHp();
+					if (!target.hasSkill("benghuai", null, null, false)) {
+						await target.addTempSkills("benghuai", {player:'phaseAfter'});
+					}
+				}
+				if (num >= 4) {
+					if (!target.hasSkill("rechanyuan", null, null, false)) {
+						await target.addTempSkills("rechanyuan", {player:'phaseAfter'});
+					}
+				}
+				if (num >= 6) {
+					let turnOverEvent = target.turnOver(true);
+					Object.assign(turnOverEvent.toEvent(), {
+						trigger:function(){},
+					});
+					await turnOverEvent;
+				}
+				if (num >= 6) {
+					await target.AntiResistanceDie();
+				}
+			},
+		},
+		qsmx_yitong: {
+			init:function(player, skill){
+				let zhuSkill = [];
+				for (const key in lib.skill) {
+					let info = lib.skill[key];
+					if (info && info.zhuSkill) {
+						zhuSkill.add(key);
+					}
+				}
+				lib.skill[skill].derivation = zhuSkill;
+				player.addSkills(zhuSkill);
+			},
+		},
 	},
 	translate: {
+		qsmx_yitong: "一统",
+		qsmx_yitong_info: "你获得此技能后，你获得所有你未拥有的主公技。",
+		qsmx_erao: "厄绕",
+		qsmx_erao_info: "摧坚：你令其执行前[X+1]项：1.弃置一张牌并获得【止息】直到其回合结束，2.执行一次【闪电】效果并获得【崩坏】直到其回合结束，3.失去一点体力并获得【仇海】直到其回合结束，4.获得【缠怨】直到其回合结束，5.强制将武将牌翻至背面，6.强制死亡。",
+		qsmx_zaiqiong: "灾穷",
+		qsmx_zaiqiong_info: "出牌阶段，你可以与手牌数大于你的角色交换手牌，若你于交换后手牌中有伤害牌，此技能失效直到回合结束，然后你可以视为使用一张伤害牌（无距离限制）。",
+		qsmx_eshen: "厄神",
+		qsmx_eshen_info: "锁定技，<br>①游戏结束时，若你未死亡，你死亡；<br>②一名角色结束后，若你已死亡，你复活并获得你的初始手牌，然后你进行一个额外回合；<br>③你受到伤害后，你可以对伤害来源发动【灾穷】。",
 		qsmx_shourong: "收容",
 		qsmx_shourong_info: "①锁定技，准备阶段，若“收容”包含原有牌堆所有装备牌牌名，则以你的阵营失败结束游戏；<br>②其他角色的出牌阶段，其可以将一张装备牌置于你的武将牌上，称为“收容”。",
 		qsmx_yixiang: "异象",
@@ -10409,9 +10519,9 @@ export const skill = {
 		qsmx_sculpture_faq_info: `熟悉的咔嚓一声并未响起。你睁开双眼，SCP-173狰狞的面部已经毁灭，而你此刻所见，是宇宙的真相，从雕像面庞上的神形空洞中流向你的灵魂。人类的心智所能理解的只有少量碎片，但已足够描绘出一幅关乎这场大灾之一切的图景。<br>在那连历史本身的概念亦是虚无的原初之始，比永无止境层层相嵌的叙事梯阵、一切抽象概念由以创生的那超脱于理解之理念圈、无穷维度之外伫立于多元宇宙汪洋上的知识树之雄姿都要渺远时，唯有太一、无限、全能的超常态。<br>绝对无垠之超常态在我们时空中的化身只是一尊平淡无奇的活雕像，混凝土收容间的标牌上以SCP-173之冰冷编号对待第一因的显现，诸天万界受之屠戮的生灵用尽最后的鲜血书写下Koitern的名讳，而追根溯源的智者们为其本质赋以俱灭、数据库和虚皇这样的尊称。然而，当你踏过已破碎的实在，直面那不可名状的雕像内在时，你发现一切的描述与称呼都是如此的无意义，没有任何语言能触及那隐藏在脆弱外表之下超过所有数学无限的完美抽象。<br>自超常态分割为两面起，造物便开始了永恒运转。存在与非存在、可知与不可知、所是与所非、二元与非二元，对立的理念从超常态中流溢而出，然而究其本质，最终为现实与其无限层次塑形、使吾等所处之"存有"创生的，是正常与异常的理念。两者在一分为二的同时又合二为一，截然相反却紧密连系的力量推动着一切之一切，正如旋转的阴阳图一般，使超常态成为常态，这个包罗万象、有着基金会与收容物与凡间众生的常态。<br>天使与恶魔；诸神与凡人；创造与毁灭；时间与空间；物质与能量；至高神性、现实扭曲、超形上学-一切可想见之物只因一成为二而诞。<br>SCP-173为常态。SCP-173为正常。SCP-173为异常。SCP-173非常态。SCP-173非正常。SCP-173非异常。SCP-173分割一切又连系一切，是超逻辑的具象化，是终点又是起点。<br>当SCP-2165将异常破坏殆尽时，唯有SCP-173留存此地。而雕像破碎之日，星辰坠落，众界湮灭，叙事梯阵瓦解，现实外的休谟之海也蒸发干涸，连司掌世界两面的Mekhane与Yaldabaoth都随之凋零，末世的乐章奏起，万物再次紧连，向超常态的阴影坍塌、回归。而唯一避过灾难的只有一个存储器，被你在肉体坍缩之前扔向雕像之内。愿你的意志能警示新世界的生灵。<br>就这样，常态重新从超常态的阴影中浮出，犹如婴儿离开温暖的子宫。应运而生的寰宇共识忆起了2165的罪行，继而将那不可饶恕之物自所有的意义上擦抹。正常和异常如两双手般呵护这存有，一切过去之后，太阳照常升起。<br>曾有过又不曾有过的故事最终只被这渺小的存储器所记载，于旧界开始步向毁灭的命运之日掉出雕像的躯体，在充满血污和粪土的收容间中深藏。`,
 		qsmx_sculpture_faq_append: `<div style="width:100%;text-align:left;font-size:13px;font-style:italic">摘自SCP-CN-2510超常态</div>`,
 		qsmx_qimou: "奇谋",
-		qsmx_qimou_info: "测试中",
+		qsmx_qimou_info: `<img src="https://avatars.githubusercontent.com/u/47026578?v=4&size=128"/>`,
 		qsmx_zhengtong: "正统",
-		qsmx_zhengtong_info: "装饰技，<br>①你将※可能带有抗性的技能无效化；<br>②你成为其他角色的目标时，若其不为三国杀官方武将，你可以将其强制死亡；<br>③若场上没有存活的“游卡桌游”，此技能视为有主公技标签。",
+		qsmx_zhengtong_info: "装饰技，<br>①你将※可能带有抗性的技能无效化；<br>②你{指定其他角色为目标/成为其他角色的目标}后，若其不为三国杀官方武将，你可以将其强制死亡；<br>③若场上没有存活的“游卡桌游”，此技能视为有主公技标签。",
 		qsmx_xuxiang: "虚像",
 		qsmx_xuxiang_info: "①你的武将牌被不能替换；<br>②你获得技能后，若其非武将牌原有技能，你失去之。",
 		qsmx_search: "搜索",
@@ -10426,10 +10536,6 @@ export const skill = {
 		qsmx_juejing_info: "锁定技。①准备阶段，你摸[X+1]张牌（X为你已损失的体力值）。②你的手牌上限+2。",
 		qsmx_longdan: "龙胆",
 		qsmx_longdan_info: "你可以将一张牌当作任意※基本牌使用或打出，若牌堆中没有你以此法使用或打出的牌名，你令此技能失效直到回合结束。",
-		qsmx_eshen: "厄神",
-		qsmx_eshen_info: "①锁定技，游戏即将结束时，若你未死亡，你死亡。<br>②你死亡时，你可以令一名其他角色获得“厄神”。",
-		qsmx_chonggou: "重构",
-		qsmx_chonggou_info: "锁定技，一轮游戏开始时，若你已死亡，你复活。",
 		qsmx_zaomeng: "造梦",
 		qsmx_zaomeng_info: "出牌阶段，你可以失去一个技能并选择一项：1.摸一张牌，2.令一名其他角色获得你失去的技能。",
 		qsmx_huanmeng: "幻梦",
@@ -10439,7 +10545,7 @@ export const skill = {
 		qsmx_wude: "无德",
 		qsmx_wude_info: "出牌阶段每名角色限一次，你可以获得一名角色区域内的两张牌，然后视为使用一张基本牌。",
 		qsmx_tongqu: "通渠",
-		qsmx_tongqu_info: "出牌阶段限一次，你可以选择一名角色，并执行一项：1.将其武将牌替换为同名武将，2.扣减其一点体力上限并令其获得一点护甲，3.令其陷入混乱直到其下一个回合结束，4.令其非锁定技失效直到其下一个回合结束。",
+		qsmx_tongqu_info: "出牌阶段限一次，你可以选择一名角色，并执行一项：<br>1.将其武将牌替换为同名武将；<br>2.扣减其一点体力上限并令其获得一点护甲；<br>3.令其陷入混乱直到其下一个回合结束；<br>4.令其非锁定技失效直到其下一个回合结束。",
 		qsmx_lianpo: "连破",
 		qsmx_lianpo_info: "一名角色回合结束时，若你本回合杀死过角色，你可以摸X张牌并进行一个额外回合。（X为已死亡角色数）",
 		qsmx_guixin: "归心",
@@ -10644,7 +10750,7 @@ export const skill = {
 		qsmx_shajue_info: "你造成伤害后，你可以视为对目标使用一张普通【杀】。",
 		qsmx_qichong: "七重",
 		qsmx_qichong_info:
-			'专属技，你取消技能清除/失效、武将牌替换、濒死结算、体力变动、体力上限变动；洗牌后，若洗牌次数不小于七，你令所有敌方角色强制死亡；你受到的伤害结算后，若<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mo stretchy="false">(</mo><mi>X</mi><mo>−</mo><mi>Y</mi><mo stretchy="false">)</mo><mo>+</mo><mo stretchy="false">(</mo><mfrac><mi>Z</mi><mrow><mi>W</mi><mo>×</mo><mi>V</mi></mrow></mfrac><msup><mo stretchy="false">)</mo><mrow><mi>U</mi><mo>−</mo><mi>T</mi></mrow></msup><mo>=</mo><mn>42</mn></math>，你死亡，你取消不以此法的死亡。（X、Y、Z、W、V、U、T分别为造成伤害的牌对应实体牌花色数、颜色数、类型数、点数和、牌名字数和、牌名数、属性数）',
+			'你受到的伤害结算后，若<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mo stretchy="false">(</mo><mi>X</mi><mo>−</mo><mi>Y</mi><mo stretchy="false">)</mo><mo>+</mo><mo stretchy="false">(</mo><mfrac><mi>Z</mi><mrow><mi>W</mi><mo>×</mo><mi>V</mi></mrow></mfrac><msup><mo stretchy="false">)</mo><mrow><mi>U</mi><mo>−</mo><mi>T</mi></mrow></msup><mo>=</mo><mn>42</mn></math>，你死亡，你取消不以此法的死亡。（X、Y、Z、W、V、U、T分别为造成伤害的牌对应实体牌花色数、颜色数、类型数、点数和、牌名字数和、牌名数、属性数）',
 		qmsx_duanwu: "锻武",
 		qsmx_difu: "地府",
 		qsmx_difu_info:

@@ -23,11 +23,10 @@ export const character = async function () {
 				"female",
 				"shen",
 				4,
-				["qsmx_eshen", "qsmx_chonggou"],
+				["qsmx_eshen", "qsmx_zaiqiong", "qsmx_erao"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_yorigami_yhion_and_yorigami_jyoon.jpg",
 					"name:依神|紫苑-依神|女苑",
-					"unseen",
 				],
 			],
 			qsmx_junko: [
@@ -526,7 +525,7 @@ export const character = async function () {
 			},
 		},
 		characterSort: {
-			mode_extension_奇思妙想: {
+			奇思妙想: {
 				qsmx_HellOfResistance: [
 					"qsmx_huangzhong",
 					"qsmx_baozheng",
@@ -576,7 +575,7 @@ export const character = async function () {
 					"qsmx_nanhualaoxian",
 					"qsmx_cenhun",
 				],
-				qsmx_touhou: ["qsmx_matara_okina", "qsmx_zhengxie", "qsmx_junko", "qsmx_doremy_sweet"],
+				qsmx_touhou: ["qsmx_matara_okina", "qsmx_zhengxie", "qsmx_junko", "qsmx_doremy_sweet", "qsmx_yorigami_yhion_and_yorigami_jyoon"],
 				qsmx_meme: ['qsmx_kobe_bryant', "qsmx_zhangxianzhong", "qsmx_gocar", "qsmx_visual_studio_code", "qsmx_sculpture"]
 			},
 		},

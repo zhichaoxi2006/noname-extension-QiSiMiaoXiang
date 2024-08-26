@@ -1,7 +1,4 @@
 import { lib, game, ui, get, ai, _status } from "../../../noname.js";
-import compiler from "../../../noname/library/element/GameEvent/compilers/ContentCompiler.js";
-import { character } from "./packages/main/character.js";
-import { card } from "./packages/main/card.js";
 import {
 	cardPileObsever,
 	discardPileObsever,
@@ -779,9 +776,19 @@ export async function content(config, pack) {
 				}
 				if (game.getExtensionConfig('奇思妙想', 'difficulty_of_boss') == 3) {
 					//针对1103v2事件重构的适配
-					try {
-						var content = compiler.regularize(event["content"].original);
-					} catch (error) {
+					if (event["content"].original) {
+						function regularize(content) {
+							// 无法直接编译的数据做处理
+							if (typeof content === 'string') {
+								return lib.element.content[content] || lib.element.contents[content];
+							}
+							else if (Symbol.iterator in content) {
+								return Array.from(content);
+							}
+							return content;
+						}
+						var content = regularize(event["content"].original);
+					} else {
 						var content = event["content"];
 					}
 					var string = new String(content);
@@ -1047,9 +1054,19 @@ export async function content(config, pack) {
 				}
 				if (!player) return;
 				//针对1103v2事件重构的适配
-				try {
-					var content = compiler.regularize(event["content"].original);
-				} catch (error) {
+				if (event["content"].original) {
+					function regularize(content) {
+						// 无法直接编译的数据做处理
+						if (typeof content === 'string') {
+							return lib.element.content[content] || lib.element.contents[content];
+						}
+						else if (Symbol.iterator in content) {
+							return Array.from(content);
+						}
+						return content;
+					}
+					var content = regularize(event["content"].original);
+				} else {
 					var content = event["content"];
 				}
 				var string = new String(content);
@@ -1325,9 +1342,19 @@ export async function content(config, pack) {
 				"Noname.Game.Event.Changed",
 				function (event) {
 					//针对1103v2事件重构的适配
-					try {
-						var content = compiler.regularize(event["content"].original);
-					} catch (error) {
+					if (event["content"].original) {
+						function regularize(content) {
+							// 无法直接编译的数据做处理
+							if (typeof content === 'string') {
+								return lib.element.content[content] || lib.element.contents[content];
+							}
+							else if (Symbol.iterator in content) {
+								return Array.from(content);
+							}
+							return content;
+						}
+						var content = regularize(event["content"].original);
+					} else {
 						var content = event["content"];
 					}
 					var string = new String(content);

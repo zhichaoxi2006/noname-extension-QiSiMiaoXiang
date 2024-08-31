@@ -6744,20 +6744,6 @@ export const skill = {
 			},
 			_priority: 0,
 		},
-		huanyuyanmiezhu: {
-			equipSkill: true,
-			firstDo: true,
-			forced: true,
-			trigger: {
-				source: "damageBefore",
-			},
-			filter: function (event, player) {
-				return !event.annihailate;
-			},
-			async content(event, trigger, player) {
-				trigger.set("annihailate", true);
-			},
-		},
 		qsmx_shengong: {
 			enable: ["phaseUse"],
 			position: "hes",
@@ -10486,23 +10472,8 @@ export const skill = {
 				}
 			},
 		},
-		qsmx_yitong: {
-			init:function(player, skill){
-				let zhuSkill = [];
-				for (const key in lib.skill) {
-					let info = lib.skill[key];
-					if (info && info.zhuSkill) {
-						zhuSkill.add(key);
-					}
-				}
-				lib.skill[skill].derivation = zhuSkill;
-				player.addSkills(zhuSkill);
-			},
-		},
 	},
 	translate: {
-		qsmx_yitong: "一统",
-		qsmx_yitong_info: "你获得此技能后，你获得所有你未拥有的主公技。",
 		qsmx_erao: "厄绕",
 		qsmx_erao_info: "摧坚：你令其执行前[X+1]项：1.弃置一张牌并获得【止息】直到其回合结束，2.执行一次【闪电】效果并获得【崩坏】直到其回合结束，3.失去一点体力并获得【仇海】直到其回合结束，4.获得【缠怨】直到其回合结束，5.强制将武将牌翻至背面，6.强制死亡。",
 		qsmx_zaiqiong: "灾穷",
@@ -10663,9 +10634,6 @@ export const skill = {
 		qsmx_tuxi_info:
 			"每回合每名角色限一次，一名其他角色获得牌时，你可以改为你获得之。",
 		_annihailate_damage: "湮灭",
-		huanyuyanmiezhu: "寰宇湮灭珠",
-		huanyuyanmiezhu_info:
-			"锁定技，你即将造成的伤害视为湮灭伤害。",
 		qsmx_taoyin: "韬隐",
 		qsmx_taoyin_info:
 			"隐匿技，当你登场后，若当前回合角色存在且不为你，你可以视为对当前回合角色使用一张【杀】。",

@@ -1226,7 +1226,9 @@ export async function content(config, pack) {
 		);
 		//关于真相
 		if (localStorage.getItem("Boss_Sculpture_Stat") == "crushed") {
-			lib["character"]["qsmx_sculpture"]["skills"]["push"]("qsmx_sculpture_faq");
+			if (lib["character"]["qsmx_sculpture"]) {
+				lib["character"]["qsmx_sculpture"]["skills"]["push"]("qsmx_sculpture_faq");
+			}
 		}
 	});
 	//lib.arenaReady

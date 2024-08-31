@@ -52,6 +52,19 @@ export const character = async function () {
 					"forbidai",
 				],
 			],
+			qsmx_sp_mimidog: [
+				"male",
+				"key",
+				"4/4",
+				[
+					"qsmx_kuitian"
+				],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_mimidog.jpg",
+					"name:null|null",
+					"forbidai",
+				],
+			],
 			qsmx_longinus: [
 				"male",
 				"western",
@@ -271,7 +284,7 @@ export const character = async function () {
 				"male",
 				"wei",
 				"4/4",
-				["qsmx_jianxiong", ,"qsmx_guixin", "rehujia"],
+				["qsmx_jianxiong", "qsmx_guixin", "rehujia"],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_caocao.jpg",
 					"zhu",
@@ -587,6 +600,8 @@ export const character = async function () {
 			qmsx_diy: "DIY武将",
 			qsmx_touhou: "东方武将",
 			//武将名
+			qsmx_sp_mimidog: "SP眯咪狗",
+			qsmx_sp_mimidog_prefix: "SP",
 			qsmx_sculpture: "雕像·最初之作",
 			qsmx_sculpture_ab: "SCP-173",
 			qsmx_visual_studio_code: "Visual Studio Code",

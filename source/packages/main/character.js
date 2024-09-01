@@ -57,7 +57,9 @@ export const character = async function () {
 				"key",
 				"4/4",
 				[
-					"qsmx_kuitian"
+					"qsmx_nongzhuo",
+					"qsmx_qidao",
+					"qsmx_xueshi"
 				],
 				[
 					"ext:奇思妙想/resource/image/character/qsmx_mimidog.jpg",

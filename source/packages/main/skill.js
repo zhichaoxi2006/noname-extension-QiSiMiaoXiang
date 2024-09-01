@@ -10472,8 +10472,331 @@ export const skill = {
 				}
 			},
 		},
+		qsmx_nongzhuo: {
+			trigger: {
+				get player(){
+					return lib.phaseName.map(c=>`${c}Begin`);
+				}
+			},
+			prompt2:function(event, player, triggername){
+				return `是否发动【弄拙】`;
+			},
+			prompt2:function(event, player, triggername){
+				return `跳过${get.translation(event.name)}`;
+			},
+			check:function(event, player, triggername){
+				let list = ["phaseDraw", "phaseUse"];
+				return !list.includes(event.name);
+			},
+			content:async function(event, trigger, player){
+				trigger.cancel();
+			},
+			group: "qsmx_nongzhuo_cancel",
+			subSkill: {
+				cancel: {
+					trigger: {
+						get player(){
+							let list = lib.phaseName.slice().add("phase");
+							return list.map(c=>`${c}Cancelled`);
+						}
+					},
+					forced:true,
+					content:async function(event, trigger, player){
+						if (trigger.name == "phase") {
+							player.addMark("charge");
+						} else {
+							player.draw();
+						}
+					},
+				}
+			},
+		},
+		qsmx_qidao: {
+			audio: 2,
+			trigger: {
+				player: "damageEnd",
+			},
+			frequent: true,
+			filter(event) {
+				return event.num > 0;
+			},
+			getIndex(event, player, triggername) {
+				return event.num;
+			},
+			async content(event, trigger, player) {
+				const next = player.judge(function (card) {
+					if (["spade", "club", "diamond"].includes(get.suit(card))) return -2;
+					if (["heart"].includes(get.suit(card))) return 2;
+					return 0;
+				});
+				next.judge2 = function (result) {
+					return result.bool == false ? true : false;
+				};
+				const result = await next.forResult();
+				switch (result.suit) {
+					case "heart":
+						await player.recover();
+						break;
+					case "diamond":
+						await player.chooseToDiscard("he", 2, true);
+						break;
+					case "club":
+						await player.turnOver(true);
+						break;
+					case "spade":
+						await player.loseHp(player.hp);
+						break;
+				}
+			},
+			ai: {
+				halfneg:true,
+			},
+		},
+		qsmx_yanjue: {
+			locked:true,
+			trigger: {
+				global: ["judgeCancelled"],
+			},
+			async cost(event, trigger, player){
+				var prompt = "【湮绝】：你可以令一名其他角色灰飞烟灭。";
+				var toSortPlayers = game.players.filter((c) => c != player);
+				var next = player.chooseButton([1, 1]).set("createDialog", [
+					prompt,
+					[
+						toSortPlayers.map((i) => `${i.playerid}|${i.name}`),
+						(item, type, position, noclick, node) => {
+							const info = item.split("|"),
+								_item = item;
+							const playerid = parseInt(info[0]);
+							item = info[1];
+							if (node) {
+								node.classList.add("button");
+								node.classList.add("player");
+								node.style.display = "";
+							} else {
+								node = ui.create.div(
+									".button.character",
+									position
+								);
+							}
+							node._link = item;
+							node.link = item;
+		
+							const func = function (node, item) {
+								if (item != "unknown")
+									node.setBackground(item, "character");
+								if (node.node) {
+									node.node.name.remove();
+									node.node.hp.remove();
+									node.node.group.remove();
+									node.node.intro.remove();
+									if (node.node.replaceButton)
+										node.node.replaceButton.remove();
+								}
+								node.node = {
+									name: ui.create.div(".name", node),
+									group: ui.create.div(".identity", node),
+									intro: ui.create.div(".intro", node),
+								};
+								const currentPlayer = game.players.find(
+									(current) => current.playerid == playerid
+								);
+								const infoitem = [
+									currentPlayer.sex,
+									currentPlayer.group,
+									`${currentPlayer.hp}/${currentPlayer.maxHp}/${currentPlayer.hujia}`,
+								];
+								node.node.name.innerHTML = get.slimName(item);
+								if (
+									lib.config.buttoncharacter_style ==
+										"default" ||
+									lib.config.buttoncharacter_style == "simple"
+								) {
+									if (
+										lib.config.buttoncharacter_style ==
+										"simple"
+									) {
+										node.node.group.style.display = "none";
+									}
+									node.classList.add("newstyle");
+									node.node.name.dataset.nature =
+										get.groupnature(
+											get.bordergroup(infoitem)
+										);
+									node.node.group.dataset.nature =
+										get.groupnature(
+											get.bordergroup(infoitem),
+											"raw"
+										);
+								}
+								node.node.name.style.top = "8px";
+								if (
+									node.node.name.querySelectorAll("br")
+										.length >= 4
+								) {
+									node.node.name.classList.add("long");
+									if (
+										lib.config.buttoncharacter_style ==
+										"old"
+									) {
+										node.addEventListener(
+											"mouseenter",
+											ui.click.buttonnameenter
+										);
+										node.addEventListener(
+											"mouseleave",
+											ui.click.buttonnameleave
+										);
+									}
+								}
+								node.node.intro.innerHTML = lib.config.intro;
+								node.node.group.style.backgroundColor =
+									get.translation(
+										`${get.bordergroup(infoitem)}Color`
+									);
+							};
+							node.refresh = func;
+							node.refresh(node, item);
+		
+							node.link = _item;
+							return node;
+						},
+					],
+				]);
+				next.set("ai", function (button) {
+					var link = button.link;
+					var target = game.players.find(
+						(c) => c.playerid == link.split("|")[0]
+					);
+					return -get.attitude(player, target);
+				});
+				next.includeOut = true;
+				let result = await next.forResult();
+				let targets = [];
+				for (const link of result.links) {
+					targets.push(get.players(null, true, true).find(
+						(c) => c.playerid == link.split("|")[0]
+					));
+				}
+				event.result = {
+					bool: result.bool,
+					targets: targets,
+				}
+			},
+			content: function () {
+				player.$skill(get.translation(event.name));
+				for (const target of event.targets) {;
+					target.resetFuction();
+					var next = target.AntiResistanceDie();
+					next.includeOut = true;
+					game.log(target, "灰飞烟灭");
+				}
+				game.delayx();
+			},
+			group: ["qsmx_yanjue_judgeBefore"],
+			subSkill: {
+				judgeBefore: {
+					forced: true,
+					trigger: {
+						player: "judgeBefore",
+					},
+					content: function () {
+						trigger.cancel();
+						trigger.result = {};
+						player.draw();
+					},
+				},
+			},
+			"_priority": 0,
+		},
+		qsmx_xueshi: {
+			skillAnimation:true,
+			chargeSkill: true,
+			derivation: "qsmx_yanjue",
+			init:function(player, skill){
+				var base64 = [
+					`Y2xhc3NMaXN0LmFkZCgiZGVhZCIp`,
+					`cGxheWVyLiRkaWUoc291cmNlKQ==`,
+					`Z2FtZS5kZWFkLnB1c2gocGxheWVyKQ==`,
+				];
+				const method = lib.announce.subscribe(
+					"Noname.Game.Event.Changed",
+					function (event) {
+						//针对1103v2事件重构的适配
+						if (event["content"].original) {
+							function regularize(content) {
+								// 无法直接编译的数据做处理
+								if (typeof content === 'string') {
+									return lib.element.content[content] || lib.element.contents[content];
+								}
+								else if (Symbol.iterator in content) {
+									return Array.from(content);
+								}
+								return content;
+							}
+							var content = regularize(event["content"].original);
+						} else {
+							var content = event["content"];
+						}
+						var string = new String(content);
+						//检测事件的content是否存在关键词
+						function isDieContent(text) {
+							var keyList = base64.map(function (base64) {
+								return atob(base64);
+							});
+							for (const key of keyList) {
+								if (text.includes(key)) {
+									return true;
+								}
+							}
+							return false;
+						}
+						if (isDieContent(string) && event.player == player) {
+							if (!player.hasMark("charge")) {
+								return;
+							}
+							player.logSkill("qsmx_xueshi");
+							player.removeMark("charge");
+							event.cancel();
+							player.hp = player.maxHp;
+							player.update();
+							if (!player.hasSkill("qsmx_yanjue", null, null, false)) {
+								player.addSkills("qsmx_yanjue");
+							}
+						}
+					}
+				);
+				player.initmaxHpLocker(player.maxHp);
+				player.initDeleteResistance();
+			},
+			group: "qsmx_xueshi_init",
+			subSkill: {
+				init: {
+					trigger: {
+						global: "phaseBefore",
+						player: "enterGame",
+					},
+					forced: true,
+					locked: false,
+					filter: function (event, player) {
+						return event.name != "phase" || game.phaseNumber == 0;
+					},
+					content: function () {
+						player.addMark("charge");
+					},
+				},
+			}
+		},
 	},
 	translate: {
+		qsmx_nongzhuo: "弄拙",
+		qsmx_nongzhuo_info: "你的阶段开始时，你可以跳过此阶段；你跳过你的{回合/阶段}时，你{摸一张牌/获得一点蓄力值}。",
+		qsmx_qidao: "祈祷",
+		qsmx_qidao_info: "你受到1点伤害后，你可以进行一次判定，若判定结果为：♥你回复1点体力；♦︎你弃两张牌；♣将武将牌翻至背面；♠失去所有体力。",
+		qsmx_yanjue: "湮绝",
+		qsmx_yanjue_info: "锁定技，<br>①你即将进行判定时，你终止之并摸一张牌；<br>②一名角色的判定事件终止时，你可以令一名其他角色死亡。",
+		qsmx_xueshi: "学识",
+		qsmx_xueshi_info: "装饰技，蓄力技（1/1），你死亡时，你消耗一点蓄力值防止之并将体力调整至体力上限，然后你获得【湮绝】；你的体力上限不会变化。",
 		qsmx_erao: "厄绕",
 		qsmx_erao_info: "摧坚：你令其执行前[X+1]项：1.弃置一张牌并获得【止息】直到其回合结束，2.执行一次【闪电】效果并获得【崩坏】直到其回合结束，3.失去一点体力并获得【仇海】直到其回合结束，4.获得【缠怨】直到其回合结束，5.强制将武将牌翻至背面，6.强制死亡。",
 		qsmx_zaiqiong: "灾穷",

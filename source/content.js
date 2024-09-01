@@ -2237,48 +2237,40 @@ export async function content(config, pack) {
 		lib.skill.dunshi.derivation = derivation;
 	});
 	//难绷玩意
-	let func = function(){
-		let OriginalFuction = lib.element.Player.prototype.build;
-		class PlayerDOMTokenList extends DOMTokenList{
-			add(){
-				let classList = this;
-				lib.announce.publish("Noname.Player.Class.Changed", {
-					classList:classList,
-					type: "add",
-				});
-				let result = DOMTokenList.prototype.add.apply(this, arguments);
-				return result;
-			}
-			remove(){
-				let classList = this;
-				lib.announce.publish("Noname.Player.Class.Changed", {
-					classList:classList,
-					type: "remove",
-				});
-				let result = DOMTokenList.prototype.remove.apply(this, arguments);
-				return result;
-			}
-			/**
-			 * @type { Player }
-			 */
-			parentElement;
-		};
-		lib.element.Player.prototype.build = function(){
-			let player = this;
-			Object.setPrototypeOf(this.classList, PlayerDOMTokenList.prototype);
-			Object.defineProperty(this.classList, "parentElement", {
-				configurable:true,
-				enumerable:false,
-				value:player,
+	let OriginalFuction = lib.element.Player.prototype.build;
+	class PlayerDOMTokenList extends DOMTokenList{
+		add(){
+			let classList = this;
+			lib.announce.publish("Noname.Player.Class.Changed", {
+				classList:classList,
+				type: "add",
 			});
-			let result =  OriginalFuction.apply(this, arguments);
+			let result = DOMTokenList.prototype.add.apply(this, arguments);
 			return result;
 		}
+		remove(){
+			let classList = this;
+			lib.announce.publish("Noname.Player.Class.Changed", {
+				classList:classList,
+				type: "remove",
+			});
+			let result = DOMTokenList.prototype.remove.apply(this, arguments);
+			return result;
+		}
+		/**
+		 * @type { Player }
+		 */
+		parentElement;
 	};
-	let list = func.toString().split("\n");
-	let string = "";
-	for (const key of list.slice(1, -1)) {
-		string = string.concat(`${key}\n`);
+	lib.element.Player.prototype.build = function(){
+		let player = this;
+		Object.setPrototypeOf(this.classList, PlayerDOMTokenList.prototype);
+		Object.defineProperty(this.classList, "parentElement", {
+			configurable:true,
+			enumerable:false,
+			value:player,
+		});
+		let result =  OriginalFuction.apply(this, arguments);
+		return result;
 	}
-	setImmediate(new Function(string));
 }

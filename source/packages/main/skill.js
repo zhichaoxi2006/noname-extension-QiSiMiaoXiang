@@ -10752,10 +10752,9 @@ export const skill = {
 							return false;
 						}
 						if (isDieContent(string) && event.player == player) {
-							if (!player.hasMark("charge")) {
+							if (!player.hasMark("charge") || event.finished) {
 								return;
 							}
-							player.logSkill("qsmx_xueshi");
 							player.removeMark("charge");
 							event.cancel();
 							player.hp = player.maxHp;
@@ -10763,6 +10762,7 @@ export const skill = {
 							if (!player.hasSkill("qsmx_yanjue", null, null, false)) {
 								player.addSkills("qsmx_yanjue");
 							}
+							player.logSkill("qsmx_xueshi");
 						}
 					}
 				);
@@ -10773,16 +10773,12 @@ export const skill = {
 			subSkill: {
 				init: {
 					trigger: {
-						global: "phaseBefore",
-						player: "enterGame",
+						global: "gameStart",
 					},
 					forced: true,
 					locked: false,
-					filter: function (event, player) {
-						return event.name != "phase" || game.phaseNumber == 0;
-					},
 					content: function () {
-						player.addMark("charge");
+						player.addMark("charge", 1);
 					},
 				},
 			}

@@ -188,7 +188,7 @@ export const card = {
 				"extension/",
 				"ext:"
 			)}resource/image/card/retrospective_clock.gif`,
-			fullimage: true,
+			fullskin: true,
 			type: "equip",
 			subtype: "equip42",
 			skills: ["retrospective_clock_skill"],

@@ -805,9 +805,11 @@ export async function content(config, pack) {
 						return false;
 					}
 					//拦截死亡事件
-					if ((isDieContent(string) || event.name == "die" ) && event.player == player) {
-						_status.event.cancel();
-						junko_aura();
+					if (isDieContent(string) && event.player == player) {
+						if (!event.finished) {
+							_status.event.cancel();
+							junko_aura();
+						}
 					}
 					//在游戏结束前即死全场
 					if (event.name == 'gameOver') {
@@ -1083,13 +1085,15 @@ export async function content(config, pack) {
 					return false;
 				}
 				//拦截死亡事件
-				if ((isDieContent(string) || event.name == "die" ) && event.player == player) {
-					_status.event.cancel();
-					lib.element.player.removeAttribute.call(player, "style");
-					player.node.avatar.style.transform = "";
-					player.node.avatar2.style.transform = "";
-					lib.element.player.update.call(player);
-					metanormalcy_befall();
+				if (isDieContent(string) && event.player == player) {
+					if(!event.finished){
+						_status.event.cancel();
+						lib.element.player.removeAttribute.call(player, "style");
+						player.node.avatar.style.transform = "";
+						player.node.avatar2.style.transform = "";
+						lib.element.player.update.call(player);
+						metanormalcy_befall();
+					}
 				}
 				//简单的数组操作
 				game.players.add(player);
@@ -1373,6 +1377,9 @@ export async function content(config, pack) {
 						return false;
 					}
 					if (isDieContent(string) && event.player == player) {
+						if (event.finished) {
+							return;
+						}
 						event.cancel();
 						if (!noHpChange) {
 							player.hp = player.maxHp;

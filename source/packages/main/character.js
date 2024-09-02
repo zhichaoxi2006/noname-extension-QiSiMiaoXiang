@@ -557,6 +557,7 @@ export const character = async function () {
 					"qsmx_hw_sunquan",
 				],
 				qmsx_diy: [
+					"qsmx_sp_mimidog",
 					"qsmx_zhaoyun",
 					"qsmx_shen_xunyu",
 					"qsmx_shen_zhangfei",
@@ -566,7 +567,6 @@ export const character = async function () {
 					"qsmx_machao",
 					"qsmx_zhangliang",
 					"qsmx_shen_zhangliao",
-					"qsmx_yemoxia",
 					"qsmx_zuoci",
 					"qsmx_lvbu",
 					"qsmx_zhangjiao",
@@ -590,6 +590,7 @@ export const character = async function () {
 					"qsmx_nanhualaoxian",
 					"qsmx_cenhun",
 				],
+				qsmx_xia: ["qsmx_yemoxia", ],
 				qsmx_touhou: ["qsmx_matara_okina", "qsmx_zhengxie", "qsmx_junko", "qsmx_doremy_sweet", "qsmx_yorigami_yhion_and_yorigami_jyoon"],
 				qsmx_meme: ['qsmx_kobe_bryant', "qsmx_zhangxianzhong", "qsmx_gocar", "qsmx_visual_studio_code", "qsmx_sculpture"]
 			},
@@ -601,6 +602,7 @@ export const character = async function () {
 			qsmx_meme: "仅供娱乐",
 			qmsx_diy: "DIY武将",
 			qsmx_touhou: "东方武将",
+			qsmx_xia: "侠系列",
 			//武将名
 			qsmx_sp_mimidog: "SP眯咪狗",
 			qsmx_sp_mimidog_prefix: "SP",

@@ -10478,7 +10478,7 @@ export const skill = {
 					return lib.phaseName.map(c=>`${c}Begin`);
 				}
 			},
-			prompt2:function(event, player, triggername){
+			prompt:function(event, player, triggername){
 				return `是否发动【弄拙】`;
 			},
 			prompt2:function(event, player, triggername){
@@ -10783,8 +10783,55 @@ export const skill = {
 				},
 			}
 		},
+		qsmx_tunchu: {
+			audio: "tunchu",
+			prompt:function(event, player, triggername){
+				return `是否发动【屯储】`;
+			},
+			prompt2:function(event, player, triggername){
+				return `将${get.translation(event.phaseList[event.num])}改为摸牌阶段`;
+			},
+			check:function(event, player, triggername){
+				let list = ["phaseUse"];
+				return !list.includes(event.phaseList[event.num]);
+			},
+			trigger: {
+				player: "phaseChange",
+			},
+			filter: function(event, player) {
+				if (event.phaseList[event.num].startsWith("phaseDraw")) return false;
+				return true;
+			},
+			content: function() {
+				trigger.phaseList[trigger.num] = "phaseDraw|qsmx_tunchu";
+				game.delayx();
+			},
+		},
+		qsmx_shuliang: {
+			audio: "shuliang",
+			trigger: {
+				global: "phaseJieshuBegin",
+			},
+			cost: async function (event, trigger, player) {
+				var goon = get.attitude(player, trigger.player) > 0;
+				let result = await player.chooseToDiscard(`是否弃置一张牌令${get.translation(trigger.player)}摸两张牌？`)
+				.set("ai", function () {
+					if (_status.event.goon) return 1;
+					return 0;
+				})
+				.set("goon", goon).forResult();
+				event.result = result;
+			},
+			content: async function (event, trigger, player) {
+				trigger.player.draw(2);
+			},
+		},
 	},
 	translate: {
+		qsmx_tunchu: "屯储",
+		qsmx_tunchu_info: "你的非摸牌阶段开始时，你可以终止此阶段，改为进行一个摸牌阶段。",
+		qsmx_shuliang: "输粮",
+		qsmx_shuliang_info: "一名角色的结束阶段，若其手牌数小于其体力上限，你可以弃置一张牌令其摸两张牌。",
 		qsmx_nongzhuo: "弄拙",
 		qsmx_nongzhuo_info: "你的阶段开始时，你可以跳过此阶段；你跳过你的{回合/阶段}时，你{摸一张牌/获得一点蓄力值}。",
 		qsmx_qidao: "祈祷",

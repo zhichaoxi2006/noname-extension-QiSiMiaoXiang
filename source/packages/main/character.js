@@ -521,6 +521,18 @@ export const character = async function () {
 					"forbidai",
 				],
 			],
+			qsmx_lifeng: [
+				"male",
+				"shu",
+				"4/4",
+				[
+					"qsmx_tunchu",
+					"qsmx_shuliang",
+				],
+				[
+					"ext:奇思妙想/resource/image/character/qsmx_lifeng.jpg",
+				],
+			],
 		},
 		characterTitle: {
 			qsmx_longinus: "百夫长",
@@ -557,6 +569,7 @@ export const character = async function () {
 					"qsmx_hw_sunquan",
 				],
 				qmsx_diy: [
+					"qsmx_lifeng",
 					"qsmx_sp_mimidog",
 					"qsmx_zhaoyun",
 					"qsmx_shen_xunyu",
@@ -610,6 +623,7 @@ export const character = async function () {
 			qsmx_sculpture_ab: "SCP-173",
 			qsmx_visual_studio_code: "Visual Studio Code",
 			qsmx_visual_studio_code_ab: "VSCode",
+			qsmx_lifeng: "妙李丰",
 			qsmx_zhaoyun: "妙赵云",
 			qsmx_shen_xunyu: "妙神荀彧",
 			qsmx_shen_zhangfei:"妙神张飞",

@@ -2238,7 +2238,7 @@ export async function content(config, pack) {
 		},
 	});
 	//对于哆来咪的加强
-	lib.arenaReady.push(()=>{
+	lib.announce.subscribe("Noname.Game.Event.GameStart", function(){
 		if (!_status.dunshi_list) lib.skill.dunshi.initList();
 		var derivation = _status.dunshi_list.slice();
 		lib.skill.dunshi.derivation = derivation;
